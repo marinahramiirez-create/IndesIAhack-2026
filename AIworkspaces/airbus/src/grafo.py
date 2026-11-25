@@ -22,7 +22,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, StateGraph
 
 import config
-from src import auditor, consistencia, documento, llm, normativa
+from src import auditor, consistencia, documento, llm, normativa, textos
 
 
 class Estado(TypedDict, total=False):
@@ -36,18 +36,20 @@ class Estado(TypedDict, total=False):
     homogeneidad: list[dict]
     consistencia_hecha: bool
     cerrado: bool
-    traza: list[str]
+    traza: list[dict]                   # {clave, datos, es}: la app lo redacta en español o inglés
 
 
-def _log(estado: Estado, texto: str) -> list[str]:
-    return estado.get("traza", []) + [texto]
+def _log(estado: Estado, clave: str, **datos) -> list[dict]:
+    paso = {"clave": clave, "datos": datos}
+    paso["es"] = textos.traza(paso, "es")
+    return estado.get("traza", []) + [paso]
 
 
 # ---------------------------------------------------------------- nodos
 def extractor(e: Estado) -> Estado:
     reqs = documento.extraer(e.get("ruta_documento") or None)
     return {"requisitos": reqs, "hallazgos": {}, "reflexiones": {},
-            "traza": _log(e, f"Extractor: {len(reqs)} requisitos extraídos del documento")}
+            "traza": _log(e, "extractor", n=len(reqs))}
 
 
 def auditor_nodo(e: Estado) -> Estado:
@@ -55,8 +57,8 @@ def auditor_nodo(e: Estado) -> Estado:
     pendientes = [r for r in e["requisitos"] if r["req_id"] not in hallazgos]
     for r in pendientes:
         hallazgos[r["req_id"]] = auditor.auditar(r)
-    juez = "reglas + LLM (autoconsistencia)" if llm.disponible() else "reglas (sin LLM configurado)"
-    return {"hallazgos": hallazgos, "traza": _log(e, f"Auditor: {len(pendientes)} requisitos juzgados · juez: {juez}")}
+    juez = "llm" if llm.disponible() else "reglas"
+    return {"hallazgos": hallazgos, "traza": _log(e, "auditor", n=len(pendientes), juez=juez)}
 
 
 def _necesita_reflexion(e: Estado) -> list[str]:
@@ -74,22 +76,22 @@ def reflexion(e: Estado) -> Estado:
         antes = hallazgos[rid]
         consulta = llm.reformular(reqs[rid]["texto"]) or auditor.reformular(reqs[rid]["texto"])
         nuevo = auditor.auditar(reqs[rid], consulta=consulta)
-        nuevo["reflexion"] = (f"Confianza baja ({antes['confianza']}) con {antes['obligacion_id']}; "
-                              f"se reformuló la búsqueda → {nuevo['obligacion_id']} ({nuevo['confianza']}).")
-        # Si aun así la confianza sigue baja, decide el humano
-        if nuevo["confianza"] < config.UMBRAL_CONFIANZA and nuevo["veredicto"] == "Cumple":
-            nuevo["veredicto"] = "Revisar"
-            nuevo["justificacion"] += " Confianza baja tras la reflexión → revisión humana."
-        if nuevo["score_recuperacion"] >= antes["score_recuperacion"] or nuevo["confianza"] > antes["confianza"]:
-            hallazgos[rid] = nuevo
-        else:
-            antes = {**antes, "reflexion": nuevo["reflexion"] + " Se mantiene el juicio inicial."}
-            if antes["veredicto"] == "Cumple":
-                antes["veredicto"] = "Revisar"
-            hallazgos[rid] = antes
+        datos_ref = {"conf_antes": antes["confianza"], "ob_antes": antes["obligacion_id"],
+                     "conf_despues": nuevo["confianza"], "ob_despues": nuevo["obligacion_id"]}
+        mejora = nuevo["score_recuperacion"] >= antes["score_recuperacion"] or nuevo["confianza"] > antes["confianza"]
+        elegido = dict(nuevo) if mejora else dict(antes)
+        elegido["detalle"] = {**elegido["detalle"], "reflexion": {**datos_ref, "mantiene": not mejora}}
+        # Si aun así la confianza sigue baja (o se mantiene el juicio dudoso), decide el humano
+        if elegido["veredicto"] == "Cumple" and (not mejora or elegido["confianza"] < config.UMBRAL_CONFIANZA):
+            elegido["veredicto"] = "Revisar"
+            elegido["detalle"]["revisar_por_reflexion"] = True
+        elegido["detalle"]["veredicto"] = elegido["veredicto"]
+        elegido["reflexion"] = textos.reflexion(elegido["detalle"]["reflexion"], "es")
+        elegido["justificacion"] = textos.justificacion(elegido["detalle"], "es")
+        hallazgos[rid] = elegido
         cambios.append(f"{rid}: {antes['obligacion_id']}→{hallazgos[rid]['obligacion_id']}")
     return {"hallazgos": hallazgos, "reflexiones": reflex,
-            "traza": _log(e, f"Reflexión: {len(cambios)} hallazgos re-evaluados ({'; '.join(cambios)})")}
+            "traza": _log(e, "reflexion", n=len(cambios), cambios="; ".join(cambios))}
 
 
 def trazabilidad(e: Estado) -> Estado:
@@ -99,7 +101,9 @@ def trazabilidad(e: Estado) -> Estado:
         h = dict(h)
         h["clausula_existe"] = (h["clausula"] in ids) if h["clausula"] else None
         if h["clausula"] and not h["clausula_existe"]:
-            h["veredicto"], h["justificacion"] = "Revisar", h["justificacion"] + " Cláusula citada inexistente."
+            h["veredicto"] = "Revisar"
+            h["detalle"] = {**h["detalle"], "clausula_inexistente": True, "veredicto": "Revisar"}
+            h["justificacion"] = textos.justificacion(h["detalle"], "es")
         hallazgos[rid] = h
     # Cobertura: ¿qué reglas obligatorias (IR) de Part-IS cubre el documento?
     citadas = {h["clausula"] for h in hallazgos.values() if h["clausula"]}
@@ -109,18 +113,18 @@ def trazabilidad(e: Estado) -> Estado:
                  for c in normativa.cargar(solo_ir=True) if c["id"].startswith("IS.I.OR.2")]
     n = sum(c["cubierta"] for c in cobertura)
     return {"hallazgos": hallazgos, "cobertura": cobertura, "trazabilidad_hecha": True,
-            "traza": _log(e, f"Trazabilidad: citas verificadas contra la normativa; cobertura {n}/{len(cobertura)} reglas IS.I.OR")}
+            "traza": _log(e, "trazabilidad", cubiertas=n, total=len(cobertura))}
 
 
 def critico(e: Estado) -> Estado:
     contra = consistencia.contradicciones(e["requisitos"])
     homo = consistencia.homogeneidad(e["requisitos"])
     return {"contradicciones": contra, "homogeneidad": homo, "consistencia_hecha": True,
-            "traza": _log(e, f"Crítico: {len(contra)} contradicciones y {len(homo)} requisitos con detalle insuficiente")}
+            "traza": _log(e, "critico", contra=len(contra), homo=len(homo))}
 
 
 def cierre(e: Estado) -> Estado:
-    return {"cerrado": True, "traza": _log(e, "Cierre: informe listo")}
+    return {"cerrado": True, "traza": _log(e, "cierre")}
 
 
 def supervisor(e: Estado) -> Estado:

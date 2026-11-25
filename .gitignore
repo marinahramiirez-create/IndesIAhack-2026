@@ -15,3 +15,4 @@ AIworkspaces/airbus/normativa/*.xml
 # Sistema
 .DS_Store
 Thumbs.db
+AIworkspaces/airbus/normativa/*.xhtml

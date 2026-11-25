@@ -48,6 +48,8 @@ No se sube a git porque ocupa 32 MB; el JSON sí.)
 | Paso (agente) | Archivo | Cómo |
 |---|---|---|
 | Normativa → cláusulas | `src/normativa.py` | Lee el XML oficial de EASA y saca 332 cláusulas (41 IR, 90 AMC, 169 GM) con su ID y sus apartados (a), (b)… |
+| Idioma ES / EN | `src/textos.py` + `app.py` | Botón **ES · EN** arriba a la derecha (se recuerda en la URL, `?lang=en`). Los hallazgos se guardan como datos y la app redacta las frases en el idioma elegido. ES: norma oficial del DOUE; EN: original de EASA. Los requisitos se muestran en su idioma original |
+| Norma en español | `src/normativa_es.py` | Texto **oficial** en español de las reglas IS.I.OR (Reg. de Ejecución (UE) 2023/203, DO L 31 de 2.2.2023), descargado de la Oficina de Publicaciones de la UE. La app lo enseña citando la fuente; el original inglés de EASA queda en un desplegable. Para comparar se usa el inglés porque el documento está en inglés |
 | Obligaciones atómicas | `normativa/obligaciones.json` | Cada regla IS.I.OR troceada en obligaciones verificables (24), cada una con cita literal, elementos exigidos y límites numéricos (72 h, 5 años, 3 años) |
 | **Extractor** | `src/documento.py` | `.docx` / `.pdf` / `.md` → requisitos con ID, sección y ubicación (párrafo/página) |
 | RAG | `src/rag.py` | BM25 sobre obligaciones y cláusulas. Con embeddings de Azure → búsqueda híbrida. Sustituible por Azure AI Search |

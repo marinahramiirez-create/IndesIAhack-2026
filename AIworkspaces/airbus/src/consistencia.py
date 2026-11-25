@@ -62,11 +62,14 @@ def homogeneidad(requisitos: list[dict]) -> list[dict]:
         lens = por_seccion[r.get("seccion", "")]
         media = sum(lens) / len(lens)
         verificable = bool(duraciones(r["texto"]) or re.search(r"\d|accountable manager|competent authority", r["texto"], re.I))
+        escueto = n < 0.5 * media and n < 15
+        sin_criterio = not verificable and n < 15
         motivos = []
-        if n < 0.5 * media and n < 15:
+        if escueto:
             motivos.append(f"mucho más escueto que su sección ({n} palabras frente a {media:.0f} de media)")
-        if not verificable and n < 15:
+        if sin_criterio:
             motivos.append("sin criterio verificable (plazo, cifra o responsable)")
-        if motivos:
-            salida.append({"req_id": r["req_id"], "palabras": n, "motivo": "; ".join(motivos)})
+        if motivos:   # los datos (escueto, sin_criterio, media) permiten redactarlo en inglés en la app
+            salida.append({"req_id": r["req_id"], "palabras": n, "motivo": "; ".join(motivos),
+                           "escueto": escueto, "sin_criterio": sin_criterio, "media": round(media, 1)})
     return salida

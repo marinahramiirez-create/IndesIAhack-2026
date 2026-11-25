@@ -16,7 +16,7 @@ discrepan (uno dice Cumple y el otro No cumple) → "Revisar" para el humano.
 import re
 
 import config
-from src import llm, rag
+from src import llm, rag, textos
 
 # ---------------------------------------------------------------- utilidades de texto
 UNIDADES_H = {"hour": 1, "h": 1, "hr": 1, "day": 24, "working day": 24, "business day": 24, "week": 168,
@@ -26,11 +26,11 @@ PATRON_DURACION = re.compile(
     r"\b(\d+(?:[.,]\d+)?|" + "|".join(NUMEROS) + r")\s*(working days?|business days?|hours?|hrs?|h|days?|weeks?|months?|years?)\b",
     re.I)
 
-VAGUEDAD = [
-    (r"\bperiodically\b|\bregularly\b|\bfrom time to time\b", "periodicidad sin definir"),
-    (r"\bas soon as practicable\b|\bin due course\b|\bpromptly\b", "plazo sin definir"),
-    (r"\bmay\b|\bshould\b|\bwhere possible\b|\bif feasible\b|\bas appropriate\b", "verbo no obligatorio / condicional"),
-    (r"\badequate\b|\bsufficient\b|\bappropriate\b", "criterio subjetivo"),
+VAGUEDAD = [   # (patrón, motivo en español, clave sin idioma → src/textos.py)
+    (r"\bperiodically\b|\bregularly\b|\bfrom time to time\b", "periodicidad sin definir", "periodicidad"),
+    (r"\bas soon as practicable\b|\bin due course\b|\bpromptly\b", "plazo sin definir", "plazo"),
+    (r"\bmay\b|\bshould\b|\bwhere possible\b|\bif feasible\b|\bas appropriate\b", "verbo no obligatorio / condicional", "verbo"),
+    (r"\badequate\b|\bsufficient\b|\bappropriate\b", "criterio subjetivo", "subjetivo"),
 ]
 
 # Para saber si un requisito es de seguridad de la información (si no, "No aplica" a Part-IS)
@@ -89,18 +89,28 @@ def juicio_reglas(req: dict, ob: dict, presentes: dict | None = None) -> dict:
     """
     texto = req["texto"]
     faltan, violaciones, vagos, resaltar, dudosos, evidencias = [], [], [], [], [], []
+    # "detalle": los mismos hechos como datos (sin idioma) → la app redacta la frase en español o en inglés
+    det = {"faltan": [], "violaciones": [], "vagos": [], "dudosos": [], "evidencias": [], "elementos": []}
+
+    def bil(el):
+        return {"es": el["nombre"], "en": el.get("nombre_en", el["nombre"])}
 
     for el in ob.get("elementos", []):
+        det["elementos"].append(bil(el))
         if presentes and el["nombre"] in presentes:
             p = presentes[el["nombre"]]
             if p.get("dudoso"):
                 dudosos.append(el["nombre"])
+                det["dudosos"].append(bil(el))
             if p["presente"]:
                 evidencias.append(f"{el['nombre']}: «{p['cita']}»")
+                det["evidencias"].append({**bil(el), "cita": p["cita"]})
             else:
                 faltan.append(el["nombre"])
+                det["faltan"].append(bil(el))
         elif not _buscar(el["patrones"], texto):
             faltan.append(el["nombre"])
+            det["faltan"].append(bil(el))
 
     for num in ob.get("numericos", []):
         for d in duraciones(texto):
@@ -108,26 +118,31 @@ def juicio_reglas(req: dict, ob: dict, presentes: dict | None = None) -> dict:
                (num["op"] == ">=" and d["horas"] < num["valor_horas"]):
                 violaciones.append(f"{num['nombre']}: el requisito fija «{d['texto']}» y la norma exige "
                                    f"{'como máximo' if num['op'] == '<=' else 'como mínimo'} {num['texto_limite']}")
+                det["violaciones"].append({"tipo": "numerico", "es": num["nombre"], "en": num.get("nombre_en", num["nombre"]),
+                                           "valor": d["texto"], "op": num["op"], "lim_es": num["texto_limite"],
+                                           "lim_en": num.get("texto_limite_en", num["texto_limite"])})
                 resaltar.append(d["texto"])
 
     for pr in ob.get("prohibidos", []):
         m = re.search(pr["patron"], texto, re.I)
         if m:
             violaciones.append(f"{pr['nombre']}: «{m.group(0)}»")
+            det["violaciones"].append({"tipo": "prohibido", "es": pr["nombre"], "en": pr.get("nombre_en", pr["nombre"]),
+                                       "valor": m.group(0)})
             resaltar.append(m.group(0))
 
     obligatorio = re.search(r"\bshall\b|\bmust\b", texto, re.I)
-    for patron, motivo in VAGUEDAD:
+    for patron, motivo, clave in VAGUEDAD:
         m = re.search(patron, texto, re.I)
         if not m:
             continue
-        if motivo.startswith("verbo") and obligatorio:
+        if clave == "verbo" and obligatorio:
             continue    # "shall ... which may expose": el requisito ya es obligatorio, el "may" es subordinado
         if re.search(re.escape(m.group(0)), ob.get("texto_norma", ""), re.I):
             continue    # la propia norma usa esa palabra ("adequate performance indicators")
-        if m:
-            vagos.append(f"{motivo}: «{m.group(0)}»")
-            resaltar.append(m.group(0))
+        vagos.append(f"{motivo}: «{m.group(0)}»")
+        det["vagos"].append({"tipo": clave, "palabra": m.group(0)})
+        resaltar.append(m.group(0))
 
     if violaciones:
         veredicto, confianza = "No cumple", 0.9
@@ -142,25 +157,13 @@ def juicio_reglas(req: dict, ob: dict, presentes: dict | None = None) -> dict:
     if dudosos and not violaciones:      # los juicios del LLM no coinciden en algún elemento → decide el humano
         veredicto, confianza = "Revisar", 0.5
 
-    partes = []
-    if dudosos and not violaciones:
-        partes.append("Juicios del LLM no coincidentes sobre: " + ", ".join(dudosos) + ".")
-    if violaciones:
-        partes.append("Incumple un límite de la norma: " + "; ".join(violaciones) + ".")
-    if faltan:
-        partes.append("No define: " + ", ".join(faltan) + ".")
-    if vagos:
-        partes.append("Redacción no verificable (" + "; ".join(vagos) + ").")
-    if veredicto == "Cumple":
-        if evidencias:
-            partes.append("Recoge los elementos que exige la cláusula — " + "; ".join(evidencias) + ".")
-        else:
-            partes.append("Recoge los elementos que exige la cláusula: "
-                          + ", ".join(e["nombre"] for e in ob.get("elementos", [])) + ".")
+    det["veredicto"] = veredicto
+    if not (dudosos and not violaciones):
+        det["dudosos"] = []
     return {
         "veredicto": veredicto, "confianza": round(min(confianza, 0.95), 2),
-        "justificacion": " ".join(partes),
-        "faltan": faltan, "violaciones": violaciones, "vaguedad": vagos, "resaltar": resaltar,
+        "justificacion": textos.justificacion(det, "es"),
+        "faltan": faltan, "violaciones": violaciones, "vaguedad": vagos, "resaltar": resaltar, "detalle": det,
     }
 
 
@@ -171,37 +174,40 @@ def auditar(req: dict, consulta: str | None = None) -> dict:
             "ubicacion": req.get("ubicacion", ""), "consulta": consulta or req["texto"]}
 
     if not es_aplicable(req["texto"]):
+        det = {"no_aplica": True, "veredicto": "No aplica"}
         return {**base, "veredicto": "No aplica", "confianza": 0.8, "obligacion_id": "", "clausula": "",
-                "apartado": "", "tema": "", "texto_norma": "", "score_recuperacion": 0.0,
-                "justificacion": "El requisito no trata de seguridad de la información: fuera del alcance de Part-IS.",
+                "apartado": "", "tema": "", "tema_en": "", "texto_norma": "", "score_recuperacion": 0.0,
+                "justificacion": textos.justificacion(det, "es"), "detalle": det,
                 "resaltar": [], "faltan": [], "violaciones": [], "vaguedad": [], "candidatas": [], "juez": "reglas",
                 "llm_votos": [], "cita_verificada": True}
 
     usa_llm = llm.disponible()
     # Con LLM se recuperan más candidatas: el LLM elige entre ellas (reordenación), nunca fuera de ellas
     candidatas = rag.buscar_obligaciones(consulta or req["texto"], k=config.TOP_K_LLM if usa_llm else config.TOP_K)
-    ob, juez, nota_llm, presentes, votos = candidatas[0], "reglas", "", None, []
+    ob, juez, nota_llm, presentes, votos = candidatas[0], "reglas", None, None, []
 
     if usa_llm:
         elegida, motivo = llm.elegir_obligacion(req, candidatas)
         if elegida == "ninguna":
-            nota_llm = f"El LLM no ve obligación aplicable entre las candidatas ({motivo})."
+            nota_llm = {"tipo": "ninguna", "motivo": motivo}
         elif elegida:
             ob = next(c for c in candidatas if c["id"] == elegida)
             if ob is not candidatas[0]:
-                nota_llm = f"El LLM reordenó la búsqueda: {candidatas[0]['id']} → {ob['id']} ({motivo})."
+                nota_llm = {"tipo": "reordeno", "de": candidatas[0]["id"], "a": ob["id"], "motivo": motivo}
         presentes, votos, error = llm.evaluar_elementos(req, ob, n=config.JUICIOS_AUTOCONSISTENCIA)
         juez = "reglas + LLM" if presentes else "reglas"
         if not presentes and error:
-            nota_llm += f" LLM no disponible: {error}."
+            nota_llm = {"tipo": "error", "motivo": error}
 
     jr = juicio_reglas(req, ob, presentes)
     if ob["score_bm25"] < 5 and not presentes:   # recuperación pobre y sin LLM: poco fiable → reflexión
         jr["confianza"] = round(min(jr["confianza"], 0.45), 2)
     if nota_llm:
-        jr["justificacion"] = (jr["justificacion"] + " " + nota_llm).strip()
+        jr["detalle"]["llm"] = nota_llm
+        jr["justificacion"] = textos.justificacion(jr["detalle"], "es")
 
     return {**base, **jr, "obligacion_id": ob["id"], "clausula": ob["clausula"], "apartado": ob["apartado"],
-            "tema": ob["tema"], "texto_norma": ob["texto_norma"], "score_recuperacion": round(ob["score_bm25"], 1),
+            "tema": ob["tema"], "tema_en": ob.get("tema_en", ob["tema"]), "texto_norma": ob["texto_norma"],
+            "score_recuperacion": round(ob["score_bm25"], 1),
             "candidatas": [f"{c['id']} ({c['score_bm25']:.1f})" for c in candidatas], "juez": juez,
             "llm_votos": votos, "cita_verificada": True}

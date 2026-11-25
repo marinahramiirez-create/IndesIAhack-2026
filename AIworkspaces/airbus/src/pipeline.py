@@ -18,14 +18,14 @@ def main(ruta: str | None = None):
     t0 = time.time()
     print("Ejecutando el grafo de agentes (LangGraph)...")
     estado = grafo.ejecutar(ruta)
-    for linea in estado["traza"]:
-        print("   ·", linea)
+    for paso in estado["traza"]:
+        print("   ·", paso["es"])
 
     h = pd.DataFrame(list(estado["hallazgos"].values()))
-    for col in ["resaltar", "faltan", "violaciones", "vaguedad", "candidatas", "llm_votos"]:
+    for col in ["resaltar", "faltan", "violaciones", "vaguedad", "candidatas", "llm_votos", "detalle"]:
         h[col] = h[col].apply(lambda v: json.dumps(v, ensure_ascii=False))
     contra = pd.DataFrame(estado["contradicciones"], columns=["req_a", "req_b", "parametro", "valor_a", "valor_b", "explicacion"])
-    homo = pd.DataFrame(estado["homogeneidad"], columns=["req_id", "palabras", "motivo"])
+    homo = pd.DataFrame(estado["homogeneidad"], columns=["req_id", "palabras", "motivo", "escueto", "sin_criterio", "media"])
     cob = pd.DataFrame(estado["cobertura"])
 
     print("\nResumen:", h.veredicto.value_counts().to_dict())
@@ -51,7 +51,8 @@ def main(ruta: str | None = None):
     db.guardar_df(contra, "contradicciones")
     db.guardar_df(homo, "homogeneidad")
     db.guardar_df(cob, "cobertura")
-    db.guardar_df(pd.DataFrame({"paso": estado["traza"]}), "traza")
+    db.guardar_df(pd.DataFrame([{"paso": p["es"], "clave": p["clave"], "datos": json.dumps(p["datos"], ensure_ascii=False)}
+                                for p in estado["traza"]]), "traza")
     db.guardar_df(pd.DataFrame([{"clave": k, "valor": json.dumps(v, ensure_ascii=False)} for k, v in metricas.items()]), "metricas")
     print(f"\nHecho en {time.time() - t0:.0f} s. Ahora: streamlit run app.py")
 
