@@ -234,23 +234,20 @@ def mostrar_sesion(usuario: dict, lang: str = "es"):
   [data-testid="stSidebar"] [data-testid="stSidebarUserContent"] > div > [data-testid="stVerticalBlock"] {
       min-height: calc(100vh - 7rem); }
   [data-testid="stSidebar"] .st-key-cerrar_sesion { order: 999; margin-top: auto; }
-  .usr { background:#fff; border:1px solid #D5DEEA; border-radius:14px; padding:18px 16px 14px; text-align:center;
-         box-shadow:0 1px 2px rgba(20,40,75,.06); }
-  .usr .av { width:64px; height:64px; border-radius:50%; background:#14284B; color:#fff; display:grid;
-             place-items:center; font-weight:800; font-size:1.5rem; margin:0 auto 10px; border:3px solid #009FE3; }
-  .usr .nm { font-weight:700; color:#14284B; font-size:1.08rem; line-height:1.2; word-break:break-word; }
-  .usr .id { color:#5B6B82; font-size:.82rem; margin-top:2px; word-break:break-all; }
-  .usr .rl { display:inline-block; background:#E6F4FB; color:#0077B0; border-radius:999px; padding:2px 12px;
-             font-size:.78rem; font-weight:700; margin-top:10px; text-transform:capitalize; }
-  .usr .mt { color:#5B6B82; font-size:.78rem; margin-top:10px; border-top:1px solid #E3EAF3; padding-top:8px; }
+  .usr { display:flex; align-items:center; gap:10px; background:#fff; border:1px solid #D5DEEA; border-radius:10px;
+         padding:8px 10px; }
+  .usr .av { width:34px; height:34px; border-radius:50%; background:#14284B; color:#fff; display:grid; flex:none;
+             place-items:center; font-weight:700; font-size:.85rem; border:2px solid #009FE3; }
+  .usr .tx { min-width:0; line-height:1.25; }
+  .usr .nm { font-weight:700; color:#14284B; font-size:.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .usr .mt { color:#5B6B82; font-size:.72rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .usr .rl { color:#0077B0; font-weight:700; text-transform:capitalize; }
 </style>""", unsafe_allow_html=True)
     with st.sidebar:
-        st.markdown(f"""<div class="usr">
+        st.markdown(f"""<div class="usr" title="{e(ident)} · {e(t['sesion'])}: {e(via)} · {e(usuario.get('desde', ''))}">
   <div class="av">{e(_iniciales(usuario['nombre']))}</div>
-  <div class="nm">{e(usuario['nombre'])}</div>
-  <div class="id">{e(ident)}</div>
-  <div class="rl">{e(usuario['rol'])}</div>
-  <div class="mt">{e(t['sesion'])}: {e(via)} · {e(usuario.get('desde', ''))}</div>
+  <div class="tx"><div class="nm">{e(usuario['nombre'])}</div>
+    <div class="mt"><span class="rl">{e(usuario['rol'])}</span> · {e(via)} · {e(usuario.get('desde', ''))}</div></div>
 </div>""", unsafe_allow_html=True)
         if st.button(t["salir"], icon=":material/logout:", width="stretch", key="cerrar_sesion"):
             st.session_state.pop(CLAVE_SESION, None)

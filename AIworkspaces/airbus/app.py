@@ -205,7 +205,6 @@ with st.sidebar:
     st.markdown(f"<div class='menu-t'>{T['menu']}</div>", unsafe_allow_html=True)
     pagina = st.radio(T["menu"], list(T["nav"]), key="pagina", label_visibility="collapsed",
                       format_func=lambda k: f"{ICONOS[k]} {T['nav'][k]}")
-    EXPORTAR = st.container()   # botones de exportar: se rellenan al final (el informe se construye abajo)
 
 if aviso := st.session_state.pop("aviso", None):
     st.toast(aviso, icon=":material/check_circle:")
@@ -471,7 +470,7 @@ if pagina == "agentes":
         st.dataframe(pd.DataFrame(filas), hide_index=True, width="stretch")
         st.caption(T["traz_txt"].format(t=f"{ev['trazabilidad_pct']:.0%}", e=f"{ev['exactitud_veredicto']:.0%}"))
 
-# --------------------------------------------------------------------------- exportar (en el menú lateral)
+# --------------------------------------------------------------------------- informe HTML (ahora sin botón en la interfaz)
 def informe_html() -> str:
     filas = "".join(
         f"<tr><td><b>{x.req_id}</b><br><small>{html.escape(x.tema_l or '')}</small></td>"
@@ -495,12 +494,5 @@ td,th{{border-bottom:1px solid {BORDE};padding:8px;vertical-align:top;font-size:
 <h2>{T['hallazgos']}</h2><table><tr><th>{T['c_req']}</th><th>{T['c_regla']}</th><th>{T['c_estado']}</th><th>{T['texto']}</th><th>{T['c_just']}</th></tr>{filas}</table>
 <h2>{T['contradicciones']}</h2><ul>{contr or f"<li>{T['ninguna']}</li>"}</ul>
 <p style="color:{GRIS};font-size:12px">{T['pie']}</p></main></body></html>"""
-
-with EXPORTAR:
-    st.markdown(f"<div class='menu-t'>{T['s6']}</div>", unsafe_allow_html=True)
-    st.download_button(T["desc_html"], informe_html(), file_name=f"informe_auditoria_part_is_{LANG}.html",
-                       mime="text/html", type="primary", width="stretch", help=T["s6_ayuda"])
-    st.download_button(T["desc_csv"], h.drop(columns=["orden"]).to_csv(index=False).encode("utf-8"),
-                       file_name="hallazgos.csv", width="stretch")
 
 st.markdown(f"<div class='pie'>{T['pie']}</div>", unsafe_allow_html=True)
