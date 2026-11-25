@@ -6,3 +6,5 @@ __pycache__/
 normativa/*.xml
 # Secretos del futuro inicio de sesión con Microsoft (ver AUTENTICACION.md)
 .streamlit/secrets.toml
+nimbus/cache/
+salidas/

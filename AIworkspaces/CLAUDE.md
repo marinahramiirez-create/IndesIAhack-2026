@@ -6,6 +6,11 @@
 - **Hecho (25-nov-2026): Airbus** (baseline sin LLM: grafo LangGraph completo, normativa real de EASA troceada por cláusula, F1 1,00 en el documento sintético —inflado— y 0,77 en la prueba ciega; el juez LLM está implementado pero sin probar hasta tener claves).
 - **Hecho (25-nov-2026): Acerinox** (sin LLM: intérprete por reglas con citas al catálogo, SQL determinista, reglas R1-R6, validador; 100 % en casos propios —inflado— y 98 % de campos / 100 % de acciones en prueba ciega; 0 bultos inventados. LLM y voz programados, sin probar).
 - **Pendiente:** Técnicas Reunidas.
+- **26-nov-2026 · NOS HA TOCADO AIRBUS.** El reto real es distinto del preparado: 75 PDF de NIMBUS (en español, 13 escaneados), salida
+  `respuestas.csv` puntuada por un puntuador oficial que empareja por documento + ID literal. Solución en `airbus/nimbus/`
+  (ver `airbus/ARQUITECTURA_NIMBUS.md`). Una orden: `python -m nimbus.ejecutar CARPETA`; medir: `python -m nimbus.puntuar`.
+  Primer resultado sin LLM: precisión 1,00 · recall 0,225 · F1 0,368 · cláusulas 100 %. Pendiente: registros, LLM, visión.
+  El material oficial del reto (corpus, kit con clave) está SOLO en local y en .gitignore: nunca subirlo.
 - **Smart App Control (Windows 11) en uno de los portátiles del equipo** bloquea DLL sin firmar: SQLAlchemy 2.1 no carga (por eso `sqlalchemy>=2.0,<2.1` en los requirements) y `psycopg` tampoco (PostgreSQL de Azure desde ese portátil probablemente falle). También bloquea los lanzadores `streamlit.exe` y `pip.exe` → en ese portátil usar siempre `python -m streamlit run app.py` y `python -m pip ...`.
 - Los PDFs de los enunciados están en `retos/`.
 - Azure CLI ya instalado en el portátil de Sergio (no hace falta en el de los demás salvo para conectar a PostgreSQL).

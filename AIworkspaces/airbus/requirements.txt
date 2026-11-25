@@ -5,6 +5,7 @@ pydantic>=2.5
 openai>=1.40
 rank-bm25>=0.2.2
 pypdf>=4.0
+pdfplumber>=0.11   # tablas con coordenadas y páginas → imagen (escaneados y figuras)
 python-docx>=1.1
 sqlalchemy>=2.0,<2.1   # 2.1 exige extensiones compiladas que Smart App Control de Windows bloquea; 2.0 tiene versión en Python puro
 psycopg[binary]>=3.1
