@@ -51,6 +51,35 @@ SINONIMOS = {
 }
 
 
+# Vocabulario del sector → términos de la norma. Se añade a la consulta YA en la primera búsqueda (BM25 solo
+# encuentra palabras iguales): "audit trails kept" debe llevar a la regla de registros, "communicated to the
+# authority" a la de notificación, etc. Son equivalencias generales del dominio, no frases de un documento concreto.
+VOCABULARIO = [
+    (r"audit trail|\blogs?\b|logging|archiv|\bkept\b|\bkeep\b|retain|retention|preserv",
+     "records retained retention archived"),
+    (r"(communicat|notif|inform|report|tell|escalat)\w*.{0,80}authorit|authorit\w*.{0,80}(communicat|notif|inform|report)",
+     "notify report competent authority notification"),
+    (r"\bkpis?\b|metric|indicator|\bmeasur\w*\s+(the\s+)?(isms|performance|effectiveness)",
+     "performance indicators continuous improvement effectiveness"),
+    (r"supplier|vendor|subcontract|third.part|outsourc|provider|contractor",
+     "contracted organisations contracting oversight"),
+    (r"\bciso\b|security officer|security manager|nominat|designat|appoint",
+     "appoint person responsible accountable manager"),
+    (r"intrusion|anomal|baseline|\bmonitor|\bdetect", "detect monitoring deviations baselines alerts"),
+    (r"\brat(e|ed|ing)\b|\bscor(e|ed|ing)\b|classif|likelihood|probab", "risk level classification likelihood severity"),
+    (r"mitigat|countermeasure|safeguard|\btreat", "risk treatment measures"),
+    (r"restor|back online|recover|resum", "recovery safe state recovery time"),
+    (r"train|competen|awareness|skill", "competence personnel training"),
+    (r"finding|non.?conformit", "findings root cause corrective action plan"),
+]
+
+
+def expandir(texto: str) -> str:
+    """Consulta para el RAG: el requisito + los términos de la norma equivalentes a su vocabulario."""
+    extra = [v for k, v in VOCABULARIO if re.search(k, texto, re.I)]
+    return texto + (" " + " ".join(extra) if extra else "")
+
+
 def duraciones(texto: str) -> list[dict]:
     salida = []
     for m in PATRON_DURACION.finditer(texto):
@@ -183,7 +212,8 @@ def auditar(req: dict, consulta: str | None = None) -> dict:
 
     usa_llm = llm.disponible()
     # Con LLM se recuperan más candidatas: el LLM elige entre ellas (reordenación), nunca fuera de ellas
-    candidatas = rag.buscar_obligaciones(consulta or req["texto"], k=config.TOP_K_LLM if usa_llm else config.TOP_K)
+    candidatas = rag.buscar_obligaciones(consulta or expandir(req["texto"]),
+                                         k=config.TOP_K_LLM if usa_llm else config.TOP_K)
     ob, juez, nota_llm, presentes, votos = candidatas[0], "reglas", None, None, []
 
     if usa_llm:

@@ -50,7 +50,7 @@ def main():
     resultados = []
     # 1. reordenación: "audit trails" → el RAG trae otra cosa primero; el LLM elige OB-245-a
     req = "Audit trails of the maintenance IT systems shall be retained for seven years."
-    cands = rag.buscar_obligaciones(req, k=6)
+    cands = rag.buscar_obligaciones(auditor.expandir(req), k=6)   # misma consulta que usa el auditor
     assert any(c["id"] == "OB-245-a" for c in cands), "OB-245-a debería estar entre las 6 candidatas"
     presente = {"periodo de retención": "retained for seven years"}
     resultados.append(caso("1 reordenación", req,

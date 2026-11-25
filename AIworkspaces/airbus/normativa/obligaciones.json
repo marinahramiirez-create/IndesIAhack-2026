@@ -572,7 +572,10 @@
     "nombre": "antes de implantar el cambio",
     "patrones": [
      "before",
-     "prior to"
+     "prior to",
+     "\\bprior\\b",
+     "in advance",
+     "beforehand"
     ],
     "nombre_en": "before implementing the change"
    }
@@ -601,7 +604,10 @@
      "retention",
      "kept",
      "stored",
-     "archiv"
+     "archiv",
+     "\\bkeep\\b",
+     "preserv",
+     "\\bmaintain\\w*\\b.{0,40}\\bfor\\b"
     ],
     "nombre_en": "retention period"
    }
@@ -730,7 +736,10 @@
      "calendar",
      "annual",
      "every \\d+",
-     "following (any |an )?(information security )?incident"
+     "following (any |an )?(information security )?incident",
+     "every\\s+(\\d+|one|two|three|four|five|six|twelve|other)\\s+(days?|weeks?|months?|years?)",
+     "\\b(monthly|quarterly|yearly|annually|biannual\\w*|semi-annual\\w*)\\b",
+     "after (each|every|any|an?) (\\w+ ){0,3}incident"
     ],
     "nombre_en": "predefined calendar or after an incident"
    }
