@@ -1,0 +1,186 @@
+[
+ {"id": "OB-200-a1", "clausula": "IS.I.OR.200", "apartado": "(a)(1)", "tema": "Política de seguridad de la información",
+  "texto_norma": "establishes a policy on information security setting out the overall principles of the organisation with regard to the potential impact of information security risks on aviation safety",
+  "consulta": "information security policy overall principles aviation safety accountable manager",
+  "elementos": [
+   {"nombre": "política de seguridad", "patrones": ["polic"]},
+   {"nombre": "relación con la seguridad aérea (aviation safety)", "patrones": ["aviation safety", "safety"]}
+  ]},
+ {"id": "OB-200-c", "clausula": "IS.I.OR.200", "apartado": "(c)", "tema": "Documentación de procesos del ISMS",
+  "texto_norma": "The organisation shall document ... all key processes, procedures, roles and responsibilities ... and shall establish a process for amending that documentation.",
+  "consulta": "document key processes procedures roles responsibilities ISMS manual ISMM amending documentation",
+  "elementos": [
+   {"nombre": "documentar procesos, roles y responsabilidades", "patrones": ["process", "procedure", "role", "responsibilit"]},
+   {"nombre": "proceso para modificar la documentación", "patrones": ["amend", "updat", "revis", "change"]}
+  ]},
+ {"id": "OB-250-a1", "clausula": "IS.I.OR.250", "apartado": "(a)(1)", "tema": "Declaración firmada del ISMM",
+  "texto_norma": "a statement signed by the accountable manager confirming that the organisation will at all times work in accordance with this Annex and with the ISMM",
+  "consulta": "information security management manual ISMM statement signed accountable manager",
+  "elementos": [
+   {"nombre": "declaración firmada", "patrones": ["sign"]},
+   {"nombre": "por el accountable manager", "patrones": ["accountable manager"]}
+  ]},
+ {"id": "OB-205-a", "clausula": "IS.I.OR.205", "apartado": "(a)", "tema": "Identificación de elementos expuestos",
+  "texto_norma": "The organisation shall identify all its elements which could be exposed to information security risks ... activities, facilities and resources ... equipment, systems, data and information",
+  "consulta": "identify elements exposed information security risks activities facilities resources services equipment systems data",
+  "elementos": [
+   {"nombre": "identificar elementos", "patrones": ["identif"]},
+   {"nombre": "actividades, instalaciones o servicios", "patrones": ["activit", "facilit", "service", "resource"]},
+   {"nombre": "equipos, sistemas o datos", "patrones": ["equipment", "system", "data"]}
+  ]},
+ {"id": "OB-205-b", "clausula": "IS.I.OR.205", "apartado": "(b)", "tema": "Identificación de interfaces con otras organizaciones",
+  "texto_norma": "The organisation shall identify the interfaces that it has with other organisations, and which could result in the mutual exposure to information security risks.",
+  "consulta": "identify interfaces other organisations mutual exposure",
+  "elementos": [
+   {"nombre": "interfaces con otras organizaciones", "patrones": ["interface"]},
+   {"nombre": "exposición mutua al riesgo", "patrones": ["mutual", "exposure", "risk"]}
+  ]},
+ {"id": "OB-205-c", "clausula": "IS.I.OR.205", "apartado": "(c)", "tema": "Clasificación del nivel de riesgo",
+  "texto_norma": "assign a risk level according to a predefined classification ... The predefined classification ... shall take into account the potential of occurrence of the threat scenario and the severity of its safety consequences.",
+  "consulta": "risk level predefined classification occurrence likelihood threat scenario severity safety consequences risk matrix",
+  "elementos": [
+   {"nombre": "nivel de riesgo según clasificación", "patrones": ["risk level", "classif", "matrix"]},
+   {"nombre": "probabilidad de ocurrencia", "patrones": ["likelihood", "occurrence", "probabilit"]},
+   {"nombre": "severidad de las consecuencias para la seguridad", "patrones": ["severity", "consequence"]}
+  ]},
+ {"id": "OB-205-d", "clausula": "IS.I.OR.205", "apartado": "(d)", "tema": "Revisión del análisis de riesgos ante cambios",
+  "texto_norma": "The organisation shall review and update the risk assessment ... (1) change in the elements ... (2) change in the interfaces ... (3) change in the information or knowledge ... (4) lessons learnt from the analysis of information security incidents.",
+  "consulta": "review update risk assessment change elements interfaces knowledge lessons learnt incidents",
+  "elementos": [
+   {"nombre": "revisar y actualizar el análisis", "patrones": ["review", "updat"]},
+   {"nombre": "disparadores: cambios en elementos/interfaces/conocimiento", "patrones": ["change"]},
+   {"nombre": "lecciones aprendidas de incidentes", "patrones": ["lesson", "incident"]}
+  ]},
+ {"id": "OB-210-a", "clausula": "IS.I.OR.210", "apartado": "(a)", "tema": "Tratamiento de riesgos y eficacia continuada",
+  "texto_norma": "The organisation shall develop measures to address unacceptable risks ..., implement them in a timely manner and check their continued effectiveness.",
+  "consulta": "risk treatment measures unacceptable risks implement timely check continued effectiveness",
+  "elementos": [
+   {"nombre": "medidas de tratamiento", "patrones": ["measure", "control", "treatment"]},
+   {"nombre": "comprobar su eficacia continuada", "patrones": ["effectiveness", "verif", "check"]}
+  ]},
+ {"id": "OB-210-b", "clausula": "IS.I.OR.210", "apartado": "(b)", "tema": "Comunicación del resultado del análisis",
+  "texto_norma": "The person referred to in point IS.I.OR.240(a) and (b) and other affected personnel ... shall be informed of the outcome of the risk assessment ... The organisation shall also inform organisations with which it has an interface ... of any risk shared between both organisations.",
+  "consulta": "inform communicate outcome risk assessment threat scenarios measures personnel interfacing organisations shared risk",
+  "elementos": [
+   {"nombre": "informar al personal afectado", "patrones": ["personnel", "staff", "manager"]},
+   {"nombre": "informar a organizaciones con interfaz", "patrones": ["interfac", "organisations sharing", "other organisation"]}
+  ]},
+ {"id": "OB-215-ab", "clausula": "IS.I.OR.215", "apartado": "(a)-(b)", "tema": "Esquema de notificación interna",
+  "texto_norma": "The organisation shall establish an internal reporting scheme to enable the collection and evaluation of information security events ... identify ... incidents or vulnerabilities ... identify the causes",
+  "consulta": "internal reporting scheme collect evaluate information security events incidents vulnerabilities causes",
+  "elementos": [
+   {"nombre": "esquema interno de notificación", "patrones": ["reporting scheme", "report"]},
+   {"nombre": "recoger y evaluar eventos", "patrones": ["collect", "evaluat", "analys"]}
+  ]},
+ {"id": "OB-215-c", "clausula": "IS.I.OR.215", "apartado": "(c)", "tema": "Notificación por parte de contratistas",
+  "texto_norma": "Any contracted organisation which may expose the organisation to information security risks ... shall be required to report information security events to the organisation ... using the procedures established in the specific contractual arrangements",
+  "consulta": "contracted organisations suppliers report information security events contractual arrangements",
+  "elementos": [
+   {"nombre": "organizaciones contratadas", "patrones": ["contract", "supplier", "subcontract"]},
+   {"nombre": "obligación de notificar eventos", "patrones": ["report"]}
+  ]},
+ {"id": "OB-230-c", "clausula": "IS.I.OR.230", "apartado": "(c)(1)-(2)", "tema": "Plazo de notificación a la autoridad competente",
+  "texto_norma": "a notification shall be submitted to the competent authority ... as soon as the condition has been known ... a report shall be submitted ... as soon as possible, but not exceeding 72 hours from the time the condition has been known to the organisation",
+  "consulta": "report notify incidents competent authority design approval holder 72 hours notification",
+  "elementos": [
+   {"nombre": "notificar a la autoridad competente", "patrones": ["competent authority", "authority"]}
+  ],
+  "numericos": [
+   {"nombre": "plazo del informe a la autoridad", "magnitud": "duracion", "op": "<=", "valor_horas": 72, "texto_limite": "72 horas"}
+  ]},
+ {"id": "OB-230-c3", "clausula": "IS.I.OR.230", "apartado": "(c)(3)", "tema": "Informe de seguimiento",
+  "texto_norma": "a follow-up report shall be submitted ... providing details of the actions the organisation has taken or intends to take to recover from the incident and the actions it intends to take to prevent similar information security incidents in the future",
+  "consulta": "follow-up report recovery actions prevent similar incidents competent authority",
+  "elementos": [
+   {"nombre": "informe de seguimiento", "patrones": ["follow-up", "follow up"]},
+   {"nombre": "acciones de recuperación/prevención", "patrones": ["recover", "prevent"]}
+  ]},
+ {"id": "OB-220-a", "clausula": "IS.I.OR.220", "apartado": "(a)", "tema": "Detección de incidentes",
+  "texto_norma": "Those detection measures shall enable the organisation to: (1) identify deviations from predetermined functional performance baselines; (2) trigger warnings to activate proper response measures",
+  "consulta": "detect monitoring incidents vulnerabilities deviations functional performance baselines trigger warnings alerts",
+  "elementos": [
+   {"nombre": "medidas de detección", "patrones": ["detect", "monitor"]},
+   {"nombre": "desviaciones respecto a una línea base", "patrones": ["baseline", "deviation"]},
+   {"nombre": "generar avisos que activen la respuesta", "patrones": ["warning", "alert", "alarm"]}
+  ]},
+ {"id": "OB-220-b", "clausula": "IS.I.OR.220", "apartado": "(b)", "tema": "Respuesta a incidentes",
+  "texto_norma": "(1) initiate the reaction to the warnings ... by activating predefined resources and course of actions; (2) contain the spread of an attack ...; (3) control the failure mode of the affected elements",
+  "consulta": "respond warnings activate predefined resources contain spread attack control failure mode",
+  "elementos": [
+   {"nombre": "respuesta con recursos predefinidos", "patrones": ["predefined", "activat", "respon"]},
+   {"nombre": "contener la propagación", "patrones": ["contain"]}
+  ]},
+ {"id": "OB-220-c", "clausula": "IS.I.OR.220", "apartado": "(c)", "tema": "Recuperación tras incidentes",
+  "texto_norma": "(1) remove the condition that caused the incident, or constrain it to a tolerable level; (2) reach a safe state of the affected elements ... within a recovery time previously defined by the organisation",
+  "consulta": "recovery measures remove condition caused incident safe state affected elements recovery time restore",
+  "elementos": [
+   {"nombre": "eliminar la causa del incidente", "patrones": ["remove", "eliminat", "constrain", "root cause"]},
+   {"nombre": "alcanzar un estado seguro", "patrones": ["safe state"]},
+   {"nombre": "tiempo de recuperación definido", "patrones": ["\\d+\\s*(hour|h\\b|day|minute)", "recovery time"]}
+  ]},
+ {"id": "OB-225-a", "clausula": "IS.I.OR.225", "apartado": "(a)-(b)", "tema": "Respuesta a hallazgos de la autoridad",
+  "texto_norma": "(1) identify the root cause ... (2) define a corrective action plan; (3) demonstrate the correction ... (b) within the period agreed with the competent authority",
+  "consulta": "findings notified competent authority root cause corrective action plan demonstrate correction period agreed",
+  "elementos": [
+   {"nombre": "causa raíz", "patrones": ["root cause"]},
+   {"nombre": "plan de acciones correctivas", "patrones": ["corrective action plan", "corrective action"]},
+   {"nombre": "plazo acordado con la autoridad", "patrones": ["period agreed", "agreed with the competent authority", "agreed period"]}
+  ]},
+ {"id": "OB-235-a", "clausula": "IS.I.OR.235", "apartado": "(a)-(b)", "tema": "Contratación de actividades del ISMS",
+  "texto_norma": "the contracted activities comply with the requirements of this Regulation and the contracted organisation works under its oversight ... the competent authority can have access upon request to the contracted organisation",
+  "consulta": "contracting outsourcing ISMS activities external providers oversight comply competent authority access",
+  "elementos": [
+   {"nombre": "el contratista trabaja bajo supervisión de la organización", "patrones": ["oversight", "supervis"]},
+   {"nombre": "cumplimiento de Part-IS por el contratista", "patrones": ["compl"]},
+   {"nombre": "acceso de la autoridad al contratista", "patrones": ["access"]}
+  ]},
+ {"id": "OB-255-b", "clausula": "IS.I.OR.255", "apartado": "(b)", "tema": "Aprobación previa de cambios en el ISMS",
+  "texto_norma": "the application shall be submitted before any such change takes place ... the change shall be implemented only upon receipt of a formal approval by the competent authority",
+  "consulta": "changes ISMS approval competent authority before change implemented procedure notified",
+  "elementos": [
+   {"nombre": "aprobación de la autoridad", "patrones": ["approv"]},
+   {"nombre": "antes de implantar el cambio", "patrones": ["before", "prior to"]}
+  ],
+  "prohibidos": [
+   {"nombre": "notificación posterior al cambio", "patron": "after (the )?(implementation|change|it has been implemented)"}
+  ]},
+ {"id": "OB-245-a", "clausula": "IS.I.OR.245", "apartado": "(a)(4)", "tema": "Retención de registros del ISMS",
+  "texto_norma": "The records referred to point (1)(iii), (iv) and (v) shall be retained at least for a period of 5 years. ... stored using means to ensure integrity, authenticity and authorised access.",
+  "consulta": "records logs incidents risks archived traceable retained retention years integrity authenticity",
+  "elementos": [
+   {"nombre": "periodo de retención", "patrones": ["retain", "retention", "kept", "stored", "archiv"]}
+  ],
+  "numericos": [
+   {"nombre": "retención de registros", "magnitud": "duracion", "op": ">=", "valor_horas": 43800, "texto_limite": "5 años"}
+  ]},
+ {"id": "OB-245-b", "clausula": "IS.I.OR.245", "apartado": "(b)(1)", "tema": "Retención de registros de cualificación del personal",
+  "texto_norma": "The personnel's qualification and experience records shall be retained for as long as the person works for the organisation, and for at least 3 years after the person has left the organisation.",
+  "consulta": "personnel staff qualification experience records retained years after leaving",
+  "elementos": [
+   {"nombre": "registros de cualificación del personal", "patrones": ["qualification", "experience", "personnel", "staff"]}
+  ],
+  "numericos": [
+   {"nombre": "retención tras la salida", "magnitud": "duracion", "op": ">=", "valor_horas": 26280, "texto_limite": "3 años"}
+  ]},
+ {"id": "OB-240-b", "clausula": "IS.I.OR.240", "apartado": "(b)", "tema": "Responsable de cumplimiento de Part-IS",
+  "texto_norma": "The accountable manager shall appoint a person or group of persons ... That person or group of persons shall report directly to the accountable manager ... It shall be determined in the procedures who deputises for a particular person in the case of lengthy absence",
+  "consulta": "appoint person responsible compliance information security officer report directly accountable manager deputy absence",
+  "elementos": [
+   {"nombre": "nombramiento de responsable", "patrones": ["appoint", "designat"]},
+   {"nombre": "dependencia directa del accountable manager", "patrones": ["report directly", "directly to the accountable manager"]},
+   {"nombre": "suplente en ausencias prolongadas", "patrones": ["deput", "absence", "substitut"]}
+  ]},
+ {"id": "OB-240-ghi", "clausula": "IS.I.OR.240", "apartado": "(g)-(i)", "tema": "Competencia y fiabilidad del personal",
+  "texto_norma": "(g) ... a process in place to ensure that the personnel ... have the necessary competence ... (h) ... acknowledge the responsibilities ... (i) ... identity and trustworthiness of the personnel who have access to information systems",
+  "consulta": "personnel competence training acknowledge responsibilities identity trustworthiness access information systems",
+  "elementos": [
+   {"nombre": "proceso de competencia/formación", "patrones": ["competen", "training", "trained"]}
+  ]},
+ {"id": "OB-260-a", "clausula": "IS.I.OR.260", "apartado": "(a)", "tema": "Mejora continua del ISMS",
+  "texto_norma": "The organisation shall assess, using adequate performance indicators, the effectiveness and maturity of the ISMS. That assessment shall be carried out on a calendar basis predefined by the organisation or following an information security incident.",
+  "consulta": "continuous improvement assess effectiveness maturity ISMS performance indicators calendar incident",
+  "elementos": [
+   {"nombre": "indicadores de rendimiento", "patrones": ["indicator", "kpi", "metric"]},
+   {"nombre": "calendario predefinido o tras incidente", "patrones": ["calendar", "annual", "every \\d+", "following (any |an )?(information security )?incident"]}
+  ]}
+]

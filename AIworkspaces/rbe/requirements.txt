@@ -1,0 +1,11 @@
+pandas>=2.1
+numpy>=1.26
+statsmodels>=0.14
+ruptures>=1.1.9
+sqlalchemy>=2.0,<2.1   # 2.1 exige extensiones compiladas que Smart App Control de Windows bloquea; 2.0 tiene versión en Python puro
+psycopg[binary]>=3.1
+python-dotenv>=1.0
+pydantic>=2.5
+openai>=1.40
+streamlit>=1.36
+plotly>=5.20

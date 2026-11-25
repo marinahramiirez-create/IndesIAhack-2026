@@ -1,0 +1,6 @@
+.venv/
+.env
+datos/
+datos_sinteticos/salida/
+__pycache__/
+normativa/*.xml

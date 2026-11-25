@@ -1,0 +1,4 @@
+chromadb>=0.5
+ollama>=0.4
+pypdf>=4.0
+python-docx>=1.1

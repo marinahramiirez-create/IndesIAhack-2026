@@ -1,0 +1,17 @@
+# Entornos virtuales (cada uno crea el suyo: no sirven en otro ordenador)
+.venv/
+venv/
+# Claves: NUNCA a git
+.env
+# Bases de datos y resultados generados (se regeneran con los scripts)
+*.db
+datos/
+**/datos_sinteticos/salida*/
+chroma_db/
+__pycache__/
+*.pyc
+# Normativa EASA en XML (32 MB, pública: se descarga de la web de EASA)
+AIworkspaces/airbus/normativa/*.xml
+# Sistema
+.DS_Store
+Thumbs.db
