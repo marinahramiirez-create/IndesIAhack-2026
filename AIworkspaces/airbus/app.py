@@ -21,7 +21,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from src import db, llm, normativa, normativa_es, textos
+from src import auth, db, llm, normativa, normativa_es, textos
 
 st.set_page_config(page_title="Part-IS audit", page_icon="🛡️", layout="wide")
 
@@ -91,6 +91,12 @@ st.markdown(f"""
   .stTabs [aria-selected="true"] {{ color: {CIAN_TXT}; }}
   .pie {{ color: {GRIS}; font-size: .8rem; text-align: center; margin-top: 28px; border-top: 1px solid {BORDE}; padding-top: 10px; }}
 </style>""", unsafe_allow_html=True)
+
+# --------------------------------------------------------------------------- inicio de sesión
+# Sin sesión iniciada se muestra la pantalla de login y la app se detiene aquí (src/auth.py).
+# Para la demo sin login: AUTH_ACTIVADA=false en .env
+USUARIO = auth.requerir_login(LANG)
+auth.mostrar_sesion(USUARIO, LANG)
 
 if not db.existe_tabla("hallazgos"):
     st.error(T["no_datos"])
@@ -306,13 +312,15 @@ with tab_h:
                     unsafe_allow_html=True)
         d1, d2, d3, d4 = st.columns([1.1, 1.3, 2.2, 1.1])
         if d1.button(T["aprobar"], key=f"a_{rid}", type="primary", width="stretch"):
-            db.registrar_decision(rid, "aprobado", r.veredicto_ia, st.session_state.get(f"c_{rid}", ""))
+            db.registrar_decision(rid, "aprobado", r.veredicto_ia, st.session_state.get(f"c_{rid}", ""),
+                                  usuario=USUARIO["nombre"], usuario_id=USUARIO["id"])
             st.rerun()
         nuevo = d2.selectbox(T["veredicto_final"], list(ORDEN), index=list(ORDEN).index(r.veredicto), key=f"v_{rid}",
                              format_func=V, label_visibility="collapsed")
         d3.text_input(T["comentario"], key=f"c_{rid}", placeholder=T["comentario"], label_visibility="collapsed")
         if d4.button(T["guardar"], key=f"g_{rid}", width="stretch"):
-            db.registrar_decision(rid, "corregido", nuevo, st.session_state.get(f"c_{rid}", ""))
+            db.registrar_decision(rid, "corregido", nuevo, st.session_state.get(f"c_{rid}", ""),
+                                  usuario=USUARIO["nombre"], usuario_id=USUARIO["id"])
             st.rerun()
 
 # --------------------------------------------------------------------------- 2 · matriz

@@ -4,3 +4,5 @@ datos/
 datos_sinteticos/salida/
 __pycache__/
 normativa/*.xml
+# Secretos del futuro inicio de sesión con Microsoft (ver AUTENTICACION.md)
+.streamlit/secrets.toml

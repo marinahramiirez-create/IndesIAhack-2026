@@ -16,6 +16,12 @@ load_dotenv(RAIZ / ".env")
 (RAIZ / "datos").mkdir(exist_ok=True)
 DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{(RAIZ / 'datos' / 'airbus.db').as_posix()}")
 
+# --- Inicio de sesión (src/auth.py, AUTENTICACION.md) ---------------------
+# true: pantalla de login (usuario+contraseña y, si está configurado, Microsoft). false: sin login (demo rápida)
+AUTH_ACTIVADA = os.getenv("AUTH_ACTIVADA", "true").lower() in ("1", "true", "si", "sí", "yes")
+# true: PROTOTIPO, cualquier usuario + contraseña entra (no se comprueba nada). Poner false cuando haya cuentas reales
+AUTH_PROTOTIPO = os.getenv("AUTH_PROTOTIPO", "true").lower() in ("1", "true", "si", "sí", "yes")
+
 # --- Entradas ------------------------------------------------------------
 # Normativa EASA ya troceada por cláusula (se genera con: python -m src.normativa archivo.xml)
 RUTA_CLAUSULAS = Path(os.getenv("RUTA_CLAUSULAS", RAIZ / "normativa" / "clausulas.json"))
