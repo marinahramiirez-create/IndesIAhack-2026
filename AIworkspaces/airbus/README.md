@@ -71,6 +71,24 @@ No se sube a git porque ocupa 32 MB; el JSON sí.)
 es la de la prueba ciega (`python datos_sinteticos/prueba_ciega.py`): el juez por reglas falla con sinónimos
 ("audit trails" en vez de "records", "prior approval", "every six months"). **Ahí es donde entra el juez LLM** el día del reto.
 
+## Cómo mejora el F1 con el LLM
+El LLM **interpreta**, el código **decide** (`src/llm.py` + `src/auditor.py`):
+1. **Reordenación**: el RAG trae 6 obligaciones candidatas y el LLM elige la que aplica (solo puede elegir entre ellas).
+   En la prueba ciega la correcta está entre las 6 en 13/13 casos, pero solo 10/13 en primera posición → la trazabilidad puede pasar del 77 % a casi el 100 %.
+2. **Elementos con evidencia**: para cada elemento que exige la norma, el LLM dice si el requisito lo cubre y copia la frase literal
+   que lo demuestra ("every six months" = calendario predefinido). Si la frase no está en el requisito, no cuenta.
+3. **Autoconsistencia**: se pregunta 3 veces; si no coinciden → "Revisar".
+4. **El veredicto lo calcula el código** con esos elementos + límites numéricos (72 h, 5 años) + redacción vaga.
+
+Comprobado sin claves con un LLM simulado (`python -m tests.test_llm_simulado`, 5/5 salvaguardas).
+**Para medir la mejora real** (con claves en `.env`):
+```powershell
+python -m src.pipeline                                   # documento principal, con LLM
+$env:DIR_DATOS="datos_sinteticos/salida_ciega"; $env:DOCUMENTO="documento_requisitos.md"; $env:DATABASE_URL="sqlite:///datos/prueba_ciega.db"
+python -m src.pipeline                                   # prueba ciega, con LLM → comparar con F1 0,77 / 77 %
+Remove-Item Env:DIR_DATOS, Env:DOCUMENTO, Env:DATABASE_URL
+```
+
 ## El día del reto
 1. **Preguntar al mentor**: formato del documento y del gold set (¿veredictos por requisito? ¿cláusula esperada?),
    si "Revisar" cuenta como acierto, y qué normativa exacta entra (¿solo Part-IS o también AMC/GM?).

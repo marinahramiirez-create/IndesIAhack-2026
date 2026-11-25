@@ -81,12 +81,25 @@ def reformular(texto: str) -> str:
 
 
 # ---------------------------------------------------------------- juez por reglas
-def juicio_reglas(req: dict, ob: dict) -> dict:
+def juicio_reglas(req: dict, ob: dict, presentes: dict | None = None) -> dict:
+    """
+    presentes (opcional, viene del LLM): {nombre_elemento: {"presente": bool, "cita": str, "dudoso": bool}}.
+    Si se da, sustituye a las expresiones regulares para decidir qué elementos cubre el requisito
+    (el LLM entiende sinónimos); el resto (límites numéricos, prohibidos, vaguedad) lo sigue haciendo el código.
+    """
     texto = req["texto"]
-    faltan, violaciones, vagos, resaltar = [], [], [], []
+    faltan, violaciones, vagos, resaltar, dudosos, evidencias = [], [], [], [], [], []
 
     for el in ob.get("elementos", []):
-        if not _buscar(el["patrones"], texto):
+        if presentes and el["nombre"] in presentes:
+            p = presentes[el["nombre"]]
+            if p.get("dudoso"):
+                dudosos.append(el["nombre"])
+            if p["presente"]:
+                evidencias.append(f"{el['nombre']}: «{p['cita']}»")
+            else:
+                faltan.append(el["nombre"])
+        elif not _buscar(el["patrones"], texto):
             faltan.append(el["nombre"])
 
     for num in ob.get("numericos", []):
@@ -125,9 +138,13 @@ def juicio_reglas(req: dict, ob: dict) -> dict:
         veredicto, confianza = "Revisar", 0.5
     else:
         veredicto = "Cumple"
-        confianza = 0.85 if ob["score_bm25"] >= 10 else 0.6   # poca coincidencia → menos seguro
+        confianza = 0.85 if (presentes or ob["score_bm25"] >= 10) else 0.6   # poca coincidencia → menos seguro
+    if dudosos and not violaciones:      # los juicios del LLM no coinciden en algún elemento → decide el humano
+        veredicto, confianza = "Revisar", 0.5
 
     partes = []
+    if dudosos and not violaciones:
+        partes.append("Juicios del LLM no coincidentes sobre: " + ", ".join(dudosos) + ".")
     if violaciones:
         partes.append("Incumple un límite de la norma: " + "; ".join(violaciones) + ".")
     if faltan:
@@ -135,8 +152,11 @@ def juicio_reglas(req: dict, ob: dict) -> dict:
     if vagos:
         partes.append("Redacción no verificable (" + "; ".join(vagos) + ").")
     if veredicto == "Cumple":
-        partes.append("Recoge los elementos que exige la cláusula: "
-                      + ", ".join(e["nombre"] for e in ob.get("elementos", [])) + ".")
+        if evidencias:
+            partes.append("Recoge los elementos que exige la cláusula — " + "; ".join(evidencias) + ".")
+        else:
+            partes.append("Recoge los elementos que exige la cláusula: "
+                          + ", ".join(e["nombre"] for e in ob.get("elementos", [])) + ".")
     return {
         "veredicto": veredicto, "confianza": round(min(confianza, 0.95), 2),
         "justificacion": " ".join(partes),
@@ -157,60 +177,31 @@ def auditar(req: dict, consulta: str | None = None) -> dict:
                 "resaltar": [], "faltan": [], "violaciones": [], "vaguedad": [], "candidatas": [], "juez": "reglas",
                 "llm_votos": [], "cita_verificada": True}
 
-    candidatas = rag.buscar_obligaciones(consulta or req["texto"])
-    ob = candidatas[0]
-    jr = juicio_reglas(req, ob)
-    if ob["score_bm25"] < 5:            # recuperación pobre: el juicio es poco fiable → reflexión
+    usa_llm = llm.disponible()
+    # Con LLM se recuperan más candidatas: el LLM elige entre ellas (reordenación), nunca fuera de ellas
+    candidatas = rag.buscar_obligaciones(consulta or req["texto"], k=config.TOP_K_LLM if usa_llm else config.TOP_K)
+    ob, juez, nota_llm, presentes, votos = candidatas[0], "reglas", "", None, []
+
+    if usa_llm:
+        elegida, motivo = llm.elegir_obligacion(req, candidatas)
+        if elegida == "ninguna":
+            nota_llm = f"El LLM no ve obligación aplicable entre las candidatas ({motivo})."
+        elif elegida:
+            ob = next(c for c in candidatas if c["id"] == elegida)
+            if ob is not candidatas[0]:
+                nota_llm = f"El LLM reordenó la búsqueda: {candidatas[0]['id']} → {ob['id']} ({motivo})."
+        presentes, votos, error = llm.evaluar_elementos(req, ob, n=config.JUICIOS_AUTOCONSISTENCIA)
+        juez = "reglas + LLM" if presentes else "reglas"
+        if not presentes and error:
+            nota_llm += f" LLM no disponible: {error}."
+
+    jr = juicio_reglas(req, ob, presentes)
+    if ob["score_bm25"] < 5 and not presentes:   # recuperación pobre y sin LLM: poco fiable → reflexión
         jr["confianza"] = round(min(jr["confianza"], 0.45), 2)
+    if nota_llm:
+        jr["justificacion"] = (jr["justificacion"] + " " + nota_llm).strip()
 
-    hallazgo = {**base, **jr, "obligacion_id": ob["id"], "clausula": ob["clausula"], "apartado": ob["apartado"],
-                "tema": ob["tema"], "texto_norma": ob["texto_norma"], "score_recuperacion": round(ob["score_bm25"], 1),
-                "candidatas": [f"{c['id']} ({c['score_bm25']:.1f})" for c in candidatas], "juez": "reglas",
-                "llm_votos": [], "cita_verificada": True}
-
-    if llm.disponible():
-        hallazgo = _combinar_con_llm(hallazgo, req, candidatas)
-    return hallazgo
-
-
-def _combinar_con_llm(h: dict, req: dict, candidatas: list[dict]) -> dict:
-    fr = rag.buscar_fragmentos(req["texto"], k=config.TOP_K, clausula=candidatas[0]["clausula"])
-    votos, error = llm.juzgar(req, candidatas[:3], fr, n=config.JUICIOS_AUTOCONSISTENCIA)
-    if not votos:
-        h["justificacion"] += f" (LLM no disponible: {error})"
-        return h
-    h["llm_votos"] = [v.veredicto for v in votos]
-    mayoritario = max(set(h["llm_votos"]), key=h["llm_votos"].count)
-    unanimes = h["llm_votos"].count(mayoritario) == len(votos)
-    elegido = next(v for v in votos if v.veredicto == mayoritario)
-
-    # Verificador de citas: la cláusula debe estar entre las recuperadas y la cita debe existir literalmente
-    citables = {c["clausula"] for c in candidatas} | {f["clausula"] for f in fr}
-    textos_norma = " ".join([c["texto_norma"] for c in candidatas] + [f["texto"] for f in fr])
-    cita_ok = elegido.clausula in citables and llm.cita_literal(elegido.cita_norma, textos_norma)
-
-    veredicto = mayoritario
-    conf = elegido.confianza if unanimes else min(elegido.confianza, 0.5)
-    motivo_extra = ""
-    if h["violaciones"]:                          # el código manda en los números
-        veredicto, conf = "No cumple", max(conf, 0.9)
-    elif {veredicto, h["veredicto"]} == {"Cumple", "No cumple"}:
-        veredicto, conf = "Revisar", 0.4
-        motivo_extra = f" Discrepancia: reglas = {h['veredicto']}, LLM = {mayoritario}."
-    if not unanimes and veredicto != "No cumple":
-        veredicto = "Revisar"
-        motivo_extra += f" Los {len(votos)} juicios del LLM no coinciden ({', '.join(h['llm_votos'])})."
-    if not cita_ok:
-        veredicto = "Revisar"
-        motivo_extra += " La cita del LLM no se encontró literalmente en la norma (verificador de citas)."
-
-    ob = next((c for c in candidatas if c["clausula"] == elegido.clausula), candidatas[0])
-    h.update({
-        "veredicto": veredicto, "confianza": round(conf, 2), "juez": "reglas+LLM", "cita_verificada": cita_ok,
-        "justificacion": elegido.justificacion + motivo_extra + " | Reglas: " + h["justificacion"],
-        "clausula": elegido.clausula if cita_ok else h["clausula"],
-        "apartado": elegido.apartado or ob["apartado"],
-        "resaltar": h["resaltar"] + ([elegido.fragmento_requisito] if elegido.fragmento_requisito else []),
-        "cita_llm": elegido.cita_norma,
-    })
-    return h
+    return {**base, **jr, "obligacion_id": ob["id"], "clausula": ob["clausula"], "apartado": ob["apartado"],
+            "tema": ob["tema"], "texto_norma": ob["texto_norma"], "score_recuperacion": round(ob["score_bm25"], 1),
+            "candidatas": [f"{c['id']} ({c['score_bm25']:.1f})" for c in candidatas], "juez": juez,
+            "llm_votos": votos, "cita_verificada": True}

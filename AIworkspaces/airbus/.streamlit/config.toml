@@ -1,0 +1,11 @@
+# Tema visual inspirado en el enunciado del reto (azul marino + cian, tarjetas claras)
+[theme]
+base = "light"
+primaryColor = "#0077B0"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F2F6FB"
+textColor = "#14284B"
+font = "sans serif"
+
+[client]
+toolbarMode = "minimal"

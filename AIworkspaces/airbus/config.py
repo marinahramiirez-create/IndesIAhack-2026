@@ -38,6 +38,7 @@ OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
 # --- Parámetros de la auditoría ------------------------------------------
 TOP_K = int(os.getenv("TOP_K", 4))                         # cláusulas recuperadas por requisito
+TOP_K_LLM = int(os.getenv("TOP_K_LLM", 6))                 # con LLM: candidatas entre las que elige (reordenación)
 JUICIOS_AUTOCONSISTENCIA = int(os.getenv("JUICIOS_AUTOCONSISTENCIA", 3))  # juicios LLM por requisito
 UMBRAL_CONFIANZA = float(os.getenv("UMBRAL_CONFIANZA", 0.6))   # por debajo → bucle de reflexión / "Revisar"
 MAX_REFLEXIONES = int(os.getenv("MAX_REFLEXIONES", 1))
