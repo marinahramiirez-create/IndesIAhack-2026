@@ -16,3 +16,9 @@ AIworkspaces/airbus/normativa/*.xml
 .DS_Store
 Thumbs.db
 AIworkspaces/airbus/normativa/*.xhtml
+
+# Material oficial del reto (plataforma IndesIA): solo en local, NUNCA a git.
+# Cada miembro del equipo lo descarga de la plataforma. Incluye la clave de desarrollo (respuestas).
+01_Guia_Reto_Airbus.pdf
+0[0-9]_*/
+*clave_desarrollo*
