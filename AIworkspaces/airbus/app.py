@@ -89,6 +89,12 @@ st.markdown(f"""
   mark {{ background: #FFD9D9; color: #5A0F0F; padding: 0 2px; border-radius: 3px; }}
   .stTabs [data-baseweb="tab"] {{ font-weight: 600; color: {GRIS}; }}
   .stTabs [aria-selected="true"] {{ color: {CIAN_TXT}; }}
+  /* panel lateral: la ventana de detalle (st.dialog) se pega a la derecha y ocupa todo el alto */
+  [data-testid="stDialog"] > div {{ position: fixed; top: 0; right: 0; bottom: 0; margin: 0;
+      width: min(780px, 94vw); max-width: none; height: 100vh; animation: panel-in .25s ease-out; }}
+  [data-testid="stDialog"] section[role="dialog"] {{ width: 100%; height: 100vh; max-height: 100vh; overflow-y: auto;
+      border-radius: 14px 0 0 14px; margin: 0; }}
+  @keyframes panel-in {{ from {{ transform: translateX(100%); }} to {{ transform: translateX(0); }} }}
   .pie {{ color: {GRIS}; font-size: .8rem; text-align: center; margin-top: 28px; border-top: 1px solid {BORDE}; padding-top: 10px; }}
 </style>""", unsafe_allow_html=True)
 
@@ -180,35 +186,155 @@ st.markdown(f"""
 </div>""", unsafe_allow_html=True)
 
 c = h.veredicto.value_counts()
-for col, v in zip(st.columns(4), ["Cumple", "No cumple", "Revisar", "No aplica"]):
-    etiqueta = T["requiere_revision"] if v == "Revisar" else V(v)
-    col.markdown(f"<div class='kpi'><span class='dot' style='background:{COLOR[v]}'></span>"
-                 f"<span class='num' style='color:{COLOR[v]}'>{c.get(v, 0)}</span>"
-                 f"<span class='lbl'>{etiqueta}</span></div>", unsafe_allow_html=True)
-
 ev = metricas.get("evaluacion")
+
+# --------------------------------------------------------------------------- menú lateral (sustituye a las pestañas)
+ICONOS = {"metricas": ":material/monitoring:", "hallazgos": ":material/fact_check:",
+          "consistencia": ":material/compare_arrows:", "cobertura": ":material/grid_on:", "agentes": ":material/hub:"}
+st.markdown(f"""<style>
+  [data-testid="stSidebar"] .menu-t {{ color: {GRIS}; font-size: .75rem; font-weight: 700; letter-spacing: .06em;
+      text-transform: uppercase; margin: 18px 0 4px 4px; }}
+  [data-testid="stSidebar"] [role="radiogroup"] {{ gap: 2px; }}
+  [data-testid="stSidebar"] [role="radiogroup"] label {{ display: flex; width: 100%; padding: 8px 12px; border-radius: 8px; margin: 0; }}
+  [data-testid="stSidebar"] [role="radiogroup"] label:hover {{ background: #EAF1F8; }}
+  [data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) {{ background: #E6F4FB; }}
+  [data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) p {{ color: {CIAN_TXT}; font-weight: 700; }}
+  [data-testid="stSidebar"] [role="radiogroup"] label p {{ color: {MARINO}; font-weight: 600; font-size: .95rem; }}
+</style>""", unsafe_allow_html=True)
+with st.sidebar:
+    st.markdown(f"<div class='menu-t'>{T['menu']}</div>", unsafe_allow_html=True)
+    pagina = st.radio(T["menu"], list(T["nav"]), key="pagina", label_visibility="collapsed",
+                      format_func=lambda k: f"{ICONOS[k]} {T['nav'][k]}")
+    EXPORTAR = st.container()   # botones de exportar: se rellenan al final (el informe se construye abajo)
+
+if aviso := st.session_state.pop("aviso", None):
+    st.toast(aviso, icon=":material/check_circle:")
+
 st.write("")
-if ev:
-    e, s = ev["deteccion_estricta"], ev["deteccion_senalados"]
-    cobm = metricas["cobertura"]
+# --------------------------------------------------------------------------- 1 · métricas
+if pagina == "metricas":
+    seccion(1, T["s0"])
+    for col, v in zip(st.columns(4), ["Cumple", "No cumple", "Revisar", "No aplica"]):
+        etiqueta = T["requiere_revision"] if v == "Revisar" else V(v)
+        col.markdown(f"<div class='kpi'><span class='dot' style='background:{COLOR[v]}'></span>"
+                     f"<span class='num' style='color:{COLOR[v]}'>{c.get(v, 0)}</span>"
+                     f"<span class='lbl'>{etiqueta}</span></div>", unsafe_allow_html=True)
 
-    def met(col, titulo, valor, ref_txt, ok):
-        marca = "" if ok is None else (f"<span class='ok'>{T['ok']}</span>" if ok else f"<span class='ko'>{T['ko']}</span>")
-        col.markdown(f"<div class='met'><div class='t'>{titulo}</div><div class='v'>{valor}</div>"
-                     f"<div class='ref'>{ref_txt} {marca}</div></div>", unsafe_allow_html=True)
+    st.write("")
+    if ev:
+        e, s = ev["deteccion_estricta"], ev["deteccion_senalados"]
+        cobm = metricas["cobertura"]
 
-    m1, m2, m3, m4 = st.columns(4)
-    met(m1, T["m_f1"], num(e["f1"]), T["m_ref_f1"], e["f1"] >= 0.8)
-    met(m2, T["m_f1s"], num(s["f1"]), T["m_f1s_ref"], None)
-    met(m3, T["m_traz"], f"{ev['trazabilidad_pct']:.0%}", T["m_traz_ref"], ev["trazabilidad_pct"] >= 0.9)
-    met(m4, T["m_cob"], f"{cobm['cubiertas']}/{cobm['total']}", T["m_cob_ref"], None)
+        def met(col, titulo, valor, ref_txt, ok):
+            marca = "" if ok is None else (f"<span class='ok'>{T['ok']}</span>" if ok else f"<span class='ko'>{T['ko']}</span>")
+            col.markdown(f"<div class='met'><div class='t'>{titulo}</div><div class='v'>{valor}</div>"
+                         f"<div class='ref'>{ref_txt} {marca}</div></div>", unsafe_allow_html=True)
 
-st.write("")
-tab_h, tab_m, tab_c, tab_cob, tab_a, tab_x = st.tabs(T["tabs"])
+        m1, m2, m3, m4 = st.columns(4)
+        met(m1, T["m_f1"], num(e["f1"]), T["m_ref_f1"], e["f1"] >= 0.8)
+        met(m2, T["m_f1s"], num(s["f1"]), T["m_f1s_ref"], None)
+        met(m3, T["m_traz"], f"{ev['trazabilidad_pct']:.0%}", T["m_traz_ref"], ev["trazabilidad_pct"] >= 0.9)
+        met(m4, T["m_cob"], f"{cobm['cubiertas']}/{cobm['total']}", T["m_cob_ref"], None)
 
-# --------------------------------------------------------------------------- 1 · hallazgos
-with tab_h:
-    seccion(1, T["s1"])
+    st.write("")
+
+
+# --------------------------------------------------------------------------- panel lateral de detalle
+def panel_detalle(rid: str):
+    """Detalle de un requisito en un panel que entra por la derecha (st.dialog con estilo de cajón lateral)."""
+
+    @st.dialog(f"{T['requisito']} {rid}", width="large")
+    def _panel():
+        r = h[h.req_id == rid].iloc[0]
+        det = r.detalle if isinstance(r.get("detalle"), dict) else {}
+
+        # --- requisito y veredicto
+        ia = (f" · <small>{T['ia_proponia']} {V(r.veredicto_ia)}</small>" if r.veredicto != r.veredicto_ia else "")
+        faltan = "".join(f"<span class='tag'>{html.escape(x[LANG])}</span>" for x in det.get("faltan", []))
+        refl = textos.reflexion(det.get("reflexion"), LANG)
+        nota_req = f"<p style='color:{GRIS};font-size:.8rem;margin:6px 0 0'>{T['nota_req']}</p>" if T["nota_req"] else ""
+        juez_r = r.juez if LANG == "es" else r.juez.replace("reglas", "rules")
+        st.markdown(f"""
+<div class="card"><div class="hd">{T['requisito']} {r.req_id} <small>· {html.escape(r.seccion)} · {ubic(r.ubicacion)}</small></div>
+<div class="bd">
+  <div class="req" style="--c:{COLOR[r.veredicto]}">{resaltar(r.texto, r.resaltar)}</div>{nota_req}
+  <div style="display:flex;align-items:center;gap:12px;margin:14px 0 4px">{chip(r.veredicto)}
+    <span style="color:{GRIS};font-size:.88rem">{T['confianza']} {num(r.confianza)} · {T['juez_min']}: {juez_r}{ia}</span></div>
+  <div class="bar"><div style="width:{r.confianza * 100:.0f}%"></div></div>
+  <p style="margin:12px 0 6px"><b>{T['justificacion']}</b> {html.escape(r.just_l)}</p>
+  {f"<p style='margin:6px 0'><b>{T['faltan']}</b><br>{faltan}</p>" if faltan else ""}
+  {f"<div class='nota'>{T['reflexion']} · {html.escape(refl)}</div>" if refl else ""}
+  {f"<div class='nota'>{T['autocons']}: {', '.join(r.llm_votos)}</div>" if r.llm_votos else ""}
+</div></div>""", unsafe_allow_html=True)
+
+        # --- regla de la norma que aplica
+        if r.clausula:
+            cl = clausulas().get(r.clausula)                                       # inglés (EASA)
+            cl_es = normativa_es.cargar().get("clausulas", {}).get(r.clausula)     # español oficial (DOUE)
+            texto_es = normativa_es.texto_obligacion(r.clausula, r.apartado)
+            if LANG == "es" and texto_es:
+                cita, origen = texto_es, T["fuente_es"]
+                titulo = cl_es["titulo"] if cl_es else ""
+            elif LANG == "es":
+                cita, origen, titulo = r.texto_norma, T["fuente_en_fallback"], (cl["titulo"] if cl else "")
+            else:
+                cita, origen, titulo = r.texto_norma, T["fuente_en"], (cl["titulo"] if cl else "")
+            st.markdown(f"""
+<div class="card"><div class="hd">{T['regla_aplicable']} · {r.clausula} {r.apartado} <small>· {html.escape(r.tema_l)}</small></div>
+<div class="bd">
+  <div class="quote">{html.escape(cita)}</div>
+  <p style="margin:10px 0 0;color:{GRIS};font-size:.85rem"><b>{html.escape(titulo)}</b><br>{T['fuente']}: {origen}</p>
+</div></div>""", unsafe_allow_html=True)
+            b1, b2 = st.columns(2)
+            b1.link_button(T["btn_eurlex"], normativa_es.URL_EURLEX, width="stretch")
+            b2.link_button(f"{r.clausula} {T['btn_easa']}", normativa.url_clausula(r.clausula), width="stretch")
+            principal = cl_es["texto"] if (LANG == "es" and cl_es) else (cl["texto"] if cl else "")
+            if principal:
+                with st.expander(T["completo"].format(c=r.clausula)):
+                    st.text(principal)
+            with st.expander(T["otro_idioma"]):
+                if LANG == "es":
+                    st.markdown(f"*{r.texto_norma}*")
+                    if cl:
+                        st.caption(T["clausula_completa"])
+                        st.text(cl["texto"])
+                else:
+                    if texto_es:
+                        st.markdown(f"*{texto_es}*")
+                    if cl_es:
+                        st.caption(T["clausula_completa"])
+                        st.text(cl_es["texto"])
+                st.caption(T["nota_idioma"])
+            with st.expander(T["rag"]):
+                st.write(T["rag_txt"] + " · ".join(r.candidatas))
+        else:
+            st.markdown(f"""<div class="card"><div class="hd">{T['sin_regla_hd']}</div>
+<div class="bd">{T['sin_regla_bd']}</div></div>""", unsafe_allow_html=True)
+
+        # --- decisión del revisor (humano en el bucle)
+        st.markdown(f"<div class='card'><div class='hd'>{T['decision']} <small>· {T['hitl']}</small></div></div>",
+                    unsafe_allow_html=True)
+        st.text_input(T["comentario"], key=f"c_{rid}", placeholder=T["comentario"], label_visibility="collapsed")
+        d1, d2, d3 = st.columns(3)
+        if d1.button(T["aprobar"], key=f"a_{rid}", type="primary", width="stretch"):
+            db.registrar_decision(rid, "aprobado", r.veredicto_ia, st.session_state.get(f"c_{rid}", ""),
+                                  usuario=USUARIO["nombre"], usuario_id=USUARIO["id"])
+            st.session_state.aviso = T["guardado"].format(rid=rid, v=V(r.veredicto_ia))
+            st.rerun()
+        nuevo = d2.selectbox(T["veredicto_final"], list(ORDEN), index=list(ORDEN).index(r.veredicto), key=f"v_{rid}",
+                             format_func=V, label_visibility="collapsed")
+        if d3.button(T["guardar"], key=f"g_{rid}", width="stretch"):
+            db.registrar_decision(rid, "corregido", nuevo, st.session_state.get(f"c_{rid}", ""),
+                                  usuario=USUARIO["nombre"], usuario_id=USUARIO["id"])
+            st.session_state.aviso = T["guardado"].format(rid=rid, v=V(nuevo))
+            st.rerun()
+
+    _panel()
+
+
+# --------------------------------------------------------------------------- 2 · hallazgos
+if pagina == "hallazgos":
+    seccion(2, T["s1"])
     f1, f2, f3 = st.columns([2, 2, 1])
     estados = f1.multiselect(T["estado"], list(ORDEN), default=["No cumple", "Revisar", "Cumple"], format_func=V)
     reglas = f2.multiselect(T["regla"], sorted(x for x in h.clausula.unique() if x), placeholder=T["todas"])
@@ -228,104 +354,84 @@ with tab_h:
     })
     st.caption(T["ayuda_tabla"])
     sel = st.dataframe(tabla, hide_index=True, width="stretch", on_select="rerun",
-                       selection_mode="single-row", height=min(330, 38 + 35 * len(tabla)),
+                       selection_mode="single-row", height=min(640, 38 + 35 * len(tabla)),
                        column_config={T["c_conf"]: st.column_config.ProgressColumn(min_value=0, max_value=1, format="%.2f"),
                                       T["c_rev"]: st.column_config.TextColumn(width="small")})
 
-    # Requisito en detalle: siempre explícito (sin fila marcada se mostraba el primero y parecía contradecir la tabla)
+    # Al marcar una fila se abre su detalle en el panel lateral. Solo se abre cuando cambia la selección:
+    # así, al cerrarlo o tras guardar una decisión, no vuelve a saltar solo.
     filas = sel.selection.rows if sel and sel.selection else []
-    rid = None
-    if len(vista):
-        ids = list(vista.req_id)
-        marcado = ids[filas[0]] if filas and filas[0] < len(ids) else None
-        etiquetas = {i: f"{i} · {V(v)} · {t or T['sin_regla']}" for i, v, t in zip(vista.req_id, vista.veredicto, vista.tema_l)}
-        rid = st.selectbox(T["en_detalle"], ids, index=ids.index(marcado) if marcado else 0,
-                           format_func=etiquetas.get, key=f"detalle_{marcado or 'ninguno'}")
-    if rid:
-        r = h[h.req_id == rid].iloc[0]
-        det = r.detalle if isinstance(r.get("detalle"), dict) else {}
+    ids = list(vista.req_id)
+    marcado = ids[filas[0]] if filas and filas[0] < len(ids) else None
+    if marcado and st.session_state.get("panel_abierto") != marcado:
+        st.session_state.panel_abierto = marcado
+        panel_detalle(marcado)
+    elif not marcado:
+        st.session_state.panel_abierto = None
+
+# --------------------------------------------------------------------------- 3 · consistencia
+if pagina == "consistencia":
+    seccion(3, T["s3"])
+    abrir = None   # requisito a revisar en el panel lateral (solo se puede abrir un panel por ejecución)
+    veredicto_de = dict(zip(h.req_id, h.veredicto))
+    st.markdown(f"**{T['contradicciones']}**")
+    if contra.empty:
+        st.success(T["sin_contra"])
+    for row in contra.itertuples():
+        ta = h.loc[h.req_id == row.req_a, "texto"].iloc[0]
+        tb = h.loc[h.req_id == row.req_b, "texto"].iloc[0]
+        st.markdown(f"""
+<div class="card"><div class="hd">{html.escape(textos.parametro(row.parametro, LANG).capitalize())}
+ <small>· {html.escape(row.valor_a)} {T['frente']} {html.escape(row.valor_b)}</small></div>
+<div class="bd">
+  <p style="margin:0 0 10px;color:{GRIS}">{html.escape(textos.contradiccion(row, LANG))}</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div><b>{row.req_a}</b> {chip(veredicto_de.get(row.req_a, ""))}<br>{resaltar(ta, [row.valor_a])}</div>
+    <div><b>{row.req_b}</b> {chip(veredicto_de.get(row.req_b, ""))}<br>{resaltar(tb, [row.valor_b])}</div>
+  </div>
+</div></div>""", unsafe_allow_html=True)
+        # Llamada a la acción: revisar cada requisito de la contradicción en el panel lateral
+        ba, bb = st.columns(2)
+        for col, rid_c, lado in [(ba, row.req_a, "a"), (bb, row.req_b, "b")]:
+            if col.button(T["revisar_req"].format(rid=rid_c), key=f"rev_{row.Index}_{lado}",
+                          icon=":material/rate_review:", width="stretch"):
+                abrir = rid_c
         st.write("")
-        izq, der = st.columns(2, gap="medium")
-        with izq:
-            ia = (f" · <small>{T['ia_proponia']} {V(r.veredicto_ia)}</small>" if r.veredicto != r.veredicto_ia else "")
-            faltan = "".join(f"<span class='tag'>{html.escape(x[LANG])}</span>" for x in det.get("faltan", []))
-            refl = textos.reflexion(det.get("reflexion"), LANG)
-            nota_req = f"<p style='color:{GRIS};font-size:.8rem;margin:6px 0 0'>{T['nota_req']}</p>" if T["nota_req"] else ""
-            juez_r = r.juez if LANG == "es" else r.juez.replace("reglas", "rules")
-            st.markdown(f"""
-<div class="card"><div class="hd">{T['requisito']} {r.req_id} <small>· {html.escape(r.seccion)} · {ubic(r.ubicacion)}</small></div>
-<div class="bd">
-  <div class="req" style="--c:{COLOR[r.veredicto]}">{resaltar(r.texto, r.resaltar)}</div>{nota_req}
-  <div style="display:flex;align-items:center;gap:12px;margin:14px 0 4px">{chip(r.veredicto)}
-    <span style="color:{GRIS};font-size:.88rem">{T['confianza']} {num(r.confianza)} · {T['juez_min']}: {juez_r}{ia}</span></div>
-  <div class="bar"><div style="width:{r.confianza * 100:.0f}%"></div></div>
-  <p style="margin:12px 0 6px"><b>{T['justificacion']}</b> {html.escape(r.just_l)}</p>
-  {f"<p style='margin:6px 0'><b>{T['faltan']}</b><br>{faltan}</p>" if faltan else ""}
-  {f"<div class='nota'>{T['reflexion']} · {html.escape(refl)}</div>" if refl else ""}
-  {f"<div class='nota'>{T['autocons']}: {', '.join(r.llm_votos)}</div>" if r.llm_votos else ""}
-</div></div>""", unsafe_allow_html=True)
-        with der:
-            if r.clausula:
-                cl = clausulas().get(r.clausula)                                       # inglés (EASA)
-                cl_es = normativa_es.cargar().get("clausulas", {}).get(r.clausula)     # español oficial (DOUE)
-                texto_es = normativa_es.texto_obligacion(r.clausula, r.apartado)
-                if LANG == "es" and texto_es:
-                    cita, origen = texto_es, T["fuente_es"]
-                    titulo = cl_es["titulo"] if cl_es else ""
-                elif LANG == "es":
-                    cita, origen, titulo = r.texto_norma, T["fuente_en_fallback"], (cl["titulo"] if cl else "")
-                else:
-                    cita, origen, titulo = r.texto_norma, T["fuente_en"], (cl["titulo"] if cl else "")
-                st.markdown(f"""
-<div class="card"><div class="hd">{T['regla_aplicable']} · {r.clausula} {r.apartado} <small>· {html.escape(r.tema_l)}</small></div>
-<div class="bd">
-  <div class="quote">{html.escape(cita)}</div>
-  <p style="margin:10px 0 0;color:{GRIS};font-size:.85rem"><b>{html.escape(titulo)}</b><br>{T['fuente']}: {origen}</p>
-</div></div>""", unsafe_allow_html=True)
-                b1, b2 = st.columns(2)
-                b1.link_button(T["btn_eurlex"], normativa_es.URL_EURLEX, width="stretch")
-                b2.link_button(f"{r.clausula} {T['btn_easa']}", normativa.url_clausula(r.clausula), width="stretch")
-                principal = cl_es["texto"] if (LANG == "es" and cl_es) else (cl["texto"] if cl else "")
-                if principal:
-                    with st.expander(T["completo"].format(c=r.clausula)):
-                        st.text(principal)
-                with st.expander(T["otro_idioma"]):
-                    if LANG == "es":
-                        st.markdown(f"*{r.texto_norma}*")
-                        if cl:
-                            st.caption(T["clausula_completa"])
-                            st.text(cl["texto"])
-                    else:
-                        if texto_es:
-                            st.markdown(f"*{texto_es}*")
-                        if cl_es:
-                            st.caption(T["clausula_completa"])
-                            st.text(cl_es["texto"])
-                    st.caption(T["nota_idioma"])
-                with st.expander(T["rag"]):
-                    st.write(T["rag_txt"] + " · ".join(r.candidatas))
-            else:
-                st.markdown(f"""<div class="card"><div class="hd">{T['sin_regla_hd']}</div>
-<div class="bd">{T['sin_regla_bd']}</div></div>""", unsafe_allow_html=True)
 
-        st.markdown(f"<div class='card'><div class='hd'>{T['decision']} <small>· {T['hitl']}</small></div></div>",
-                    unsafe_allow_html=True)
-        d1, d2, d3, d4 = st.columns([1.1, 1.3, 2.2, 1.1])
-        if d1.button(T["aprobar"], key=f"a_{rid}", type="primary", width="stretch"):
-            db.registrar_decision(rid, "aprobado", r.veredicto_ia, st.session_state.get(f"c_{rid}", ""),
-                                  usuario=USUARIO["nombre"], usuario_id=USUARIO["id"])
-            st.rerun()
-        nuevo = d2.selectbox(T["veredicto_final"], list(ORDEN), index=list(ORDEN).index(r.veredicto), key=f"v_{rid}",
-                             format_func=V, label_visibility="collapsed")
-        d3.text_input(T["comentario"], key=f"c_{rid}", placeholder=T["comentario"], label_visibility="collapsed")
-        if d4.button(T["guardar"], key=f"g_{rid}", width="stretch"):
-            db.registrar_decision(rid, "corregido", nuevo, st.session_state.get(f"c_{rid}", ""),
-                                  usuario=USUARIO["nombre"], usuario_id=USUARIO["id"])
-            st.rerun()
+    st.markdown(f"**{T['homo']}**")
+    st.caption(T["homo_ayuda"] + " " + T["homo_cta"])
+    if len(homo) and "escueto" in homo:
+        motivos = [textos.homogeneidad(SimpleNamespace(**x), LANG) for x in homo.to_dict("records")]
+    else:
+        motivos = list(homo.get("motivo", []))
+    sel_h = st.dataframe(pd.DataFrame({T["c_req"]: homo.req_id, T["c_estado"]: homo.req_id.map(veredicto_de).map(V),
+                                       T["palabras"]: homo.palabras, T["motivo"]: motivos}),
+                         hide_index=True, width="stretch", on_select="rerun", selection_mode="single-row",
+                         column_config={T["motivo"]: st.column_config.TextColumn(width="large")})
+    # Igual que en Hallazgos: el panel se abre solo cuando cambia la fila marcada
+    filas_h = sel_h.selection.rows if sel_h and sel_h.selection else []
+    marcado_h = homo.req_id.iloc[filas_h[0]] if filas_h and filas_h[0] < len(homo) else None
+    if marcado_h and st.session_state.get("panel_homo") != marcado_h:
+        st.session_state.panel_homo = marcado_h
+        abrir = abrir or marcado_h
+    elif not marcado_h:
+        st.session_state.panel_homo = None
 
-# --------------------------------------------------------------------------- 2 · matriz
-with tab_m:
-    seccion(2, T["s2"])
+    if abrir:
+        panel_detalle(abrir)
+
+# --------------------------------------------------------------------------- 4 · cobertura
+if pagina == "cobertura":
+    seccion(4, T["s4"])
+    st.caption(T["s4_ayuda"])
+    titulos_es = {k: v["titulo"] for k, v in normativa_es.cargar().get("clausulas", {}).items()}
+    titulos = cob.clausula.map(titulos_es).fillna(cob.titulo) if LANG == "es" else cob.titulo
+    st.dataframe(pd.DataFrame({T["clausula"]: cob.clausula, T["titulo_col"]: titulos, T["requisitos_col"]: cob.requisitos,
+                               T["cubierta"]: cob.cubierta.map({True: "✓", False: "✗", 1: "✓", 0: "✗"})}),
+                 hide_index=True, width="stretch")
+    st.caption(T["titulos_fuente"])
+    st.write("")
+    st.markdown(f"**{T['s2']}**")
     st.caption(T["s2_ayuda"])
     ap = h[h.clausula != ""].copy()
     columnas = list(cob.clausula) if len(cob) else sorted(ap.clausula.unique())
@@ -343,47 +449,9 @@ with tab_m:
     st.plotly_chart(fig, width="stretch")
     st.markdown(" ".join(chip(v) for v in ["Cumple", "Revisar", "No cumple"]), unsafe_allow_html=True)
 
-# --------------------------------------------------------------------------- 3 · consistencia
-with tab_c:
-    seccion(3, T["s3"])
-    st.markdown(f"**{T['contradicciones']}**")
-    if contra.empty:
-        st.success(T["sin_contra"])
-    for row in contra.itertuples():
-        ta = h.loc[h.req_id == row.req_a, "texto"].iloc[0]
-        tb = h.loc[h.req_id == row.req_b, "texto"].iloc[0]
-        st.markdown(f"""
-<div class="card"><div class="hd">{html.escape(textos.parametro(row.parametro, LANG).capitalize())}
- <small>· {html.escape(row.valor_a)} {T['frente']} {html.escape(row.valor_b)}</small></div>
-<div class="bd">
-  <p style="margin:0 0 10px;color:{GRIS}">{html.escape(textos.contradiccion(row, LANG))}</p>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-    <div><b>{row.req_a}</b><br>{resaltar(ta, [row.valor_a])}</div>
-    <div><b>{row.req_b}</b><br>{resaltar(tb, [row.valor_b])}</div>
-  </div>
-</div></div>""", unsafe_allow_html=True)
-    st.markdown(f"**{T['homo']}**")
-    st.caption(T["homo_ayuda"])
-    if len(homo) and "escueto" in homo:
-        motivos = [textos.homogeneidad(SimpleNamespace(**x), LANG) for x in homo.to_dict("records")]
-    else:
-        motivos = list(homo.get("motivo", []))
-    st.dataframe(pd.DataFrame({T["c_req"]: homo.req_id, T["palabras"]: homo.palabras, T["motivo"]: motivos}),
-                 hide_index=True, width="stretch")
-
-# --------------------------------------------------------------------------- 4 · cobertura
-with tab_cob:
-    seccion(4, T["s4"])
-    st.caption(T["s4_ayuda"])
-    titulos_es = {k: v["titulo"] for k, v in normativa_es.cargar().get("clausulas", {}).items()}
-    titulos = cob.clausula.map(titulos_es).fillna(cob.titulo) if LANG == "es" else cob.titulo
-    st.dataframe(pd.DataFrame({T["clausula"]: cob.clausula, T["titulo_col"]: titulos, T["requisitos_col"]: cob.requisitos,
-                               T["cubierta"]: cob.cubierta.map({True: "✓", False: "✗", 1: "✓", 0: "✗"})}),
-                 hide_index=True, width="stretch")
-    st.caption(T["titulos_fuente"])
 
 # --------------------------------------------------------------------------- 5 · agentes
-with tab_a:
+if pagina == "agentes":
     seccion(5, T["s5"])
     st.markdown("<div style='display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px'>" +
                 " <span style='color:#9AA8BC'>→</span> ".join(
@@ -403,21 +471,17 @@ with tab_a:
         st.dataframe(pd.DataFrame(filas), hide_index=True, width="stretch")
         st.caption(T["traz_txt"].format(t=f"{ev['trazabilidad_pct']:.0%}", e=f"{ev['exactitud_veredicto']:.0%}"))
 
-# --------------------------------------------------------------------------- 6 · exportar
-with tab_x:
-    seccion(6, T["s6"])
-    st.caption(T["s6_ayuda"])
-
-    def informe_html() -> str:
-        filas = "".join(
-            f"<tr><td><b>{x.req_id}</b><br><small>{html.escape(x.tema_l or '')}</small></td>"
-            f"<td>{x.clausula} {x.apartado}</td><td>{chip(x.veredicto)}{' ✓' if x.revisado else ''}</td>"
-            f"<td>{resaltar(x.texto, x.resaltar)}</td><td>{html.escape(x.just_l)}</td></tr>"
-            for x in h.itertuples())
-        contr = "".join(f"<li><b>{html.escape(textos.parametro(x.parametro, LANG))}</b>: "
-                        f"{html.escape(textos.contradiccion(x, LANG))}</li>" for x in contra.itertuples())
-        kpis = "".join(f"<div class='k'><span style='color:{COLOR[k]}'>{c.get(k, 0)}</span> {V(k)}</div>" for k in ORDEN)
-        return f"""<!doctype html><html lang="{LANG}"><head><meta charset="utf-8"><title>{T['inf_titulo']}</title>
+# --------------------------------------------------------------------------- exportar (en el menú lateral)
+def informe_html() -> str:
+    filas = "".join(
+        f"<tr><td><b>{x.req_id}</b><br><small>{html.escape(x.tema_l or '')}</small></td>"
+        f"<td>{x.clausula} {x.apartado}</td><td>{chip(x.veredicto)}{' ✓' if x.revisado else ''}</td>"
+        f"<td>{resaltar(x.texto, x.resaltar)}</td><td>{html.escape(x.just_l)}</td></tr>"
+        for x in h.itertuples())
+    contr = "".join(f"<li><b>{html.escape(textos.parametro(x.parametro, LANG))}</b>: "
+                    f"{html.escape(textos.contradiccion(x, LANG))}</li>" for x in contra.itertuples())
+    kpis = "".join(f"<div class='k'><span style='color:{COLOR[k]}'>{c.get(k, 0)}</span> {V(k)}</div>" for k in ORDEN)
+    return f"""<!doctype html><html lang="{LANG}"><head><meta charset="utf-8"><title>{T['inf_titulo']}</title>
 <style>body{{font-family:Segoe UI,Arial,sans-serif;margin:0;color:#1B2333}} header{{background:{MARINO};color:#fff;padding:24px 32px}}
 header .r{{width:110px;height:4px;background:{CIAN};margin:10px 0}} main{{padding:24px 32px}}
 .ks{{display:flex;gap:12px;margin-bottom:20px}} .k{{background:{FONDO};border:1px solid {BORDE};border-radius:10px;padding:10px 16px;font-weight:600}}
@@ -432,10 +496,11 @@ td,th{{border-bottom:1px solid {BORDE};padding:8px;vertical-align:top;font-size:
 <h2>{T['contradicciones']}</h2><ul>{contr or f"<li>{T['ninguna']}</li>"}</ul>
 <p style="color:{GRIS};font-size:12px">{T['pie']}</p></main></body></html>"""
 
-    a, b = st.columns(2)
-    a.download_button(T["desc_html"], informe_html(), file_name=f"informe_auditoria_part_is_{LANG}.html",
-                      mime="text/html", type="primary", width="stretch")
-    b.download_button(T["desc_csv"], h.drop(columns=["orden"]).to_csv(index=False).encode("utf-8"),
-                      file_name="hallazgos.csv", width="stretch")
+with EXPORTAR:
+    st.markdown(f"<div class='menu-t'>{T['s6']}</div>", unsafe_allow_html=True)
+    st.download_button(T["desc_html"], informe_html(), file_name=f"informe_auditoria_part_is_{LANG}.html",
+                       mime="text/html", type="primary", width="stretch", help=T["s6_ayuda"])
+    st.download_button(T["desc_csv"], h.drop(columns=["orden"]).to_csv(index=False).encode("utf-8"),
+                       file_name="hallazgos.csv", width="stretch")
 
 st.markdown(f"<div class='pie'>{T['pie']}</div>", unsafe_allow_html=True)
