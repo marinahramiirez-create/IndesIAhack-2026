@@ -76,6 +76,21 @@ La página funciona sin servidor: doble clic y listo. Tiene estas pantallas:
 - **Configuración**.
 
 Las decisiones del revisor se guardan en el navegador y se exportan a `feedback.csv`. Nunca modifican `respuestas.csv`.
+Arriba a la derecha, **ES / EN** cambia el idioma de la interfaz (los hallazgos siguen en español, como salen del auditor).
+
+### Revisión en equipo, en vivo
+
+```powershell
+.\.venv\Scripts\python servidor.py      # después de generar_revision.py
+```
+La consola muestra dos direcciones: `http://localhost:8765` para ti y `http://<tu-IP>:8765` para los compañeros
+**conectados a la misma Wi-Fi** (si Windows pregunta por el Firewall, pulsa «Permitir»). Con el servidor:
+- las decisiones (aprobar / rechazar) son compartidas: si alguien aprueba, lo veis todos en unos segundos;
+- cada hallazgo tiene un **debate** con comentarios; escribe `@nombre` para avisar a alguien;
+- la **campanita** muestra cuántas menciones tienes sin leer y te lleva al hallazgo;
+- «*Marina también está en este hallazgo*»: quién está mirando lo mismo que tú.
+
+Todo se guarda en `salidas/colaboracion.json`, en el ordenador que ejecuta el servidor; nada sale fuera.
 
 Alternativa en Streamlit: `.\.venv\Scripts\python -m streamlit run app.py` (`app_clasica.py` es la primera versión).
 

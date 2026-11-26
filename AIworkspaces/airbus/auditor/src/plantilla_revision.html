@@ -104,6 +104,50 @@ mark{background:#ffe27a;padding:0 2px;border-radius:3px}
 .pill{display:inline-flex;align-items:center;padding:2px 8px;border-radius:6px;font-size:12px;font-weight:600;background:var(--pb);color:var(--pc);margin:0 4px 3px 0;white-space:nowrap}
 .estado{justify-self:end;text-align:right}
 .mini{height:4px;background:#e5e5ea;border-radius:999px;overflow:hidden;width:120px;margin:6px 0 0 auto}
+/* Barra superior: idioma, avisos y usuario; revisión en equipo (debate, menciones, presencia) */
+.topbar .seg button{padding:4px 10px;font-size:13px}
+.bell{position:relative;background:#f2f2f7;color:var(--text);padding:7px 9px;border-radius:10px;display:inline-flex;align-items:center}
+.badge{position:absolute;top:-6px;right:-7px;background:var(--err);color:#fff;font-size:11px;font-weight:700;border-radius:999px;min-width:18px;height:18px;padding:0 5px;display:flex;align-items:center;justify-content:center}
+.who{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600}
+.av{width:28px;height:28px;border-radius:50%;background:#1a4c7c;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:none}
+.avisos{position:fixed;top:62px;right:16px;width:min(380px,92vw);max-height:70vh;overflow:auto;background:#fff;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.2);z-index:40;padding:16px}
+.aviso{display:block;width:100%;text-align:left;background:#fdeef2;color:var(--text);border-radius:10px;padding:10px 12px;margin-top:8px;font-size:14px}
+.aviso.leido{background:#f7f7fa}
+.pres{font-size:12px;color:#c2185b;display:flex;align-items:center;gap:6px;margin:0 0 8px}
+.debate{margin-top:10px;border-top:1px solid var(--sep);padding-top:10px}
+.com{background:#f7f7fa;border-radius:10px;padding:8px 10px;margin:6px 0;font-size:13px}
+.com .q{color:var(--sec);font-size:12px;margin-bottom:2px}
+.mention{color:var(--tint);font-weight:600}
+.envivo{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--sec)}
+.envivo i{width:8px;height:8px;border-radius:50%;background:var(--ok);display:inline-block}
+.envivo.off i{background:var(--err)}
+@media (max-width:700px){.who span:last-child,.envivo span{display:none}}
+/* Chat del equipo (estructura del de Marina) */
+.chatgrid{display:grid;grid-template-columns:270px minmax(0,1fr);gap:16px;align-items:start}
+.canal{display:block;width:100%;text-align:left;background:none;color:var(--text);padding:9px 12px;border-radius:10px;font-weight:600;margin-bottom:2px}
+.canal:hover{background:#f0f0f5}
+.canal.on{background:#e5f1ff;color:var(--tint);box-shadow:inset 3px 0 0 #c2185b}
+.miembro{display:flex;align-items:center;gap:10px;padding:9px 2px;border-bottom:1px solid var(--sep)}
+.miembro:last-child{border-bottom:0}
+.dot{width:9px;height:9px;border-radius:50%;background:#c7c7cc;flex:none}
+.dot.on{background:var(--ok)}
+.chatbox{display:flex;flex-direction:column;height:calc(100vh - 150px);min-height:440px}
+.chatlist{flex:1;overflow:auto;padding:4px 2px}
+.mens{display:flex;gap:10px;padding:9px 0}
+.ref{display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid var(--sep);border-left:4px solid var(--c);border-radius:10px;padding:8px 12px;margin-top:6px;background:#fff;cursor:pointer;max-width:620px}
+.ref:hover{box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.plegar{display:flex;align-items:center;gap:8px;width:100%;background:none;color:var(--text);padding:4px 2px;font-weight:700;font-size:15px;text-align:left}
+.plegar .flecha{display:inline-block;transition:transform .15s;color:var(--sec);font-size:12px}
+.plegar[aria-expanded="false"] .flecha{transform:rotate(-90deg)}
+.plegar .n{margin-left:auto;font-weight:400;font-size:12px;color:var(--sec)}
+.fcanal{display:flex;align-items:center;gap:2px}
+.fcanal .canal{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mini-btn{background:none;color:var(--sec);padding:4px 7px;border-radius:8px;font-size:13px;opacity:.55}
+.fcanal:hover .mini-btn,.mini-btn:focus-visible{opacity:1}
+.mini-btn:hover{background:#f0f0f5;color:var(--text)}
+.rolpill{font-size:11px;font-weight:600;padding:1px 6px;border-radius:5px;background:#e5e5ea;color:#3a3a3c;margin-left:4px}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1c1c1e;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;z-index:60;display:none;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+@media (max-width:900px){.chatgrid{grid-template-columns:1fr}.chatbox{height:70vh}}
 /* Menú lateral con los colores del de Marina: azul marino, texto blanco y opción activa en blanco */
 .drawer{background:#1a4c7c;color:#fff}
 .drawer .user{background:rgba(255,255,255,.12)}
@@ -138,13 +182,22 @@ mark{background:#ffe27a;padding:0 2px;border-radius:3px}
     <div class="title" id="ttl">Inicio</div>
     <span aria-label="Marca Airbus (texto provisional)" style="font-weight:700;letter-spacing:.12em;font-size:13px;color:var(--sec)">AIRBUS</span>
     <div class="sp"></div>
+    <span class="envivo hidden" id="envivo" title="Revisión en equipo"><i></i><span>En equipo</span></span>
+    <div class="seg" role="group" aria-label="Idioma"><button data-act="lang" data-v="es" id="lang-es" class="on">ES</button><button data-act="lang" data-v="en" id="lang-en">EN</button></div>
+    <button class="bell hidden" id="bell" data-act="avisos" aria-label="Avisos" title="Avisos">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span class="badge hidden" id="bellN">0</span>
+    </button>
+    <div class="who"><span class="av" id="uAv"></span><span id="uTop"></span></div>
   </div>
+  <div class="avisos hidden" id="avisos" role="dialog" aria-label="Avisos"></div>
 
   <aside class="drawer" id="drawer" aria-label="Menú principal">
     <div class="user"><b id="uN"></b><span id="uC"></span></div>
     <button class="nav-item" data-act="nav" data-v="inicio">Inicio</button>
     <button class="nav-item" data-act="nav" data-v="ia">Panel de control IA</button>
     <button class="nav-item" data-act="nav" data-v="historico">Histórico</button>
+    <button class="nav-item" data-act="nav" data-v="chat">Chat</button>
     <button class="nav-item" data-act="nav" data-v="reglas">Configuración</button>
     <button class="nav-item sub" data-act="nav" data-v="reglas">Reglas</button>
     <button class="nav-item sub" data-act="nav" data-v="usuarios">Usuarios y roles</button>
@@ -184,6 +237,254 @@ const S={
 const LS='rv_real_'+D.id;
 try{S.dec=JSON.parse(localStorage.getItem(LS+'_dec')||'{}');}catch(e){S.dec={};}
 try{S.extra=JSON.parse(localStorage.getItem(LS+'_extra')||'[]');}catch(e){S.extra=[];}
+try{S.lang=localStorage.getItem('rv_lang')||'es';}catch(e){S.lang='es';}
+
+// ---------- Revisión en equipo: con servidor.py (http://…) las decisiones, comentarios, menciones y presencia se
+// comparten; abierta con doble clic (file://) todo sigue funcionando solo en este navegador.
+const SRV=location.protocol.startsWith('http');
+Object.assign(S,{coms:[],avisos:[],pres:{},ccom:'',cq:'',avisosOpen:false,online:null,
+  mensajes:[],canales:['general'],canal:'general',ctx:'',chatAbajo:true});
+let _firma='';
+// Equipo: con servidor llega de colaboracion.json (gestionable en Configuración → Usuarios y roles); sin él, esta lista
+const ROLES={Administrador:'Gestiona el equipo y los chats; decide sobre los hallazgos.',
+  Aprobador:'Decide y firma las decisiones de los demás.',Revisor:'Aprueba o rechaza hallazgos y comenta.'};
+S.equipo=[{n:'Sergio',c:'sergio@airbus.es',rol:'Administrador'},{n:'Marina',c:'marina@airbus.es',rol:'Aprobador'},
+  {n:'Nelson',c:'nelson@airbus.es',rol:'Revisor'},{n:'Valentina',c:'valentina@airbus.es',rol:'Revisor'},
+  {n:'Daniela',c:'daniela@airbus.es',rol:'Revisor'}];
+S.canal_autor={}; S.abierto={chats:true,equipo:true};
+function miRol(){const m=S.equipo.find(x=>x.n===S.user.nombre); return m?m.rol:'';}
+function esAdmin(){return miRol()==='Administrador';}
+function aviso(txt){S.toast=txt; pintarToast(); clearTimeout(S._tt); S._tt=setTimeout(()=>{S.toast=''; pintarToast();},3500);}
+function pintarToast(){
+  let t=document.getElementById('toast');
+  if(!t){t=document.createElement('div'); t.id='toast'; t.setAttribute('role','status'); document.body.appendChild(t);}
+  t.textContent=S.toast||''; t.style.display=S.toast?'block':'none';
+}
+const COLAV=['#1a4c7c','#c2185b','#248a3d','#a442d6','#c76a00','#0a6fd6'];
+const NUM=new Map(RES.map((r,i)=>[r.documento+'|'+r.ubicacion,i+1]));     // #número de cada hallazgo para el chat
+function ini(n){return String(n||'?').split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('');}
+function colorDe(n){let h=0; for(const ch of String(n)) h=(h*31+ch.charCodeAt(0))>>>0; return COLAV[h%COLAV.length];}
+function av(n,t=32){return `<span class="av" style="width:${t}px;height:${t}px;background:${colorDe(n)}">${esc(ini(n))}</span>`;}
+function hace(iso){const m=(Date.now()-new Date(iso))/60000; if(m<1) return 'ahora'; if(m<60) return `hace ${Math.round(m)} min`; if(m<1440) return `hace ${Math.round(m/60)} h`; return fmtFecha(iso);}
+function enLinea(n){return n===S.user.nombre||Object.keys(S.pres||{}).some(u=>u.toLowerCase()===n.toLowerCase());}
+function menciones(html){return html.replace(/@([\wáéíóúñü.\-]+)/gi,'<span class="mention">@$1</span>');}
+async function api(ruta,datos){
+  try{
+    const r=await fetch(ruta,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...datos,user:S.user.nombre})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok&&j.error) aviso(j.error);
+    return {ok:r.ok,...j};
+  }catch(e){aviso('Sin conexión con el servidor'); return {ok:false};}
+}
+function focoKey(){if(S.view!=='revision') return ''; const r=R()[S.foco]; return r?key(r):'';}
+async function sondear(){
+  if(!SRV||!S.user.nombre) return;
+  try{
+    const r=await fetch(`/api/estado?user=${encodeURIComponent(S.user.nombre)}&key=${encodeURIComponent(focoKey())}`,{cache:'no-store'});
+    if(!r.ok) throw new Error(r.status);
+    const d=await r.json();
+    Object.assign(S,{dec:d.dec,coms:d.comentarios,avisos:d.avisos,pres:d.presencia,
+                     mensajes:d.mensajes||[],canales:d.canales||['general'],canal_autor:d.canal_autor||{}});
+    if(d.equipo&&d.equipo.length) S.equipo=d.equipo;
+    if(!S.canales.includes(S.canal)) S.canal='general';             // alguien borró o renombró el chat abierto
+    const firma=d.seq+'|'+JSON.stringify(d.presencia);
+    const cambio=firma!==_firma||S.online!==true;      // solo se redibuja si hay novedades
+    _firma=firma; S.online=true;
+    if(cambio) render();
+  }catch(e){if(S.online!==false){S.online=false; render();}}
+}
+async function enviarComentario(){
+  const txt=(S.ccom||'').trim(), r=R()[S.foco];
+  if(!txt||!r) return;
+  S.ccom=''; S.coms.push({key:key(r),user:S.user.nombre,texto:txt,fecha:new Date().toISOString()}); render();
+  await api('/api/comentario',{key:key(r),texto:txt}); sondear();
+}
+// Quién más está mirando este hallazgo y el hilo de comentarios con @menciones.
+function vPresencia(r){
+  if(!SRV||!r) return '';
+  const otros=Object.entries(S.pres||{}).filter(([u,k])=>k===key(r)&&u!==S.user.nombre).map(([u])=>u);
+  return otros.length?`<div class="pres"><span class="av" style="width:20px;height:20px;font-size:10px;background:#c2185b">${esc(ini(otros[0]))}</span><span>${esc(otros.join(', '))} también ${otros.length>1?'están':'está'} en este hallazgo</span></div>`:'';
+}
+function vDebate(r){
+  if(!r) return '';
+  if(!SRV) return `<p class="note">Para comentar y avisar a compañeros con @nombre, abrid la revisión en equipo: <b>python servidor.py</b>.</p>`;
+  const lista=(S.coms||[]).filter(c=>c.key===key(r)).map(c=>`<div class="com"><div class="q"><b>${esc(c.user)}</b> · ${fmtFecha(c.fecha)}</div>${menciones(esc(c.texto))}</div>`).join('');
+  const enLinea=Object.keys(S.pres||{}).filter(u=>u!==S.user.nombre);
+  return `<div class="debate"><b style="font-size:14px">Debate</b>
+    ${lista||'<div class="small" style="margin:6px 0">Sin comentarios todavía.</div>'}
+    <form id="comForm" class="chatin" style="margin-top:6px"><input id="ccom" value="${esc(S.ccom)}" placeholder="Comenta; usa @nombre para avisar" autocomplete="off" aria-label="Comentario para el equipo"><button type="submit">Enviar</button></form>
+    ${enLinea.length?`<div class="small" style="margin-top:6px">En línea: ${enLinea.map(u=>esc(u)).join(', ')}</div>`:''}</div>`;
+}
+// ---------- Chat del equipo: canales, @menciones (avisan en la campanita) y #número para enlazar un hallazgo.
+function tarjetaRef(n){
+  const r=RES[n-1]; if(!r) return '';
+  const d=decOf(r), est=d?DECTXT[d.dec]:'Pendiente';
+  const c=d?(d.dec==='approved'?ECOL['Completado']:GRIS):ECOL['Pendiente'];
+  return `<div class="ref" style="--c:${d?(d.dec==='approved'?'var(--ok)':'var(--sec)'):(r.tipo==='No verificable'?'var(--warn)':'var(--err)')}" data-act="abrirH" data-doc="${esc(r.documento)}" data-u="${esc(r.ubicacion)}" role="button" tabindex="0">
+    <div style="min-width:0"><b>${esc(r.documento)}</b> <span class="small">${esc(r.ubicacion)}</span>
+    <div class="small">${esc(r.justificacion.slice(0,120))}${r.justificacion.length>120?'…':''}</div></div>${pill('● '+est,c)}</div>`;
+}
+function textoChat(t){
+  const h=menciones(esc(t)).replace(/(^|\s)#(\d{1,4})\b/g,(m,a,n)=>`${a}<a href="#" data-act="abrirNum" data-n="${n}" class="mention">#${n}</a>`);
+  const nums=[...new Set([...t.matchAll(/(?:^|\s)#(\d{1,4})\b/g)].map(m=>+m[1]))];
+  return h+nums.map(tarjetaRef).join('');
+}
+function vChat(){
+  if(!SRV) return `<h2>Chat</h2><div class="card"><p class="sub" style="margin:0">El chat del equipo necesita la revisión en equipo: en la carpeta del auditor ejecuta <b>python servidor.py</b> y abre la dirección que muestra.</p></div>`;
+  const canal=S.canal||'general';
+  const lista=(S.mensajes||[]).filter(m=>m.canal===canal).map(m=>`<div class="mens">${av(m.user)}<div style="min-width:0;flex:1">
+      <div><b>${esc(m.user)}</b> <span class="small">${hace(m.fecha)}</span></div>
+      <div style="white-space:pre-wrap;overflow-wrap:anywhere">${textoChat(m.texto)}</div></div></div>`).join('');
+  const puedeEditar=c=>c!=='general'&&(S.canal_autor[c]===S.user.nombre||esAdmin());
+  const canales=(S.canales||['general']).map(c=>`<div class="fcanal">
+      <button class="canal ${c===canal?'on':''}" data-act="canal" data-v="${esc(c)}" title="#${esc(c)}">#${esc(c)}</button>
+      ${puedeEditar(c)?`<button class="mini-btn" data-act="renombrarCanal" data-v="${esc(c)}" title="Renombrar #${esc(c)}" aria-label="Renombrar #${esc(c)}">✎</button>
+      <button class="mini-btn" data-act="borrarCanal" data-v="${esc(c)}" title="Eliminar #${esc(c)}" aria-label="Eliminar #${esc(c)}">✕</button>`:''}</div>`).join('');
+  const miembros=S.equipo.map(m=>{
+    const on=enLinea(m.n), yo=m.n===S.user.nombre;
+    return `<div class="miembro">${av(m.n,30)}<div style="flex:1;min-width:0"><b style="font-size:14px">${esc(m.n)}</b>${yo?' <span class="small">(tú)</span>':''}<span class="rolpill">${esc(m.rol||'Revisor')}</span>
+        <div class="small" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(m.c)}</div></div>
+      <span class="dot ${on?'on':''}" title="${on?'En línea':'Desconectado'}"></span>
+      ${yo?'':`<button class="ghost" data-act="mencionar" data-v="${esc(m.n)}" title="Mencionar a ${esc(m.n)}" aria-label="Mencionar a ${esc(m.n)}" style="padding:4px 9px;font-size:13px">@</button>`}</div>`;
+  }).join('');
+  const nOn=S.equipo.filter(m=>enLinea(m.n)).length;
+  const seccion=(id,titulo,n,cuerpo)=>`<button class="plegar" data-act="plegar" data-v="${id}" aria-expanded="${S.abierto[id]}"><span class="flecha">▼</span>${titulo}<span class="n">${n}</span></button>
+      <div ${S.abierto[id]?'':'hidden'}>${cuerpo}</div>`;
+  return `<h2>Chat</h2>
+    <div class="chatgrid">
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="card" style="padding:12px">${seccion('chats','Chats',S.canales.length,
+          `<div style="margin-top:6px;max-height:40vh;overflow:auto">${canales}</div>
+          <form id="canalForm" style="margin-top:8px"><input id="ncanal" placeholder="Nuevo chat" aria-label="Nuevo chat" style="width:100%" autocomplete="off"></form>`)}</div>
+        <div class="card" style="padding:12px 16px">${seccion('equipo','Equipo',`${nOn} de ${S.equipo.length} en línea`,
+          `${miembros}${esAdmin()?'<button class="ghost" data-act="nav" data-v="usuarios" style="width:100%;margin-top:8px;font-size:14px">Gestionar equipo</button>':''}`)}</div>
+      </div>
+      <div class="card chatbox">
+        <div style="border-bottom:1px solid var(--sep);padding-bottom:10px"><h3 style="margin:0">#${esc(canal)}</h3>
+          <div class="small">Escribe #número para enlazar un hallazgo y @nombre para avisar a alguien.</div></div>
+        <div class="chatlist" id="chatlist">${lista||'<p class="small" style="margin-top:12px">Todavía no hay mensajes en este canal.</p>'}</div>
+        <form id="chatEq" class="chatin" style="margin-top:8px;align-items:flex-end">
+          <textarea id="ctx" rows="2" placeholder="Mensaje para #${esc(canal)}" aria-label="Mensaje" style="flex:1;resize:vertical">${esc(S.ctx||'')}</textarea>
+          <button type="submit">Enviar</button></form>
+      </div>
+    </div>`;
+}
+// Configuración → Usuarios y roles: personas, rol, estado; alta y baja (solo administradores, el servidor lo comprueba)
+function vEquipo(){
+  const admin=SRV&&esAdmin();
+  const filas=S.equipo.map(m=>{
+    const yo=m.n===S.user.nombre, on=enLinea(m.n);
+    const rol=admin?`<select data-rol="${esc(m.n)}" aria-label="Rol de ${esc(m.n)}">${Object.keys(ROLES).map(r=>`<option ${r===m.rol?'selected':''}>${r}</option>`).join('')}</select>`:esc(m.rol||'Revisor');
+    return `<tr><td><div style="display:flex;align-items:center;gap:10px">${av(m.n,30)}<div><b>${esc(m.n)}</b>${yo?' <span class="small">(tú)</span>':''}<div class="small">${esc(m.c)}</div></div></div></td>
+      <td>${rol}</td><td>${on?st('ok','En línea'):st('neutral','Desconectado')}</td>
+      <td style="text-align:right">${admin&&!yo?`<button class="ghost" data-act="bajaEq" data-v="${esc(m.n)}" style="font-size:13px;padding:6px 12px">Eliminar</button>`:''}</td></tr>`;
+  }).join('');
+  const alta=admin?`<div class="card" style="margin-top:16px"><h3>Añadir miembro</h3>
+      <form id="altaEq" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+        <label class="small" style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:140px">Nombre<input id="aN" autocomplete="off" required></label>
+        <label class="small" style="display:flex;flex-direction:column;gap:4px;flex:2;min-width:200px">Correo<input id="aC" type="email" placeholder="nombre@airbus.es" autocomplete="off" required></label>
+        <label class="small" style="display:flex;flex-direction:column;gap:4px">Rol<select id="aR">${Object.keys(ROLES).map(r=>`<option ${r==='Revisor'?'selected':''}>${r}</option>`).join('')}</select></label>
+        <button type="submit">Añadir</button></form>
+      <p class="note">La persona entra con ese correo y aparece en el chat para poder mencionarla.</p></div>`
+    :`<p class="note">${SRV?'Solo un administrador puede añadir o eliminar miembros y cambiar roles.':'Para gestionar el equipo, abrid la revisión en equipo: <b>python servidor.py</b>.'}</p>`;
+  return `<div class="card"><h3>Equipo</h3><p class="small" style="margin:0 0 8px">Personas, rol y estado de conexión.</p>
+      <table><thead><tr><th>Persona</th><th>Rol</th><th>Estado</th><th></th></tr></thead><tbody>${filas}</tbody></table></div>
+    ${alta}
+    <div class="card" style="margin-top:16px"><h3>Roles</h3><div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
+      ${Object.entries(ROLES).map(([r,d])=>`<div><b>${r}</b><div class="small">${d}</div></div>`).join('')}</div></div>`;
+}
+async function enviarMensaje(){
+  const t=(S.ctx||'').trim(); if(!t) return;
+  const canal=S.canal||'general';
+  S.ctx=''; S.mensajes.push({canal,user:S.user.nombre,texto:t,fecha:new Date().toISOString()}); S.chatAbajo=true; render();
+  await api('/api/mensaje',{canal,texto:t}); sondear();
+}
+function pintarBarra(){
+  document.getElementById('uAv').textContent=ini(S.user.nombre);
+  document.getElementById('uAv').style.background=colorDe(S.user.nombre);
+  document.getElementById('uTop').textContent=S.user.nombre;
+  const ev=document.getElementById('envivo');
+  ev.classList.toggle('hidden',!SRV); ev.classList.toggle('off',S.online===false);
+  ev.lastElementChild.textContent=S.online===false?'Sin conexión':'En equipo';
+  const b=document.getElementById('bell'); b.classList.toggle('hidden',!SRV);
+  const n=(S.avisos||[]).filter(a=>!a.leido).length, bn=document.getElementById('bellN');
+  bn.textContent=n; bn.classList.toggle('hidden',!n);
+  const p=document.getElementById('avisos'); p.classList.toggle('hidden',!S.avisosOpen);
+  if(S.avisosOpen) p.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">Avisos</h3><button class="ghost" data-act="avisos" aria-label="Cerrar">×</button></div>`+
+    ((S.avisos||[]).slice().reverse().map(a=>{
+      const chat=a.key.startsWith('chat:'), donde=chat?'Chat · #'+a.key.slice(5):a.key.replace('|',' · ');
+      return `<button class="aviso ${a.leido?'leido':''}" data-act="irAviso" data-k="${esc(a.key)}"><b>${esc(a.de)}</b> ${chat?'te ha mencionado en #'+esc(a.key.slice(5)):'te ha mencionado'}<div class="small" style="color:var(--text);margin-top:2px">${menciones(esc(a.texto))}</div><div class="small">${esc(donde)} · ${hace(a.fecha)}</div></button>`;
+    }).join('')||'<p class="small">No tienes avisos.</p>');
+}
+
+// ---------- Idioma: traduce los textos de la interfaz (no los hallazgos, que salen del auditor en español).
+const EN={'Inicio':'Home','Revisión':'Review','Panel de control IA':'AI control panel','Histórico':'History','Configuración':'Settings',
+ 'Reglas':'Rules','Usuarios y roles':'Users and roles','Configuración · Reglas':'Settings · Rules','Configuración · Usuarios y roles':'Settings · Users and roles',
+ 'Cerrar sesión':'Log out','Revisión de hallazgos':'Findings review','Prototipo · Reto Airbus':'Prototype · Airbus challenge',
+ 'Correo corporativo':'Corporate email','Contraseña':'Password','Entrar':'Sign in','Auditor · Calidad Part-IS':'Auditor · Part-IS quality',
+ 'Documentos auditados. Pulsa uno para revisar sus hallazgos junto al PDF.':'Audited documents. Click one to review its findings next to the PDF.',
+ 'Todas las familias':'All families','Cargar archivo':'Upload file','Todos':'All','Pendientes':'Pending','En revisión':'In review','Completados':'Completed',
+ 'Sin hallazgos':'No findings','Pendiente':'Pending','Completado':'Completed','● Pendiente':'● Pending','● En revisión':'● In review','● Completado':'● Completed','● Sin hallazgos':'● No findings',
+ 'El auditor no encontró defectos en este documento.':'The auditor found no defects in this document.',
+ '← Listado':'← List','Criterios':'Criteria','Hallazgos revisados':'Findings reviewed','← Anterior':'← Previous','Siguiente →':'Next →',
+ 'Seleccionar todos':'Select all','Aprobar':'Approve','Rechazar':'Reject','Aprobado':'Approved','Rechazado':'Rejected',
+ 'Comentario':'Comment','· se guarda al pulsar Aprobar o Rechazar':'· saved when you Approve or Reject',
+ 'Documento revisado:':'Document reviewed:','Leído del documento:':'Read in the document:','Contrastado con:':'Checked against:','Por qué:':'Why:',
+ 'Tu decisión:':'Your decision:','· Comentario:':'· Comment:','Debate':'Discussion','Sin comentarios todavía.':'No comments yet.','Enviar':'Send',
+ 'Avisos':'Notifications','te ha mencionado':'mentioned you','No tienes avisos.':'No notifications.','En equipo':'Team mode','Sin conexión':'Offline',
+ 'Revisión completa':'Review complete','Todos los hallazgos tienen decisión.':'All findings have a decision.','Volver al listado':'Back to list',
+ 'Criterios de validación':'Validation criteria','Cerrar':'Close','Jerarquía normativa':'Regulatory hierarchy','Hallazgos contrastados':'Checked findings',
+ 'Rango':'Rank','Fuente':'Source','Qué aporta':'What it provides','Comentario sin hallazgo':'Comment without finding','Cancelar':'Cancel','Guardar comentario':'Save comment',
+ 'Flujo':'Flow','Qué hace cada agente':'What each agent does','Registro de ejecución':'Run log','Actividades':'Activities',
+ 'Resultado frente a la clave (puntuador oficial)':'Result against the answer key (official scorer)','Defectos encontrados por familia':'Defects found by family',
+ 'Pulsa un agente para ver sus actividades y métricas.':'Click an agent to see its activities and metrics.',
+ 'Hallazgos de la solución y tus decisiones. Filtra o pregunta al asistente para resaltar lo que encuentre.':'Solution findings and your decisions. Filter or ask the assistant to highlight what it finds.',
+ 'Todos los tipos':'All types','Ubicación':'Location','Tipo':'Type','Cláusula':'Clause','Tu decisión':'Your decision','Asistente de hallazgos':'Findings assistant',
+ 'Criterio de aceptación':'Acceptance criterion','Umbral de aceptación (%)':'Acceptance threshold (%)','Aceptación actual':'Current acceptance',
+ 'Hallazgos pendientes':'Pending findings','Documentos aprobados':'Approved documents','Documentos rechazados':'Rejected documents','Documentos en revisión':'Documents in review',
+ 'Referencia':'Reference','Descripción':'Description','Regla':'Rule','Qué comprueba':'What it checks','Roles':'Roles','Usuarios':'Users',
+ 'No cumple':'Non-compliant','Inconsistencia':'Inconsistency','Cobertura faltante':'Missing coverage','Trazabilidad incorrecta':'Wrong traceability','No verificable':'Not verifiable',
+ 'Especificaciones':'Specifications','Registros operativos':'Operational records','Proveedores':'Suppliers','Evaluaciones de riesgos':'Risk assessments',
+ 'Auditorias y revision':'Audits and review','Verificacion':'Verification','Interfaces':'Interfaces','Politicas y estandares':'Policies and standards','Nucleo':'Core',
+ 'Equipo':'Team','Nuevo canal':'New channel','Chats':'Chats','Nuevo chat':'New chat','Gestionar equipo':'Manage team',
+ 'Añadir miembro':'Add member','Nombre':'Name','Correo':'Email','Rol':'Role','Añadir':'Add','Eliminar':'Remove','Persona':'Person','Estado':'Status',
+ 'En línea':'Online','Desconectado':'Offline','Personas, rol y estado de conexión.':'People, role and connection status.',
+ 'Administrador':'Administrator','Aprobador':'Approver','Revisor':'Reviewer',
+ 'Gestiona el equipo y los chats; decide sobre los hallazgos.':'Manages the team and chats; decides on findings.',
+ 'Decide y firma las decisiones de los demás.':'Decides and signs off other people\'s decisions.','Aprueba o rechaza hallazgos y comenta.':'Approves or rejects findings and comments.',
+ 'La persona entra con ese correo y aparece en el chat para poder mencionarla.':'The person signs in with that email and appears in the chat so they can be mentioned.',
+ 'Solo un administrador puede añadir o eliminar miembros y cambiar roles.':'Only an administrator can add or remove members and change roles.','(tú)':'(you)','ahora':'now','Todavía no hay mensajes en este canal.':'No messages in this channel yet.',
+ 'Escribe #número para enlazar un hallazgo y @nombre para avisar a alguien.':'Type #number to link a finding and @name to notify someone.',
+ 'Buscar documento, título, familia o revisor':'Search document, title, family or reviewer','Explica tu criterio':'Explain your reasoning',
+ 'Comenta; usa @nombre para avisar':'Comment; use @name to notify','Escribe tu pregunta':'Type your question','Buscar documento, ubicación o texto':'Search document, location or text'};
+const EN_RE=[[/^(\d+) de (\d+) revisados$/,'$1 of $2 reviewed'],[/^Página (\d+) de (\d+)$/,'Page $1 of $2'],[/^(\d+) de (\d+) documentos$/,'$1 of $2 documents'],
+ [/^(\d+) documentos · (\d+) hallazgos$/,'$1 documents · $2 findings'],[/^(\d+) de (\d+) hallazgos$/,'$1 of $2 findings'],[/^Revisado por (.+)$/,'Reviewed by $1'],
+ [/^(.+) también (?:está|están) en este hallazgo$/,'$1 also on this finding'],[/^Cláusula (.+)$/,'Clause $1'],
+ [/^te ha mencionado en (#.+)$/,'mentioned you in $1'],[/^hace (\d+) min$/,'$1 min ago'],[/^hace (\d+) h$/,'$1 h ago'],
+ [/^(\d+) de (\d+) en línea$/,'$1 of $2 online'],[/^Mensaje para (#.+)$/,'Message for $1'],[/^Chat · (#.+) · (.+)$/,'Chat · $1 · $2'],[/^Agente (\d+)$/,'Agent $1'],[/^En línea: (.+)$/,'Online: $1'],
+ [/^(.+) · (\d+)$/,(m,a,b)=>(EN[a]||a)+' · '+b],[/^(.+) · v([\d.]+)$/,(m,a,b)=>(EN[a]||a)+' · v'+b]];
+function tr(s){
+  const t=s.trim(); if(!t) return null;
+  if(EN[t]) return s.replace(t,EN[t]);
+  for(const [re,r] of EN_RE) if(re.test(t)) return s.replace(t,t.replace(re,r));
+  return null;
+}
+function aplicarIdioma(){
+  document.documentElement.lang=S.lang;
+  document.getElementById('lang-es').classList.toggle('on',S.lang==='es');
+  document.getElementById('lang-en').classList.toggle('on',S.lang==='en');
+  const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT); let n;
+  while((n=w.nextNode())){
+    if(n.parentElement&&n.parentElement.closest('script,style')) continue;
+    if(n._es===undefined) n._es=n.nodeValue;
+    const v=S.lang==='en'?(tr(n._es)??n._es):n._es;
+    if(n.nodeValue!==v) n.nodeValue=v;
+  }
+  document.querySelectorAll('[placeholder]').forEach(el=>{
+    if(el._ph===undefined) el._ph=el.placeholder;
+    el.placeholder=S.lang==='en'?(tr(el._ph)??el._ph):el._ph;
+  });
+}
 
 function esc(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function st(k,label){
@@ -231,8 +532,10 @@ function objetivosActuales(){
 function aplicar(dec){
   const comentario=(S.comment||'').trim();
   const fecha=new Date().toISOString();
-  objetivosActuales().forEach(r=>{S.dec[key(r)]={dec,note:comentario,fecha,user:S.user.nombre};});
-  persist();
+  const objs=objetivosActuales();
+  objs.forEach(r=>{S.dec[key(r)]={dec,note:comentario,fecha,user:S.user.nombre};});
+  if(SRV) api('/api/decision',{keys:objs.map(key),dec,note:comentario}).then(sondear);   // compartida con el equipo
+  else persist();
   S.sel={}; S.comment='';
   const n=nextPending(S.foco);
   if(n>=0) irA(n);
@@ -318,7 +621,7 @@ function vMotivo(r){
   const d=decOf(r);
   const dec=d?`<div class="small" style="margin-top:8px">Tu decisión: <b style="color:var(--text)">${DECTXT[d.dec]}</b>${d.note?` · Comentario: ${esc(d.note)}`:''}</div>`:'';
   return `<div class="card" style="padding:14px 16px;background:#fafafc;box-shadow:none;border:1px solid var(--sep)">
-    <div class="small">${esc(r.ubicacion)} · página ${r.pagina} · ${esc(r.origen)} · confianza ${Math.round(r.conf*100)}%</div>
+    <div class="small"><b title="Número para enlazarlo en el chat">#${NUM.get(key(r))}</b> · ${esc(r.ubicacion)} · página ${r.pagina} · ${esc(r.origen)} · confianza ${Math.round(r.conf*100)}%</div>
     <div style="margin-top:6px">${st(sev(r.tipo),esc(r.tipo))}</div>
     <div class="small" style="margin-top:4px">Cláusula ${esc(r.clausula)}</div>
     <div class="small" style="margin-top:8px"><b style="color:var(--text)">Documento revisado:</b> ${esc(r.documento)}</div>
@@ -362,7 +665,7 @@ function vDecision(){
       <span class="small" style="font-weight:600;color:var(--text)">Seleccionar todos</span>
     </div>
     <div class="lista-scroll">${filas}</div>
-    <div class="motivo-scroll">${vMotivo(rs[S.foco])}</div>
+    <div class="motivo-scroll">${vPresencia(rs[S.foco])}${vMotivo(rs[S.foco])}${vDebate(rs[S.foco])}</div>
     <label class="small" for="fcom" style="display:block;margin-top:12px;flex:none">Comentario <span style="font-weight:400">· se guarda al pulsar Aprobar o Rechazar</span></label>
     <textarea id="fcom" rows="2" style="width:100%;margin-top:6px;flex:none" placeholder="Explica tu criterio">${esc(S.comment)}</textarea>
     <div class="fbtns" style="flex:none">
@@ -567,7 +870,7 @@ function vHist(){
       <div class="small" style="margin-bottom:8px">Busca por tipo, cláusula, documento o texto. Solo responde con hallazgos ya calculados.</div>
       <div class="msgs" id="msgs">${S.msgs.map(m=>`<div class="m ${m.r}">${m.t}</div>`).join('')}</div>
       <form id="chatForm" class="chatin">
-        <input id="cq" placeholder="Escribe tu pregunta" aria-label="Pregunta para el asistente" autocomplete="off">
+        <input id="cq" value="${esc(S.cq)}" placeholder="Escribe tu pregunta" aria-label="Pregunta para el asistente" autocomplete="off">
         <button type="submit">Enviar</button>
       </form>
     </div>
@@ -623,14 +926,7 @@ function vCfg(){
       </tbody></table>
       <p class="note">Las reglas se cargan desde la solución. Cambiarlas requiere aprobación de Calidad; esta pantalla no las modifica.</p></div>`;
   } else {
-    body=`<div class="grid g2">
-      <div class="card"><h3>Roles</h3>
-        <p class="small"><b>Auditor:</b> revisa hallazgos, decide sobre los resultados de la IA y da retroalimentación.</p>
-        <p class="small"><b>Consulta:</b> lee documentos y usa el asistente, sin decidir.</p>
-        <p class="small"><b>Administrador:</b> gestiona reglas, usuarios y roles.</p>
-      </div>
-      <div class="card"><h3>Usuarios</h3><p class="small">La lista de usuarios llegará con la autenticación real (Entra ID). En este prototipo no hay inicio de sesión verdadero.</p></div>
-    </div>`;
+    body=vEquipo();
   }
   return `<div class="tabs" role="tablist">
     <button role="tab" class="${tab==='reglas'?'on':''}" data-act="nav" data-v="reglas">Reglas</button>
@@ -638,10 +934,13 @@ function vCfg(){
   </div>${body}`;
 }
 
-const VIEWS={inicio:vInicio,revision:vRevision,ia:vIA,historico:vHist,reglas:vCfg,usuarios:vCfg};
-const TITLES={inicio:'Inicio',revision:'Revisión',ia:'Panel de control IA',historico:'Histórico',reglas:'Configuración · Reglas',usuarios:'Configuración · Usuarios y roles'};
+const VIEWS={inicio:vInicio,revision:vRevision,ia:vIA,historico:vHist,chat:vChat,reglas:vCfg,usuarios:vCfg};
+const TITLES={inicio:'Inicio',revision:'Revisión',ia:'Panel de control IA',historico:'Histórico',chat:'Chat',reglas:'Configuración · Reglas',usuarios:'Configuración · Usuarios y roles'};
 
 function render(){
+  // Conserva lo que el usuario está escribiendo y el desplazamiento de las listas al redibujar (llegan novedades del equipo)
+  const act=document.activeElement, actId=act&&act.id, pos=act&&act.selectionStart;
+  const scr=['.lista-scroll','.motivo-scroll','.hscroll','#msgs','.sidemodal'].map(s=>{const el=document.querySelector(s);return [s,el?el.scrollTop:0];});
   document.getElementById('uN').textContent=S.user.nombre;
   document.getElementById('uC').textContent=S.user.cargo;
   document.getElementById('ttl').textContent=TITLES[S.view];
@@ -668,6 +967,17 @@ function render(){
       </div>
     </div>`:'';
   document.getElementById('view').innerHTML=VIEWS[S.view]()+criterios+comentario;
+  scr.forEach(([s,y])=>{const el=document.querySelector(s); if(el&&y) el.scrollTop=y;});
+  const cl=document.getElementById('chatlist');                   // chat: baja al último mensaje si hay nuevos
+  if(cl){
+    const n=(S.mensajes||[]).filter(m=>m.canal===(S.canal||'general')).length;
+    if(S.chatAbajo||n!==S._nMsg) cl.scrollTop=cl.scrollHeight; else cl.scrollTop=S._yChat||0;
+    S._nMsg=n; S.chatAbajo=false;
+    cl.onscroll=()=>{S._yChat=cl.scrollTop;};
+  }
+  if(actId){const el=document.getElementById(actId); if(el&&el!==document.activeElement&&'value' in el){el.focus(); try{el.setSelectionRange(pos,pos);}catch(e){}}}
+  pintarBarra();
+  aplicarIdioma();
   if(S.view==='revision') centrarCita();
 }
 
@@ -680,9 +990,53 @@ function toggleDrawer(force){
 }
 
 document.addEventListener('click',e=>{
+  if(S.avisosOpen&&!e.target.closest('#avisos,#bell')){S.avisosOpen=false; pintarBarra(); aplicarIdioma();}
   const el=e.target.closest('[data-act]');
   if(!el||el.disabled) return;
   const a=el.dataset.act;
+  if(a==='lang'){S.lang=el.dataset.v; try{localStorage.setItem('rv_lang',S.lang);}catch(err){} render(); return;}
+  if(a==='avisos'){
+    S.avisosOpen=!S.avisosOpen; pintarBarra(); aplicarIdioma();
+    if(S.avisosOpen&&S.avisos.some(x=>!x.leido)) api('/api/leido',{}).then(()=>{S.avisos.forEach(x=>{x.leido=true;});});
+    return;
+  }
+  if(a==='irAviso'&&el.dataset.k.startsWith('chat:')){
+    S.avisosOpen=false; S.view='chat'; S.canal=el.dataset.k.slice(5); S.chatAbajo=true; render(); window.scrollTo(0,0); return;
+  }
+  if(a==='canal'){S.canal=el.dataset.v; S.chatAbajo=true; render(); return;}
+  if(a==='plegar'){S.abierto[el.dataset.v]=!S.abierto[el.dataset.v]; render(); return;}
+  if(a==='renombrarCanal'){
+    const de=el.dataset.v, nuevo=(prompt(`Nuevo nombre para #${de}:`,de)||'').trim();
+    if(!nuevo||nuevo===de) return;
+    api('/api/canal/renombrar',{nombre:de,nuevo}).then(r=>{if(r.ok&&S.canal===de) S.canal=nuevo.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,'-').replace(/[^a-z0-9ñ-]/g,'').slice(0,30); sondear();});
+    return;
+  }
+  if(a==='borrarCanal'){
+    const c=el.dataset.v;
+    if(!confirm(`¿Eliminar el chat #${c} y todos sus mensajes? No se puede deshacer.`)) return;
+    api('/api/canal/borrar',{nombre:c}).then(r=>{if(r.ok&&S.canal===c) S.canal='general'; sondear();});
+    return;
+  }
+  if(a==='bajaEq'){
+    const n=el.dataset.v;
+    if(!confirm(`¿Eliminar a ${n} del equipo? Sus mensajes y decisiones se conservan.`)) return;
+    api('/api/equipo/baja',{n}).then(sondear);
+    return;
+  }
+  if(a==='mencionar'){
+    S.ctx=(S.ctx?S.ctx.replace(/\s*$/,' '):'')+'@'+el.dataset.v+' '; render();
+    const t=document.getElementById('ctx'); if(t){t.focus(); t.setSelectionRange(t.value.length,t.value.length);} return;
+  }
+  if(a==='abrirNum'){
+    e.preventDefault(); const r=RES[Number(el.dataset.n)-1]; if(!r) return;
+    abrirRevision(r.documento); const i=R().findIndex(x=>x.ubicacion===r.ubicacion); if(i>=0) irA(i);
+    render(); window.scrollTo(0,0); return;
+  }
+  if(a==='irAviso'){
+    const [doc]=el.dataset.k.split('|'); S.avisosOpen=false;
+    abrirRevision(doc); const i=R().findIndex(r=>key(r)===el.dataset.k); if(i>=0) irA(i);
+    render(); window.scrollTo(0,0); return;
+  }
   if(a==='drawer') toggleDrawer();
   else if(a==='nav'){S.view=el.dataset.v; toggleDrawer(false); render(); window.scrollTo(0,0);}
   else if(a==='abrir'){abrirRevision(el.dataset.doc); render(); window.scrollTo(0,0);}
@@ -719,6 +1073,9 @@ document.addEventListener('input',e=>{
   if(e.target.id==='flt'){S.q=e.target.value; render(); const f=document.getElementById('flt'); if(f){f.focus(); f.setSelectionRange(f.value.length,f.value.length);}}
   if(e.target.id==='iq'){S.iq=e.target.value; render(); const f=document.getElementById('iq'); if(f){f.focus(); f.setSelectionRange(f.value.length,f.value.length);}}
   if(e.target.id==='fcom'){S.comment=e.target.value;}
+  if(e.target.id==='ccom'){S.ccom=e.target.value;}
+  if(e.target.id==='ctx'){S.ctx=e.target.value;}
+  if(e.target.id==='cq'){S.cq=e.target.value;}
   if(e.target.id==='xref'){S.extraForm.ref=e.target.value;}
   if(e.target.id==='xtxt'){S.extraForm.txt=e.target.value;}
 });
@@ -728,25 +1085,49 @@ document.addEventListener('change',e=>{
   if(e.target.id==='itipo'){S.itipo=e.target.value; render();}
   if(e.target.id==='iest'){S.iest=e.target.value; render();}
   if(e.target.id==='umbral'){S.umbral=Math.min(100,Math.max(0,Number(e.target.value)||0)); render();}
+  if(e.target.dataset&&e.target.dataset.rol){api('/api/equipo/rol',{n:e.target.dataset.rol,rol:e.target.value}).then(sondear);}
   if(e.target.id==='archivo'){
     const f=e.target.files&&e.target.files[0];
     if(f){S.uploads.push({nombre:f.name,fecha:new Date().toISOString()}); render();}
   }
 });
 
+// En el chat, Intro envía y Mayúsculas+Intro hace salto de línea
+document.addEventListener('keydown',e=>{
+  if(e.target.id==='ctx'&&e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault(); enviarMensaje();}
+});
+
 document.addEventListener('submit',e=>{
   e.preventDefault();
   if(e.target.id==='loginForm'){
     const em=(document.getElementById('em').value||'revisor').trim();
-    S.user.nombre=em.split('@')[0].split(/[._-]+/).filter(Boolean).map(w=>w[0].toUpperCase()+w.slice(1)).join(' ')||'Revisor';
+    // Si es alguien del equipo (por correo o por nombre), se usa su nombre del equipo: así las @menciones le llegan
+    const loc=em.split('@')[0].toLowerCase(), m=S.equipo.find(x=>x.c===em.toLowerCase()||x.n.toLowerCase()===loc.split(/[._\-\s]+/)[0]);
+    S.user.nombre=m?m.n:(em.split('@')[0].split(/[._-]+/).filter(Boolean).map(w=>w[0].toUpperCase()+w.slice(1)).join(' ')||'Revisor');
+    if(m) S.user.cargo=`${m.rol} · Calidad Part-IS`;
     document.getElementById('login').classList.add('hidden');
     document.getElementById('app').classList.remove('hidden');
     render();
+    if(SRV&&!S.sondeo){S.sondeo=setInterval(sondear,2500); sondear();}   // novedades del equipo cada 2,5 s
   } else if(e.target.id==='chatForm'){
-    sendChat(document.getElementById('cq').value);
+    sendChat(document.getElementById('cq').value); S.cq='';
+  } else if(e.target.id==='comForm'){
+    enviarComentario();
+  } else if(e.target.id==='chatEq'){
+    enviarMensaje();
+  } else if(e.target.id==='altaEq'){
+    const n=document.getElementById('aN').value.trim(), c=document.getElementById('aC').value.trim(), rol=document.getElementById('aR').value;
+    api('/api/equipo/alta',{n,c,rol}).then(r=>{if(r.ok){aviso(`${n} añadido al equipo`); sondear();}});
+  } else if(e.target.id==='canalForm'){
+    const nombre=(document.getElementById('ncanal').value||'').trim(); if(!nombre) return;
+    S.canal=nombre.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,'-').replace(/[^a-z0-9ñ-]/g,'').slice(0,30);
+    S.canales=[...new Set([...(S.canales||[]),S.canal])]; S.chatAbajo=true; render();
+    api('/api/canal',{nombre}).then(sondear);
   }
 });
 
+// Con servidor, el equipo actual llega antes del inicio de sesión (para reconocer a cada uno por su correo)
+if(SRV) fetch('/api/estado',{cache:'no-store'}).then(r=>r.json()).then(d=>{if(d.equipo&&d.equipo.length) S.equipo=d.equipo;}).catch(()=>{});
 render();
 </script>
 </body>
