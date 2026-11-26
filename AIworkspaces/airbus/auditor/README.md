@@ -6,9 +6,9 @@ Una sola orden: entra una carpeta de PDF y sale `respuestas.csv` en el formato d
 
 | F1 | Precisión | Recall | Cláusula correcta |
 |---|---|---|---|
-| **0,897** | 0,905 | 0,889 (152/171) | 89 % |
+| **0,932** | 0,906 | 0,959 (164/171) | 91 % |
 
-Por familia: proveedores 18/18 · evaluaciones de riesgos 15/15 · interfaces 5/5 · auditorías 6/7 · verificación 6/7 · especificaciones 53/58 · registros operativos 49/61.
+Por familia: registros operativos 61/61 · proveedores 18/18 · evaluaciones de riesgos 15/15 · interfaces 5/5 · auditorías 6/7 · verificación 6/7 · especificaciones 53/58.
 
 ## Cómo funciona
 
@@ -16,6 +16,7 @@ Por familia: proveedores 18/18 · evaluaciones de riesgos 15/15 · interfaces 5/
 2. **Referencias** (`src/referencias.py`): Part-IS (`normativa/part_is_ir.json`), STD-SEC-001 **vigente** según LISTA-DOC, y los documentos que cita cada uno.
 3. **Propuestas**:
    - reglas deterministas (`src/reglas.py`);
+   - reglas de registros operativos (`src/registros.py`): leen las tablas columna a columna y aplican STD-SEC-001 §10 (plazos leídos del estándar vigente);
    - agente LLM sobre el texto (`src/agente.py`);
    - visión en las páginas con figuras.
 4. **Verificador por código** (`src/verificar.py`). El LLM propone, el código decide:

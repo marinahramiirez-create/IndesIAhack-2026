@@ -15,15 +15,16 @@ Fases:
 import argparse
 import csv
 import json
+import re
 import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-from src import ingesta, referencias, reglas
+from src import ingesta, referencias, registros, reglas
 from src.modelo import COLUMNAS, EXTRA
-from src.verificar import ANCLA, verificar
+from src.verificar import ANCLA, ANCLA_GENERICA, verificar
 
 _lock = threading.Lock()
 
@@ -39,10 +40,23 @@ def escribir(hallazgos, ruta: Path):
     tmp.replace(ruta)
 
 
+SISTEMA_UBIC = re.compile(r"\b[A-Z][A-Z0-9]{2}\b")
+FECHA_UBIC = re.compile(r"\d{4}-\d{2}-\d{2}")
+
+
 def clave_defecto(h) -> tuple:
-    """Dos filas son el mismo defecto si comparten documento y primer identificador de la ubicación."""
+    """Dos filas son el mismo defecto si comparten documento y primer identificador de la ubicación.
+    Si ese identificador es genérico («Tabla 2»), se añaden el sistema y la fecha de la fila, para no fundir
+    filas distintas de una misma tabla («Tabla 2, OPC (2026-01-22)» ≠ «Tabla 2, MPS (2026-09-12)»)."""
     a = ANCLA.findall(h.ubicacion)
-    return (h.documento, a[0] if a else h.ubicacion)
+    if not a:
+        return (h.documento, h.ubicacion)
+    if not ANCLA_GENERICA.match(a[0]):
+        return (h.documento, a[0])
+    literal = next((x for x in a[1:] if not ANCLA_GENERICA.match(x)), "")    # «Tabla 1 (falta E-1242)»
+    resto = h.ubicacion.replace(a[0], " ")
+    s, f = SISTEMA_UBIC.findall(resto), FECHA_UBIC.findall(resto)
+    return (h.documento, a[0], literal, s[0] if s else "", f[0] if f else "")
 
 
 def deduplicar(hallazgos):
@@ -51,11 +65,27 @@ def deduplicar(hallazgos):
         k = clave_defecto(h)
         if k not in mejor or h.confianza > mejor[k].confianza:
             mejor[k] = h
-    return list(mejor.values())
+    # Una propuesta del LLM sin fecha («Tabla 1, TLM») es la misma fila que una regla con fecha
+    # («Tabla 1, TLM (2026-05-30)»): se queda la de la regla, que trae el cálculo exacto.
+    # Igual con una propuesta del LLM que solo dice «Tabla 2»: si una regla ya ha revisado esa tabla fila a fila,
+    # la mención genérica sobra (sería un duplicado de alguna fila).
+    regla = [k for k, h in mejor.items() if len(k) == 5 and h.origen.startswith("regla")]
+    con_regla, tablas_regla = {k[:4] for k in regla}, {k[:2] for k in regla}
+
+    def sobra(k, h):
+        if len(k) != 5 or h.origen.startswith("regla"):
+            return False
+        if not k[4] and k[3] and k[:4] in con_regla:
+            return True
+        return not (k[2] or k[3] or k[4]) and k[:2] in tablas_regla
+
+    return [h for k, h in mejor.items() if not sobra(k, h)]
 
 
-def auditar_doc(doc, docs, bloque_ref, usar_llm):
-    propuestas = reglas.revisar(doc)
+def auditar_doc(doc, docs, bloque_ref, usar_llm, std=None):
+    # Primero las reglas por código (registros: cuentas exactas); a igual confianza, prevalecen sobre el LLM
+    propuestas, texto_cruzado = registros.revisar(doc, docs, std)
+    propuestas += reglas.revisar(doc)
     rel = referencias.relacionados(doc, docs)
     if usar_llm:
         from src import agente
@@ -65,7 +95,7 @@ def auditar_doc(doc, docs, bloque_ref, usar_llm):
             propuestas += agente.auditar_figuras(doc, bloque_ref)   # diagramas: visión solo donde hay figuras
         except Exception as e:                                        # un fallo de visión no tumba el documento
             print(f"  aviso: figuras de {doc.codigo} no analizadas: {e!r}")
-    texto_rel = "\n".join(r.texto for r in rel)
+    texto_rel = "\n".join(r.texto for r in rel) + "\n" + texto_cruzado
     aceptados, traza = [], []
     for h in propuestas:
         ok = verificar(h, doc.texto, texto_rel)
@@ -132,7 +162,7 @@ def main():
     todos = []
     open(ftraza, "w", encoding="utf-8").close()
     with ThreadPoolExecutor(a.hilos) as ex:
-        fut = {ex.submit(auditar_doc, d, docs, bloque, not a.sin_llm): d for d in auditables}
+        fut = {ex.submit(auditar_doc, d, docs, bloque, not a.sin_llm, std): d for d in auditables}
         for i, fu in enumerate(as_completed(fut), 1):
             d = fut[fu]
             try:
