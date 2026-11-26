@@ -14,6 +14,7 @@ import hashlib
 import json
 import re
 import webbrowser
+from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -26,6 +27,7 @@ from src.rutas import CORPUS  # noqa: E402  (ruta del corpus: .env o carpetas ha
 EASA_URL = "https://www.easa.europa.eu/en/document-library/easy-access-rules/easy-access-rules-information-security-part"
 PATRON_ID = re.compile(r"\b[A-Z][A-Z0-9]{1,6}(?:-[A-Z0-9]{1,8}){0,3}-\d{2,4}\b|\b[A-Z]-\d{2,4}\b|\bu\d{3,5}\b")
 ZOOM = 1.4
+VERSION_TEXTO = "2"        # formato del texto de cada página (2 = párrafos y tablas, src/texto_paginas.py)
 
 
 def norm(t: str) -> str:
@@ -144,6 +146,11 @@ def main():
         if d.codigo:
             docs[d.codigo] = (d, f)
 
+    from src.texto_paginas import texto_legible
+    marca_txt = destino / "paginas" / "_texto_version.txt"      # si cambia el formato del texto, se regenera
+    texto_al_dia = marca_txt.exists() and marca_txt.read_text().strip() == VERSION_TEXTO
+    if not texto_al_dia:
+        print("Preparando el texto legible de cada página (solo la primera vez, ≈1 min)…")
     info_docs, res = {}, []
     for cod, (d, f) in docs.items():
         slug = re.sub(r"[^A-Za-z0-9_-]", "_", cod)
@@ -152,10 +159,13 @@ def main():
             img = destino / "paginas" / f"{slug}_{n}.jpg"
             if not img.exists():
                 img.write_bytes(pag.get_pixmap(matrix=pymupdf.Matrix(ZOOM, ZOOM)).tobytes("jpg", jpg_quality=72))
-            # Texto de la página (el del escaneado sale de la transcripción con visión, si hay caché): es el punto
-            # de partida de las versiones editables. El PDF original nunca se modifica.
-            txt = d.paginas[n - 1] if n - 1 < len(d.paginas) else ""
-            (destino / "paginas" / f"{slug}_{n}.txt").write_text(txt or "", encoding="utf-8")
+            # Texto legible de la página (párrafos y tablas, src/texto_paginas.py): es el punto de partida de las
+            # versiones editables. Escaneado sin texto digital → la transcripción con visión, si hay caché.
+            # Se reutiliza si ya existe en el formato actual. El PDF original nunca se modifica.
+            txt_f = destino / "paginas" / f"{slug}_{n}.txt"
+            if not (txt_f.exists() and texto_al_dia):
+                txt = texto_legible(pag) or (d.paginas[n - 1] if n - 1 < len(d.paginas) else "")
+                txt_f.write_text(txt or "", encoding="utf-8")
         info_docs[cod] = {"slug": slug, "titulo": re.sub(r"\s*Documento$", "", d.titulo.strip()), "version": d.version, "familia": familia(f.parent.name),
                           "paginas": pdf.page_count, "escaneado": d.escaneado}
         for r in df[df.documento == cod].to_dict("records"):
@@ -165,6 +175,7 @@ def main():
                         "base": fuente.get((cod, r["ubicacion"]), ""), "origen": r.get("origen", ""),
                         "conf": float(r.get("confianza") or 0),
                         "boxes": [] if d.escaneado else cajas(pdf[n - 1], r["evidencia"], r["ubicacion"])})
+    marca_txt.write_text(VERSION_TEXTO)
     sin_pdf = sorted(set(df.documento) - set(docs))
     if sin_pdf:
         print("  aviso: hallazgos de documentos sin PDF en el corpus:", sin_pdf)
@@ -206,6 +217,8 @@ def main():
 
     datos = {"id": hashlib.md5(ruta_csv.read_bytes()).hexdigest()[:8], "fichero": ruta_csv.name, "easa": EASA_URL,
              "carpeta": "paginas", "docs": info_docs, "res": res, "etapas": etapas, "metricas": metricas(RAIZ / "salidas"),
+             # Antigüedad de los documentos del corpus en Inicio: cuenta desde que se ejecutó la auditoría
+             "fecha_auditoria": datetime.fromtimestamp(ruta_csv.stat().st_mtime).isoformat(timespec="seconds"),
              "log": log}
     plantilla = (RAIZ / "src" / "plantilla_revision.html").read_text(encoding="utf-8")
     js = json.dumps(datos, ensure_ascii=False).replace("</", "<\\/")

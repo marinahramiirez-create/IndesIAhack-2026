@@ -69,18 +69,36 @@ Opciones de `auditar.py`:
 `generar_revision.py` toma el diseño de `src/plantilla_revision.html` (el prototipo de Valentina) y le mete los datos reales. Genera la página `salidas/revision/index.html` y una imagen por cada página del PDF.
 
 La página funciona sin servidor: doble clic y listo. Tiene estas pantallas:
-- **Inicio**: los documentos, con las pestañas de estado (Todos, Pendientes, En revisión, Completados, Sin hallazgos) y
-  filtros de hallazgos: texto, decisión (Pendiente / Aceptado / Rechazado), tipo, familia, cláusula, confianza mínima,
-  «Míos» (decididos por ti), «Nuevos» (que aún no has abierto, recordado en tu navegador) y «Con comentarios».
-  Un documento aparece si tiene algún hallazgo que cumpla los filtros.
+- **Inicio**: los documentos auditados y los cargados, con las pestañas de estado (Todos, Pendientes, En revisión,
+  Completados, Sin hallazgos) y filtros: texto, decisión (Pendiente / Aceptado / Rechazado), tipo, familia, cláusula,
+  **prioridad**, **antigüedad** (hoy · esta semana · más de 7 días · vencidos), **orden** y las casillas «Míos»
+  (decididos por ti), «Nuevos» (que aún no has abierto, recordado en tu navegador), «Con comentarios» y **«En equipo»**
+  (compartidos contigo o por ti, o trabajados por ti y al menos otra persona; enseña quién y por qué).
+  - **Prioridad** Alta / Media / Baja: se **sugiere** según los hallazgos (5 o más «No cumple» → Alta; alguno → Media;
+    ninguno → Baja) y se cambia en Revisión; queda quién y cuándo. Por ahora la puede cambiar cualquiera del equipo.
+  - **Antigüedad y plazos**: alta 2 días, media 5, baja 10, contados desde la auditoría (o desde que se cargó el
+    documento). Si se pasa sin revisar, sale **«Vencido»**. «Urgencia» (el orden por defecto) pone primero lo que hay
+    que revisar, por prioridad y, dentro de cada una, lo que más lleva esperando.
+  - **Cargar archivo**: PDF, imagen, Word (.docx), Excel (.xlsx), CSV o texto (hasta 25 MB). El servidor lo prepara
+    (`src/cargados.py`) y se puede **abrir enseguida** en Revisión, aunque no tenga hallazgos: el PDF página a página;
+    el Word con títulos, párrafos y tablas; el Excel y el CSV como tablas. Queda **quién lo cargó y cuándo**; la
+    **familia** se rellena sola por el código del documento (SRS-, REG-, EVR-…) y, si no se reconoce, se elige a mano.
+    La cláusula no se rellena al cargar: es de cada hallazgo y sale al auditarlo (`python auditar.py`).
 - **Revisión**: el PDF con la cita marcada; aprobar o rechazar con un comentario. Cada documento abierto queda como
   **pestaña** arriba (como Safari), con × para cerrarla; cada pestaña recuerda en qué hallazgo y página estabas.
+  En la barra del documento: **Prioridad**, **Compartir** (eliges a personas del equipo y les llega una notificación con
+  enlace), **Versiones** y **✎ Editar**. Un documento **sin hallazgos** se abre igual y se puede comentar y
+  **marcar como revisado**.
+  - **Versiones** (panel dentro del documento): el **original**, que nunca se modifica, y cada versión editada,
+    numerada a partir de la versión oficial del documento: si el original es v3.0, las ediciones son **v3.0.1,
+    v3.0.2…**, con autor, fecha, nota y un nombre opcional. «Comparar con el original» enseña los dos textos lado a
+    lado (amarillo = añadido o cambiado, rojo = quitado) y «.txt» descarga el texto completo. Se guardan en
+    `salidas/versiones/`.
+  - **✎ Editar** (PDF): la página junto a su texto, ahora **legible** (párrafos juntos y tablas fila a fila,
+    `src/texto_paginas.py`). Lo que cambias se **resalta mientras escribes** (amarillo; una marca roja donde se quitó
+    algo, y debajo qué se quitó).
 - **Panel de control IA**: lo que hizo cada agente y el F1.
 - **Histórico**: con asistente y exportación de `respuestas.csv` y `feedback.csv`.
-- **Versiones** (con servidor): el **original** de cada PDF auditado, que nunca se modifica, y las **versiones editadas**
-  por el equipo. «✎ Editar» (en Revisión o aquí) abre la página del PDF junto a su texto; se cambia el texto y se guarda
-  como versión nueva con una nota. «Comparar» enseña original y versión lado a lado (amarillo = añadido o cambiado,
-  rojo = quitado) y «.txt» descarga el texto completo. Las versiones se guardan en `salidas/versiones/`.
 - **Configuración**.
 - **Mi cuenta** (*My account* en inglés; también pulsando tu nombre arriba a la derecha): perfil (nombre, usuario,
   correo, rol, idioma y cerrar sesión), **sesiones abiertas** (navegador y desde cuándo; las lleva el servidor) y la
@@ -123,8 +141,11 @@ Para conectarse desde fuera de la red (por ejemplo, desde casa) se puede usar Ra
 de Radmin y se abre `http://<IP de Radmin del ordenador con el servidor>:8765`. El inicio de sesión es de prototipo
 (no comprueba contraseñas); en producción se conectaría a Entra ID.
 
-Todo se guarda en `salidas/colaboracion.json` (y las versiones de los PDF en `salidas/versiones/`), en el ordenador que
-ejecuta el servidor; nada sale fuera.
+Todo se guarda en `salidas/colaboracion.json` (las versiones de los PDF en `salidas/versiones/` y los documentos
+cargados en `salidas/revision/cargados/`), en el ordenador que ejecuta el servidor; nada sale fuera.
+
+La primera vez que se ejecuta `generar_revision.py` tras esta versión prepara el texto legible de cada página
+(≈1 minuto para el corpus); después se reutiliza.
 
 ### Asistente IA con modelo (RAG local con Llama)
 

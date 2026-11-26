@@ -57,12 +57,18 @@ _estado = {"seq": 0, "dec": {}, "comentarios": [], "avisos": [], "mensajes": [],
            "chats": [{"id": "general", "tipo": "canal", "nombre": "general", "autor": "", "miembros": {}}], "n_grupos": 0,
            "adjuntos": {},       # id → {nombre, tipo, tam, chat, user, fecha, archivo}
            "ediciones": {},      # clave del hallazgo → [{user, fecha, tipo, clausula, justificacion}] (el original no se toca)
-           "versiones": {}}      # documento → [{n, user, fecha, nota, paginas: [nº de página cambiadas]}]; el texto va aparte
+           "versiones": {},      # documento → [{n, user, fecha, nota, nombre, base, paginas}]; el texto va aparte
+           "docs_meta": {},      # documento → {prioridad: {valor, user, fecha}, revisado: {user, fecha}}
+           "compartidos": [],    # [{doc, de, para: [..], nota, fecha}]
+           "cargados": {}}       # id → {archivo, tipo, vista, paginas, codigo, version, titulo, familia, prioridad, user, fecha}
+PRIORIDADES = ("Alta", "Media", "Baja")
+DOC_ID = re.compile(r"[\w.\-]{1,120}")       # códigos de documento válidos (sin barras: también nombran archivos)
 VERSIONES = RAIZ / "salidas" / "versiones"   # un JSON por versión; el PDF original del corpus nunca se modifica
 MAX_VERSION = 3_000_000                      # bytes del cuerpo al guardar una versión (el resto de peticiones: 20 KB)
 _presencia: dict[str, dict] = {}       # usuario → {"key", "t"}
 _sesiones: dict[str, dict] = {}        # usuario → {id de sesión → {"inicio", "ua", "t"}} (en memoria; solo informativo)
 SESION_S = 30 * 60                     # una sesión sin señales durante 30 min deja de listarse
+_sid_cerrados: dict[str, float] = {}   # sesiones cerradas: un sondeo que llegue tarde no las vuelve a «abrir»
 
 
 def _ahora() -> str:
@@ -155,6 +161,16 @@ def _borrar_chat(cid: str):
     _estado["avisos"] = [a for a in _estado["avisos"] if a["key"] != f"chat:{cid}"]
 
 
+def _borrar_cargado(cid: str):
+    """Quita los archivos de un documento cargado (original, contenido e imágenes/texto de sus páginas)."""
+    import shutil
+    if not re.fullmatch(r"[0-9a-f]+", cid):
+        return
+    shutil.rmtree(WEB / "cargados" / cid, ignore_errors=True)
+    for f in (WEB / "paginas").glob(f"up_{cid}_*"):
+        f.unlink(missing_ok=True)
+
+
 class Manejador(SimpleHTTPRequestHandler):
     def __init__(self, *a, **k):
         super().__init__(*a, directory=str(WEB), **k)
@@ -230,6 +246,36 @@ class Manejador(SimpleHTTPRequestHandler):
             _guardar()
         return self._json({"ok": True, "id": aid, "nombre": nombre, "tipo": tipo, "tam": n})
 
+    def _cargar(self):
+        """«Cargar archivo» en Inicio: guarda el original y lo prepara para abrirlo en Revisión (src/cargados.py).
+        Queda pendiente de confirmar (familia y prioridad) con /api/cargado/guardar."""
+        from urllib.parse import unquote
+        user = unquote(self.headers.get("X-User", ""))[:80].strip()
+        nombre = Path(unquote(self.headers.get("X-Nombre", "documento"))[:120]).name or "documento"
+        n = int(self.headers.get("Content-Length", 0) or 0)
+        if not user or n <= 0 or n > MAX_ADJUNTO:
+            self.close_connection = True
+            return self._json({"error": "falta el usuario, o el archivo está vacío o pasa de 25 MB"}, 400)
+        datos = self.rfile.read(n)
+        with _lock:
+            cid = f"{int(time.time() * 1000):x}{len(_estado.setdefault('cargados', {})):x}"
+        seguro = re.sub(r"[^\w.\- ]", "_", nombre)
+        carpeta = WEB / "cargados" / cid
+        carpeta.mkdir(parents=True, exist_ok=True)
+        (carpeta / seguro).write_bytes(datos)
+        try:                                        # fuera del candado: un PDF grande no bloquea el chat de nadie
+            from src import cargados
+            meta = cargados.procesar(carpeta / seguro, cid, WEB)
+            tipo = cargados.tipo_de(nombre)
+        except Exception as e:
+            _borrar_cargado(cid)
+            return self._json({"error": f"no se pudo preparar el documento: {type(e).__name__}: {e}"[:300]}, 400)
+        with _lock:
+            _estado["cargados"][cid] = {"archivo": nombre, "ruta": f"cargados/{cid}/{seguro}", "tipo": tipo, "tam": n,
+                                        "user": user, "fecha": _ahora(), "confirmado": False, **meta}
+            _guardar()
+        return self._json({"ok": True, "id": cid, **_estado["cargados"][cid]})
+
     def _asistente(self, d):
         """Reenvía la pregunta al servicio RAG local y devuelve {respuesta, fuentes} (o un error legible)."""
         cuerpo = json.dumps({"pregunta": str(d.get("pregunta", ""))[:2000], "datos_app": str(d.get("datos_app", ""))[:6000],
@@ -259,9 +305,10 @@ class Manejador(SimpleHTTPRequestHandler):
         key = (q.get("key") or [""])[0][:200]
         sid = (q.get("sid") or [""])[0][:40]
         with _lock:
-            if user:
+            cerrada = sid in _sid_cerrados
+            if user and not cerrada:
                 _presencia[user] = {"key": key, "t": time.time()}
-            if user and sid:                  # «Mi cuenta → Sesiones abiertas»: cada pestaña del navegador es una sesión
+            if user and sid and not cerrada:                  # «Mi cuenta → Sesiones abiertas»: cada pestaña del navegador es una sesión
                 s = _sesiones.setdefault(user, {}).setdefault(sid, {"inicio": _ahora(), "ua": self.headers.get("User-Agent", "")[:300]})
                 s["t"] = time.time()
             ahora_t = time.time()
@@ -278,12 +325,17 @@ class Manejador(SimpleHTTPRequestHandler):
                         "avisos": [a for a in _estado["avisos"] if a["para"] == user], "presencia": vivos,
                         "chats": chats, "mensajes": visibles[-800:],
                         "equipo": _estado["equipo"], "ediciones": _estado["ediciones"],
-                        "versiones": _estado.get("versiones", {}), "sesiones": mias})
+                        "versiones": _estado.get("versiones", {}), "sesiones": mias,
+                        "docs_meta": _estado.get("docs_meta", {}),
+                        "compartidos": [x for x in _estado.get("compartidos", []) if user == x["de"] or user in x["para"]],
+                        "cargados": [{"id": k, **v} for k, v in _estado.get("cargados", {}).items() if v.get("confirmado")]})
 
     def do_POST(self):
         u = urlparse(self.path).path
         if u == "/api/subir":
             return self._subir()
+        if u == "/api/cargar":
+            return self._cargar()
         d = self._cuerpo(MAX_VERSION if u == "/api/version/guardar" else 20000)
         if u == "/api/asistente":
             return self._asistente(d)
@@ -453,12 +505,62 @@ class Manejador(SimpleHTTPRequestHandler):
                 VERSIONES.mkdir(parents=True, exist_ok=True)
                 (VERSIONES / f"{doc}_v{n}.json").write_text(json.dumps({"doc": doc, "n": n, "paginas": pags}, ensure_ascii=False),
                                                             encoding="utf-8")
+                base = d.get("base") if isinstance(d.get("base"), int) else 0
                 lista.append({"n": n, "user": user, "fecha": _ahora(), "nota": str(d.get("nota", "")).strip()[:300],
+                              "nombre": str(d.get("nombre", "")).strip()[:60], "base": base,
                               "paginas": sorted(int(k) for k in pags)})
                 extra = {"n": n}
+            elif u == "/api/doc/prioridad":                # prioridad de un documento (por ahora la cambia cualquiera)
+                doc, valor = str(d.get("doc", "")), d.get("prioridad")
+                if not DOC_ID.fullmatch(doc) or valor not in PRIORIDADES:
+                    return self._json({"error": "documento o prioridad no válidos"}, 400)
+                _estado.setdefault("docs_meta", {}).setdefault(doc, {})["prioridad"] = {"valor": valor, "user": user, "fecha": _ahora()}
+            elif u == "/api/doc/revisado":                 # un documento sin hallazgos también se puede dar por revisado
+                doc = str(d.get("doc", ""))
+                if not DOC_ID.fullmatch(doc):
+                    return self._json({"error": "documento no válido"}, 400)
+                meta = _estado.setdefault("docs_meta", {}).setdefault(doc, {})
+                if d.get("revisado"):
+                    meta["revisado"] = {"user": user, "fecha": _ahora()}
+                else:
+                    meta.pop("revisado", None)
+            elif u == "/api/compartir":                    # compartir un documento: aviso en la campanita de cada persona
+                doc = str(d.get("doc", ""))
+                equipo = {m["n"] for m in _estado["equipo"]}
+                para = sorted({str(p) for p in d.get("para", []) if str(p) in equipo and str(p) != user})
+                if not DOC_ID.fullmatch(doc) or not para:
+                    return self._json({"error": "elige al menos a una persona del equipo"}, 400)
+                nota = str(d.get("nota", "")).strip()[:MAX_TEXTO]
+                _estado.setdefault("compartidos", []).append({"doc": doc, "de": user, "para": para, "nota": nota, "fecha": _ahora()})
+                for p in para:
+                    _estado["avisos"].append({"para": p, "de": user, "key": f"compartir:{doc}", "fecha": _ahora(),
+                                              "texto": nota or f"Te ha compartido {doc}", "leido": False, "mencion": True})
+            elif u == "/api/cargado/guardar":              # confirma un documento cargado: familia y prioridad
+                c = _estado.get("cargados", {}).get(str(d.get("id", "")))
+                if not c or c["user"] != user:
+                    return self._json({"error": "documento cargado no encontrado"}, 404)
+                familia = str(d.get("familia", "")).strip()[:60]
+                if not familia:
+                    return self._json({"error": "elige la familia del documento"}, 400)
+                c.update({"familia": familia, "prioridad": d.get("prioridad") if d.get("prioridad") in PRIORIDADES else "Media",
+                          "titulo": str(d.get("titulo", c.get("titulo", ""))).strip()[:160] or c.get("titulo", ""),
+                          "confirmado": True})
+            elif u == "/api/cargado/borrar":               # cancelar la carga (solo quien lo cargó, y solo si no se confirmó)
+                cid = str(d.get("id", ""))
+                c = _estado.get("cargados", {}).get(cid)
+                if not c or c["user"] != user or c.get("confirmado"):
+                    return self._json({"error": "no se puede cancelar esa carga"}, 400)
+                _estado["cargados"].pop(cid)
+                _borrar_cargado(cid)
             elif u == "/api/sesion/cerrar":                # «Cerrar sesión»: deja de listarse en «Sesiones abiertas»
-                _sesiones.get(user, {}).pop(str(d.get("sid", ""))[:40], None)
+                sid = str(d.get("sid", ""))[:40]
+                _sesiones.get(user, {}).pop(sid, None)
                 _presencia.pop(user, None)
+                ahora_t = time.time()
+                for k in [k for k, t in _sid_cerrados.items() if ahora_t - t > 3600]:
+                    _sid_cerrados.pop(k)
+                if sid:
+                    _sid_cerrados[sid] = ahora_t
                 return self._json({"ok": True})
             elif u == "/api/chat/vaciar":                   # vacía el chat SOLO para este usuario; los demás lo siguen viendo
                 c = _chat(str(d.get("id", "")))
