@@ -8,19 +8,22 @@ Guarda en salidas/colaboracion.json, compartido por todos:
   - decisiones (aprobar / rechazar con comentario), con quién y cuándo;
   - comentarios por hallazgo, con @menciones → avisos (la campanita);
   - presencia: quién está mirando cada hallazgo («Marina también está en este hallazgo»);
-  - equipo con roles (Administrador, Aprobador, Revisor);
+  - usuarios, roles y permisos por módulo (src/permisos.py), con escalamiento de documentos a un Dueño de Proceso;
   - chats de tres tipos:
       canal   público para todo el equipo; solo el administrador del equipo lo crea, renombra o borra;
       grupo   lo crea cualquiera y elige quién entra; su creador es administrador del grupo (renombra,
               añade o quita miembros, da o quita el rol de administrador del grupo);
       privado conversación entre dos personas; solo ellas la ven.
-El servidor solo envía a cada persona los chats y mensajes que puede ver. Aviso: el inicio de sesión es de prototipo
-(no comprueba contraseñas), así que la privacidad depende de que cada uno entre con su propio correo.
+El servidor solo envía a cada persona los chats y mensajes que puede ver.
+Sesiones: /api/login da un token y TODAS las demás rutas sacan el usuario de ese token (cabecera X-Sesion), nunca
+del cuerpo de la petición; cada operación comprueba el permiso de su rol en el servidor. Aviso: el inicio de sesión
+sigue siendo de prototipo (no comprueba contraseñas: basta el correo de alguien del equipo); en producción, Entra ID.
 La página pregunta cada 2,5 s si hay novedades. Nada sale de este ordenador; no toca respuestas.csv.
 """
 import argparse
 import json
 import re
+import secrets
 import socket
 import threading
 import time
@@ -30,6 +33,8 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 from urllib.request import Request, urlopen
+
+from src import permisos as P
 
 RAIZ = Path(__file__).resolve().parent
 WEB = RAIZ / "salidas" / "revision"
@@ -43,14 +48,14 @@ MAX_ADJUNTO = 25 * 1024 * 1024                # 25 MB por archivo
 ASISTENTE_URL = "http://127.0.0.1:8766/preguntar"
 TIPOS_EN_LINEA = ("image/", "video/", "audio/", "application/pdf", "text/plain")
 
-# Equipo inicial (después se gestiona desde Configuración → Usuarios y roles; se guarda en colaboracion.json).
-ROLES = ("Administrador", "Aprobador", "Revisor")
+# Equipo inicial (después se gestiona desde Configuración → Usuarios; se guarda en colaboracion.json).
+# «rol» es el id de un rol de src/permisos.py (roles editables por el Admin).
 EDITAR_MIN = 30           # minutos durante los que se puede editar un mensaje del chat (la página usa el mismo valor)
-EQUIPO_INICIAL = [{"n": "Sergio", "c": "sergio@airbus.es", "rol": "Administrador"},
-                  {"n": "Marina", "c": "marina@airbus.es", "rol": "Aprobador"},
-                  {"n": "Nelson", "c": "nelson@airbus.es", "rol": "Revisor"},
-                  {"n": "Valentina", "c": "valentina@airbus.es", "rol": "Revisor"},
-                  {"n": "Daniela", "c": "daniela@airbus.es", "rol": "Revisor"}]
+EQUIPO_INICIAL = [{"n": "Sergio", "c": "sergio@airbus.es", "rol": P.ADMIN},
+                  {"n": "Marina", "c": "marina@airbus.es", "rol": "aprobador"},
+                  {"n": "Nelson", "c": "nelson@airbus.es", "rol": "revisor"},
+                  {"n": "Valentina", "c": "valentina@airbus.es", "rol": "revisor"},
+                  {"n": "Daniela", "c": "daniela@airbus.es", "rol": "revisor"}]
 
 _lock = threading.Lock()
 _estado = {"seq": 0, "dec": {}, "comentarios": [], "avisos": [], "mensajes": [], "equipo": [dict(m) for m in EQUIPO_INICIAL],
@@ -62,6 +67,8 @@ VERSIONES = RAIZ / "salidas" / "versiones"   # un JSON por versión; el PDF orig
 MAX_VERSION = 3_000_000                      # bytes del cuerpo al guardar una versión (el resto de peticiones: 20 KB)
 _presencia: dict[str, dict] = {}       # usuario → {"key", "t"}
 _sesiones: dict[str, dict] = {}        # usuario → {id de sesión → {"inicio", "ua", "t"}} (en memoria; solo informativo)
+_tokens: dict[str, str] = {}           # token de sesión → usuario (en memoria: al reiniciar el servidor, hay que volver a entrar)
+_HALL: dict[str, list[str]] = {}       # documento → claves «documento|ubicación» de sus hallazgos (leído de index.html)
 SESION_S = 30 * 60                     # una sesión sin señales durante 30 min deja de listarse
 
 
@@ -89,6 +96,30 @@ def _cargar():
         datos.pop("canales", None)
         datos.pop("canal_autor", None)
         _estado = {**_estado, **datos}
+    P.migrar(_estado)                     # roles por defecto y roles antiguos («Administrador»…) → ids actuales
+
+
+def _cargar_documentos():
+    """Documentos y hallazgos de la pantalla generada: el servidor los necesita para saber el estado de cada documento."""
+    _HALL.clear()
+    for linea in (WEB / "index.html").read_text(encoding="utf-8").splitlines():
+        if linea.startswith("const D=") and linea.endswith(";"):
+            d = json.loads(linea[len("const D="):-1])
+            for doc in d.get("docs", {}):
+                _HALL[doc] = []
+            for r in d.get("res", []):
+                _HALL.setdefault(r["documento"], []).append(f"{r['documento']}|{r['ubicacion']}")
+            return
+    print("aviso: no encuentro los datos en index.html; las reglas de edición por estado no podrán comprobarse")
+
+
+def _todas_las_claves() -> set[str]:
+    return {k for ks in _HALL.values() for k in ks}
+
+
+def _editables(user: str) -> dict:
+    """Para la pantalla: por cada documento escalado, si este usuario puede editarlo ahora y, si no, por qué."""
+    return {doc: P.motivo_no_editar(_estado, user, doc, _HALL.get(doc, [])) for doc in _estado["escalados"]}
 
 
 def _guardar():
@@ -103,8 +134,13 @@ def _usuarios() -> set[str]:
     return {x for x in u | set(_presencia) if x}
 
 
-def _rol(user: str) -> str:
-    return next((m["rol"] for m in _estado["equipo"] if m["n"] == user), "")
+def _usuario_de_token(token: str) -> str:
+    """Usuario de la sesión, solo si sigue en el equipo (un usuario eliminado pierde sus sesiones)."""
+    user = _tokens.get(token or "", "")
+    if user and not P.miembro(_estado, user):
+        _tokens.pop(token, None)
+        return ""
+    return user
 
 
 def _nombre_canal(t: str) -> str:
@@ -134,7 +170,7 @@ def _ve(user: str, c: dict) -> bool:
 def _gestiona(user: str, c: dict) -> bool:
     """Canal: el administrador del equipo. Grupo: un administrador del grupo. Privado: nadie lo renombra."""
     if c["tipo"] == "canal":
-        return _rol(user) == "Administrador"
+        return P.es_admin(_estado, user)
     if c["tipo"] == "grupo":
         return c["miembros"].get(user) == "admin"
     return False
@@ -162,6 +198,12 @@ class Manejador(SimpleHTTPRequestHandler):
     def log_message(self, *_):            # sin ruido en la consola
         pass
 
+    def end_headers(self):
+        # La página se regenera a menudo: que el navegador la pida siempre de nuevo (si no, enseña la versión antigua)
+        if self.command == "GET" and urlparse(self.path).path in ("/", "/index.html"):
+            self.send_header("Cache-Control", "no-cache")
+        super().end_headers()
+
     def _json(self, datos, code=200):
         cuerpo = json.dumps(datos, ensure_ascii=False).encode("utf-8")
         self.send_response(code)
@@ -183,8 +225,8 @@ class Manejador(SimpleHTTPRequestHandler):
     def _adjunto(self, q):
         """Descarga o muestra un archivo del chat, solo si quien lo pide puede ver ese chat."""
         aid = (q.get("id") or [""])[0]
-        user = (q.get("user") or [""])[0][:80]
         with _lock:
+            user = _usuario_de_token((q.get("s") or [""])[0])
             meta = _estado["adjuntos"].get(aid)
             c = _chat(meta["chat"]) if meta else None
             if not meta or not c or not _ve(user, c):
@@ -206,7 +248,8 @@ class Manejador(SimpleHTTPRequestHandler):
     def _subir(self):
         """Recibe un archivo (cuerpo binario) para adjuntarlo a un mensaje del chat."""
         from urllib.parse import unquote
-        user = unquote(self.headers.get("X-User", ""))[:80].strip()
+        with _lock:
+            user = _usuario_de_token(self.headers.get("X-Sesion", ""))
         chat = unquote(self.headers.get("X-Chat", ""))[:200]
         nombre = unquote(self.headers.get("X-Nombre", "archivo"))[:120] or "archivo"
         tipo = (self.headers.get("Content-Type") or "application/octet-stream").split(";")[0][:100]
@@ -241,11 +284,27 @@ class Manejador(SimpleHTTPRequestHandler):
             return self._json({"error": "El asistente con IA no está encendido (ejecuta _rag/servidor_rag.py y abre Ollama). "
                                         f"Detalle: {type(e).__name__}"}, 503)
 
+    def _login(self, d):
+        """Entrar con el correo (o el nombre) de alguien del equipo → token de sesión. Sin contraseña (prototipo)."""
+        em = str(d.get("correo", "")).strip().lower()[:80]
+        loc = re.split(r"[._\-\s]+", em.split("@")[0])[0] if em else ""
+        with _lock:
+            m = next((x for x in _estado["equipo"] if x["c"] == em), None) or \
+                next((x for x in _estado["equipo"] if loc and _norm(x["n"]) == _norm(loc)), None)
+            if not m:
+                return self._json({"error": "Ese correo no está dado de alta. Pide a un administrador que te cree el usuario."}, 403)
+            token = secrets.token_urlsafe(24)
+            _tokens[token] = m["n"]
+            return self._json({"ok": True, "token": token, "n": m["n"], "c": m["c"], "rol": m["rol"]})
+
     def do_GET(self):
         u = urlparse(self.path)
         if u.path == "/api/adjunto":
             return self._adjunto(parse_qs(u.query))
         if u.path == "/api/version":                  # texto completo de una versión (la lista va en /api/estado)
+            with _lock:
+                if not P.puede(_estado, _usuario_de_token(self.headers.get("X-Sesion", "")), "revisiones", "consultar"):
+                    return self._json({"error": "Tu rol no permite consultar revisiones."}, 403)
             q = parse_qs(u.query)
             doc, n = (q.get("doc") or [""])[0], (q.get("n") or [""])[0]
             f = VERSIONES / f"{doc}_v{n}.json"
@@ -255,12 +314,13 @@ class Manejador(SimpleHTTPRequestHandler):
         if u.path != "/api/estado":
             return super().do_GET()
         q = parse_qs(u.query)
-        user = (q.get("user") or [""])[0][:80]
         key = (q.get("key") or [""])[0][:200]
         sid = (q.get("sid") or [""])[0][:40]
         with _lock:
-            if user:
-                _presencia[user] = {"key": key, "t": time.time()}
+            user = _usuario_de_token(self.headers.get("X-Sesion", ""))
+            if not user:
+                return self._json({"error": "sesión no válida: vuelve a entrar"}, 401)
+            _presencia[user] = {"key": key, "t": time.time()}
             if user and sid:                  # «Mi cuenta → Sesiones abiertas»: cada pestaña del navegador es una sesión
                 s = _sesiones.setdefault(user, {}).setdefault(sid, {"inicio": _ahora(), "ua": self.headers.get("User-Agent", "")[:300]})
                 s["t"] = time.time()
@@ -274,31 +334,66 @@ class Manejador(SimpleHTTPRequestHandler):
             vaciado = _estado.setdefault("vaciados", {}).get(user, {})     # «Vaciar chat» es solo para quien lo pide
             visibles = [m for m in _estado["mensajes"]
                         if m["canal"] in ids and m.get("id", 0) > vaciado.get(m["canal"], 0)]
-            self._json({"seq": _estado["seq"], "dec": _estado["dec"], "comentarios": _estado["comentarios"],
+            ve = P.puede(_estado, user, "revisiones", "consultar")     # sin permiso no se envían los datos de revisión
+            ve_cfg = P.puede(_estado, user, "configuracion", "consultar")
+            self._json({"seq": _estado["seq"], "user": user, "dec": _estado["dec"] if ve else {},
+                        "comentarios": _estado["comentarios"] if ve else [],
                         "avisos": [a for a in _estado["avisos"] if a["para"] == user], "presencia": vivos,
                         "chats": chats, "mensajes": visibles[-800:],
-                        "equipo": _estado["equipo"], "ediciones": _estado["ediciones"],
-                        "versiones": _estado.get("versiones", {}), "sesiones": mias})
+                        "equipo": _estado["equipo"], "ediciones": _estado["ediciones"] if ve else {},
+                        "versiones": _estado.get("versiones", {}) if ve else {}, "sesiones": mias,
+                        "roles": _estado["roles"] if ve_cfg else [{"id": r["id"], "nombre": r["nombre"]} for r in _estado["roles"]],
+                        "modulos": P.MODULOS, "permisos": P.permisos_de(_estado, user),
+                        "escalados": _estado["escalados"] if ve else {},
+                        "escalados_hist": _estado["escalados_hist"][-300:] if ve else [],
+                        "editables": _editables(user), "config": _estado["config"]})
 
     def do_POST(self):
         u = urlparse(self.path).path
         if u == "/api/subir":
             return self._subir()
         d = self._cuerpo(MAX_VERSION if u == "/api/version/guardar" else 20000)
+        if u == "/api/login":
+            return self._login(d)
+        with _lock:                                     # el usuario sale SIEMPRE del token, nunca del cuerpo
+            user = _usuario_de_token(self.headers.get("X-Sesion", ""))
+        if not user:
+            return self._json({"error": "sesión no válida: vuelve a entrar"}, 401)
         if u == "/api/asistente":
             return self._asistente(d)
-        user = str(d.get("user", ""))[:80].strip()
-        if not user:
-            return self._json({"error": "falta el usuario"}, 400)
         extra = {}
         with _lock:
+            try:
+                return self._operar(u, d, user, extra)
+            except P.Denegado as e:
+                return self._json({"error": str(e)}, e.code)
+
+    def _operar(self, u, d, user, extra):
+        """Una operación de escritura, ya con el usuario autenticado y dentro del candado."""
+        if True:
             if u == "/api/decision":
-                for key in d.get("keys", [])[:500]:
-                    _estado["dec"][str(key)[:200]] = {"dec": d.get("dec") if d.get("dec") in ("approved", "rejected") else "approved",
-                                                       "note": str(d.get("note", ""))[:MAX_TEXTO], "user": user, "fecha": _ahora()}
+                dec = d.get("dec")
+                if dec not in ("approved", "rejected"):
+                    return self._json({"error": "decisión no válida"}, 400)
+                P.exigir(_estado, user, "revisiones", "aprobar" if dec == "approved" else "rechazar")
+                validas = _todas_las_claves()
+                keys = [str(k)[:200] for k in d.get("keys", [])[:500]]
+                if not keys or (validas and not set(keys) <= validas):
+                    return self._json({"error": "hallazgo no válido"}, 400)
+                for key in keys:                        # cambiar una decisión ya tomada exige también el permiso de la anterior
+                    previa = _estado["dec"].get(key)
+                    if previa and previa["dec"] != dec:
+                        P.exigir(_estado, user, "revisiones", "aprobar" if previa["dec"] == "approved" else "rechazar")
+                for key in keys:
+                    _estado["dec"][key] = {"dec": dec, "note": str(d.get("note", ""))[:MAX_TEXTO], "user": user, "fecha": _ahora()}
             elif u == "/api/deshacer":
+                previa = _estado["dec"].get(str(d.get("key", "")))
+                if not previa:
+                    return self._json({"error": "ese hallazgo no tiene decisión"}, 400)
+                P.exigir(_estado, user, "revisiones", "aprobar" if previa["dec"] == "approved" else "rechazar")
                 _estado["dec"].pop(str(d.get("key", "")), None)
             elif u == "/api/comentario":
+                P.exigir(_estado, user, "revisiones", "comentar")
                 texto = str(d.get("texto", "")).strip()[:MAX_TEXTO]
                 key = str(d.get("key", ""))[:200]
                 if not texto or not key:
@@ -344,19 +439,21 @@ class Manejador(SimpleHTTPRequestHandler):
                 m.setdefault("original", m["texto"])
                 m["texto"], m["editado"] = texto, _ahora()
             elif u == "/api/edicion":                       # edición de un hallazgo: se guarda la versión, no se pisa
+                P.exigir(_estado, user, "revisiones", "editar_hallazgos")
                 key = str(d.get("key", ""))[:200]
                 campos = {k: str(d.get(k, "")).strip()[:MAX_TEXTO] for k in ("tipo", "clausula", "justificacion")}
                 if not key or not all(campos.values()):
                     return self._json({"error": "faltan el tipo, la cláusula o la justificación"}, 400)
-                if user not in {m["n"] for m in _estado["equipo"]}:
-                    return self._json({"error": "solo el equipo puede editar hallazgos"}, 403)
+                if _todas_las_claves() and key not in _todas_las_claves():
+                    return self._json({"error": "hallazgo no válido"}, 400)
                 _estado["ediciones"].setdefault(key, []).append({"user": user, "fecha": _ahora(), **campos})
             elif u == "/api/edicion/deshacer":              # vuelve al original (quita todas las ediciones)
+                P.exigir(_estado, user, "revisiones", "editar_hallazgos")
                 _estado["ediciones"].pop(str(d.get("key", "")), None)
             elif u == "/api/chat/crear":
                 tipo = d.get("tipo")
                 if tipo == "canal":
-                    if _rol(user) != "Administrador":
+                    if not P.es_admin(_estado, user):
                         return self._json({"error": "solo el administrador del equipo crea canales públicos"}, 403)
                     cid = _nombre_canal(d.get("nombre", ""))
                     if not cid or _chat(cid):
@@ -414,35 +511,43 @@ class Manejador(SimpleHTTPRequestHandler):
                     _borrar_chat(c["id"])
                 elif not any(r == "admin" for r in c["miembros"].values()):
                     c["miembros"][next(iter(c["miembros"]))] = "admin"     # alguien hereda la administración
-            elif u in ("/api/equipo/alta", "/api/equipo/baja", "/api/equipo/rol"):
-                if _rol(user) != "Administrador":
-                    return self._json({"error": "solo un administrador gestiona el equipo"}, 403)
-                eq = _estado["equipo"]
-                n = str(d.get("n", "")).strip()[:40]
-                if u.endswith("alta"):
-                    c = str(d.get("c", "")).strip().lower()[:80]
-                    rol = d.get("rol") if d.get("rol") in ROLES else "Revisor"
-                    if not n or "@" not in c:
-                        return self._json({"error": "faltan el nombre o un correo válido"}, 400)
-                    if any(_norm(m["n"]) == _norm(n) or m["c"] == c for m in eq):
-                        return self._json({"error": "ya hay alguien con ese nombre o correo"}, 400)
-                    eq.append({"n": n, "c": c, "rol": rol})
-                elif u.endswith("baja"):
-                    if n == user:
-                        return self._json({"error": "no puedes eliminarte a ti mismo"}, 400)
-                    _estado["equipo"] = [m for m in eq if m["n"] != n]
-                else:
-                    rol = d.get("rol")
-                    if rol not in ROLES:
-                        return self._json({"error": "rol no válido"}, 400)
-                    admins = [m for m in eq if m["rol"] == "Administrador"]
-                    if rol != "Administrador" and len(admins) == 1 and admins[0]["n"] == n:
-                        return self._json({"error": "tiene que quedar al menos un administrador"}, 400)
-                    for m in eq:
-                        if m["n"] == n:
-                            m["rol"] = rol
+            elif u == "/api/equipo/alta":
+                P.crear_usuario(_estado, user, d)
+            elif u in ("/api/equipo/editar", "/api/equipo/rol"):
+                P.editar_usuario(_estado, user, d)
+            elif u == "/api/equipo/baja":
+                n = str(d.get("n", ""))[:40]
+                for doc in P.borrar_usuario(_estado, user, n, _ahora()):
+                    _avisar_escalado(doc, user, "quitado")
+                for t in [t for t, x in _tokens.items() if x == n]:   # sus sesiones dejan de valer
+                    _tokens.pop(t)
+            elif u == "/api/config/plazo":
+                P.cambiar_plazo(_estado, user, d)
+            elif u == "/api/rol/crear":
+                extra["id"] = P.crear_rol(_estado, user, d)
+            elif u == "/api/rol/editar":
+                P.editar_rol(_estado, user, d)
+            elif u == "/api/rol/borrar":
+                P.borrar_rol(_estado, user, str(d.get("id", "")))
+            elif u == "/api/escalar":
+                doc = str(d.get("doc", ""))[:120]
+                previo = (_estado["escalados"].get(doc) or {}).get("para")
+                extra["accion"] = P.escalar(_estado, user, doc, str(d.get("para", ""))[:40], str(d.get("nota", "")),
+                                            _ahora(), set(_HALL))
+                _avisar_escalado(doc, user, "escalado", _estado["escalados"][doc]["para"])
+                if previo:
+                    _avisar_escalado(doc, user, "reasignado", previo)
+            elif u == "/api/escalar/quitar":
+                doc = str(d.get("doc", ""))[:120]
+                para = (_estado["escalados"].get(doc) or {}).get("para")
+                P.quitar_escalado(_estado, user, doc, _ahora())
+                if para and para != user:
+                    _avisar_escalado(doc, user, "quitado", para)
             elif u == "/api/version/guardar":              # versión editada de un PDF: nunca pisa el original ni otra versión
                 doc = str(d.get("doc", ""))[:120]
+                motivo = P.motivo_no_editar(_estado, user, doc, _HALL.get(doc, []))
+                if motivo:                                  # escalado + a esta persona + Dueño de Proceso + estado editable
+                    return self._json({"error": motivo}, 403)
                 pags = d.get("paginas") if isinstance(d.get("paginas"), dict) else {}
                 pags = {str(int(k)): str(v)[:100_000] for k, v in list(pags.items())[:500]
                         if str(k).isdigit() and isinstance(v, str)}
@@ -459,6 +564,7 @@ class Manejador(SimpleHTTPRequestHandler):
             elif u == "/api/sesion/cerrar":                # «Cerrar sesión»: deja de listarse en «Sesiones abiertas»
                 _sesiones.get(user, {}).pop(str(d.get("sid", ""))[:40], None)
                 _presencia.pop(user, None)
+                _tokens.pop(self.headers.get("X-Sesion", ""), None)   # el token de esta pestaña deja de valer
                 return self._json({"ok": True})
             elif u == "/api/chat/vaciar":                   # vacía el chat SOLO para este usuario; los demás lo siguen viendo
                 c = _chat(str(d.get("id", "")))
@@ -495,6 +601,18 @@ class Manejador(SimpleHTTPRequestHandler):
             return self._json({"ok": True, "seq": _estado["seq"], **extra})
 
 
+def _avisar_escalado(doc: str, de: str, que: str, para: str | None = None):
+    """Aviso en la campanita del destinatario (o del anterior destinatario)."""
+    para = para or (_estado["escalados"].get(doc) or {}).get("para")
+    if not para or para == de:
+        return
+    textos = {"escalado": f"Te ha escalado {doc} para que lo corrijas.",
+              "reasignado": f"{doc} ya no está escalado a ti: se ha asignado a otra persona.",
+              "quitado": f"Se ha quitado el escalamiento de {doc}."}
+    _estado["avisos"].append({"para": para, "de": de, "key": f"{doc}|escalado", "texto": textos[que],
+                              "fecha": _ahora(), "leido": False})
+
+
 def ips_locales() -> list[str]:
     ips = set()
     try:
@@ -518,6 +636,7 @@ def main():
     if not (WEB / "index.html").exists():
         raise SystemExit("\nTodavía no está generada la pantalla.\n  → Ejecuta primero: .\\.venv\\Scripts\\python generar_revision.py\n")
     _cargar()
+    _cargar_documentos()
     srv = ThreadingHTTPServer(("0.0.0.0", a.puerto), Manejador)
     print("\nRevisión en equipo en marcha. Ábrela en el navegador:")
     print(f"  · En este ordenador:   http://localhost:{a.puerto}")

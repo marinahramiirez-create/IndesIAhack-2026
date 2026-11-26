@@ -112,7 +112,33 @@ La consola muestra dos direcciones: `http://localhost:8765` para ti y `http://<t
 - **Chat** con tres tipos: **canales públicos** (los crea o borra un administrador del equipo), **grupos** (los crea
   cualquiera; su creador los administra: nombre, integrantes y papeles) y **privados** entre dos personas. Cada uno
   solo recibe los chats en los que está; `#número` enlaza un hallazgo;
-- **Configuración → Usuarios y roles**: alta y baja de miembros y roles (Administrador, Aprobador, Revisor).
+- **Configuración → Usuarios**: roles y usuarios con permisos por módulo (ver abajo).
+
+### Usuarios, roles y permisos
+
+Con el servidor, solo entra quien está dado de alta: `/api/login` da un token de sesión y **todas** las operaciones
+sacan el usuario de ese token (nunca del cuerpo de la petición) y comprueban el permiso de su rol en el servidor
+(`src/permisos.py`). El inicio de sesión todavía no pide contraseña (prototipo; en producción, Entra ID).
+
+- **Roles** (Configuración → Usuarios → Roles): nombre, descripción y una matriz de permisos por módulo.
+  Solo el rol **Admin** crea, edita o elimina roles; los demás los consultan. Ninguna casilla concede administrar roles.
+  Admin y Dueño de Proceso son roles del sistema (no se eliminan); un rol con usuarios tampoco se elimina.
+- **Permisos** (acciones reales de la app):
+  - Revisiones: consultar, **aprobar** y **rechazar** (independientes), comentar, editar hallazgos, escalar documentos,
+    editar documentos escalados.
+  - Configuración: consultar, cambiar el umbral, gestionar usuarios.
+  - Descarga de histórico: respuestas del auditor, revisión del equipo.
+- **Usuarios**: crear, editar (correo y rol) y eliminar. Todo usuario tiene un rol existente; solo un Admin da o quita
+  el rol Admin y siempre queda al menos uno. Al cambiar el rol cambian al momento los permisos.
+- **Escalamiento y edición de documentos**: en Revisión, «⇪ Escalar» asigna el documento a UNA persona con rol
+  **Dueño de Proceso**. Solo esa persona puede pulsar «✎ Editar» (crear versiones), y solo mientras el documento no
+  esté Completado. Si se escala a otra persona, el anterior deja de poder editarlo; ambos reciben un aviso.
+
+Pruebas (42, sin instalar nada; levantan el servidor en un puerto libre con datos temporales):
+
+```bash
+.venv/bin/python -m unittest tests.test_permisos -v      # Windows: .\.venv\Scripts\python -m unittest tests.test_permisos -v
+```
 - **Aviso emergente**: cuando llega una notificación nueva sale arriba a la derecha y se oculta solo a los **10 segundos**
   (con el ratón encima se pausa); la notificación sigue en la campanita;
 - **Editar un mensaje** solo durante los **30 minutos** siguientes a enviarlo (el ✎ desaparece después y el servidor lo rechaza);
