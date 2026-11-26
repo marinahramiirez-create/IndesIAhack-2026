@@ -69,11 +69,26 @@ Opciones de `auditar.py`:
 `generar_revision.py` toma el diseño de `src/plantilla_revision.html` (el prototipo de Valentina) y le mete los datos reales. Genera la página `salidas/revision/index.html` y una imagen por cada página del PDF.
 
 La página funciona sin servidor: doble clic y listo. Tiene estas pantallas:
-- **Inicio**: los documentos.
-- **Revisión**: el PDF con la cita marcada; aprobar o rechazar con un comentario.
+- **Inicio**: los documentos, con las pestañas de estado (Todos, Pendientes, En revisión, Completados, Sin hallazgos) y
+  filtros de hallazgos: texto, decisión (Pendiente / Aceptado / Rechazado), tipo, familia, cláusula, confianza mínima,
+  «Míos» (decididos por ti), «Nuevos» (que aún no has abierto, recordado en tu navegador) y «Con comentarios».
+  Un documento aparece si tiene algún hallazgo que cumpla los filtros.
+- **Revisión**: el PDF con la cita marcada; aprobar o rechazar con un comentario. Cada documento abierto queda como
+  **pestaña** arriba (como Safari), con × para cerrarla; cada pestaña recuerda en qué hallazgo y página estabas.
 - **Panel de control IA**: lo que hizo cada agente y el F1.
 - **Histórico**: con asistente y exportación de `respuestas.csv` y `feedback.csv`.
+- **Versiones** (con servidor): el **original** de cada PDF auditado, que nunca se modifica, y las **versiones editadas**
+  por el equipo. «✎ Editar» (en Revisión o aquí) abre la página del PDF junto a su texto; se cambia el texto y se guarda
+  como versión nueva con una nota. «Comparar» enseña original y versión lado a lado (amarillo = añadido o cambiado,
+  rojo = quitado) y «.txt» descarga el texto completo. Las versiones se guardan en `salidas/versiones/`.
 - **Configuración**.
+- **Mi cuenta** (*My account* en inglés; también pulsando tu nombre arriba a la derecha): perfil (nombre, usuario,
+  correo, rol, idioma y cerrar sesión), **sesiones abiertas** (navegador y desde cuándo; las lleva el servidor) y la
+  **política de acceso real** del prototipo, separada de lo previsto. Llaves de acceso, app de autenticación y códigos
+  de recuperación aparecen como «Próximamente»: llegarán con el inicio de sesión de Microsoft (Entra ID, ver
+  `AIworkspaces/airbus/AUTENTICACION.md`).
+
+El menú lateral lleva un icono junto a cada opción.
 
 Las decisiones del revisor se guardan en el navegador y se exportan a `feedback.csv`. Nunca modifican `respuestas.csv`.
 Arriba a la derecha, **ES / EN** cambia el idioma de la interfaz (los hallazgos siguen en español, como salen del auditor).
@@ -98,12 +113,18 @@ La consola muestra dos direcciones: `http://localhost:8765` para ti y `http://<t
   cualquiera; su creador los administra: nombre, integrantes y papeles) y **privados** entre dos personas. Cada uno
   solo recibe los chats en los que está; `#número` enlaza un hallazgo;
 - **Configuración → Usuarios y roles**: alta y baja de miembros y roles (Administrador, Aprobador, Revisor).
+- **Aviso emergente**: cuando llega una notificación nueva sale arriba a la derecha y se oculta solo a los **10 segundos**
+  (con el ratón encima se pausa); la notificación sigue en la campanita;
+- **Editar un mensaje** solo durante los **30 minutos** siguientes a enviarlo (el ✎ desaparece después y el servidor lo rechaza);
+- **Vaciar chat**: cada persona puede vaciar un chat **solo para sí**; los demás siguen viendo los mensajes;
+- **Adjuntos** (imágenes, PDF, texto) se abren en una **vista previa dentro de la página**, con × para cerrar (o Esc).
 
 Para conectarse desde fuera de la red (por ejemplo, desde casa) se puede usar Radmin VPN: todos en la misma red
 de Radmin y se abre `http://<IP de Radmin del ordenador con el servidor>:8765`. El inicio de sesión es de prototipo
 (no comprueba contraseñas); en producción se conectaría a Entra ID.
 
-Todo se guarda en `salidas/colaboracion.json`, en el ordenador que ejecuta el servidor; nada sale fuera.
+Todo se guarda en `salidas/colaboracion.json` (y las versiones de los PDF en `salidas/versiones/`), en el ordenador que
+ejecuta el servidor; nada sale fuera.
 
 ### Asistente IA con modelo (RAG local con Llama)
 

@@ -108,7 +108,8 @@ mark{background:#ffe27a;padding:0 2px;border-radius:3px}
 .topbar .seg button{padding:4px 10px;font-size:13px}
 .bell{position:relative;background:#f2f2f7;color:var(--text);padding:7px 9px;border-radius:10px;display:inline-flex;align-items:center}
 .badge{position:absolute;top:-6px;right:-7px;background:var(--err);color:#fff;font-size:11px;font-weight:700;border-radius:999px;min-width:18px;height:18px;padding:0 5px;display:flex;align-items:center;justify-content:center}
-.who{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600}
+.who{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;background:none;color:var(--text);padding:4px 8px 4px 4px;border-radius:999px}
+.who:hover{background:#f0f0f5}
 .av{width:28px;height:28px;border-radius:50%;background:#1a4c7c;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:none}
 .avisos{position:fixed;top:62px;right:16px;width:min(380px,92vw);max-height:70vh;overflow:auto;background:#fff;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.2);z-index:40;padding:16px}
 .aviso{display:block;width:100%;text-align:left;background:#fdeef2;color:var(--text);border-radius:10px;padding:10px 12px;margin-top:8px;font-size:14px}
@@ -135,6 +136,20 @@ mark{background:#ffe27a;padding:0 2px;border-radius:3px}
 .enlace{background:none;color:var(--tint);padding:0;font-size:12px;text-decoration:underline}
 /* Adjuntos del chat */
 .adj-img img{max-width:min(320px,100%);max-height:240px;border-radius:10px;margin-top:6px;display:block;border:1px solid var(--sep)}
+button.adj-img{all:unset;cursor:zoom-in;display:block;border-radius:10px}
+button.adj-img:focus-visible{outline:2px solid var(--tint);outline-offset:2px}
+/* Vista previa de adjuntos dentro de la página */
+#prevAdj{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:24px}
+.prev-fondo{position:absolute;inset:0;background:rgba(0,0,0,.72)}
+.prev-caja{position:relative;display:flex;flex-direction:column;width:min(1100px,100%);max-height:100%;background:#1c1c1e;border-radius:14px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.prev-cab{display:flex;align-items:center;gap:10px;padding:10px 12px 10px 16px;background:#2c2c2e;color:#fff}
+.prev-cab .adj-n{color:#fff}
+.prev-x{width:34px;height:34px;border-radius:50%;padding:0;background:rgba(255,255,255,.16);color:#fff;font-size:22px;line-height:34px;flex:none}
+.prev-x:hover{background:rgba(255,255,255,.28)}
+.prev-cuerpo{flex:1;min-height:0;overflow:auto;display:flex;align-items:center;justify-content:center;padding:12px}
+.prev-cuerpo img,.prev-cuerpo video{max-width:100%;max-height:calc(100vh - 140px);object-fit:contain;border-radius:6px}
+.prev-cuerpo iframe{width:100%;height:calc(100vh - 140px);border:0;background:#fff;border-radius:6px}
+.prev-cuerpo pre{width:100%;max-height:calc(100vh - 140px);margin:0;overflow:auto;background:#fff;color:var(--text);padding:16px;border-radius:6px;white-space:pre-wrap;font-size:13px}
 .adj-vid{max-width:min(420px,100%);border-radius:10px;margin-top:6px;display:block}
 .adj-aud{margin-top:6px}.adj-aud audio{max-width:100%}
 .adj-arch{display:flex;align-items:center;gap:10px;border:1px solid var(--sep);border-radius:12px;padding:8px 12px;margin-top:6px;max-width:420px;background:#fff}
@@ -145,8 +160,7 @@ mark{background:#ffe27a;padding:0 2px;border-radius:3px}
 .chip.err{background:#fdeef0;color:#d70015}
 .clip{cursor:pointer;font-size:20px;padding:6px 8px;border-radius:10px;background:#f0f0f5;align-self:flex-end}
 .chatbox.soltar{outline:3px dashed var(--tint);outline-offset:-6px}
-.msg-ed{opacity:0;padding:0 6px}.mens:hover .msg-ed,.msg-ed:focus-visible{opacity:1}
-@media (hover:none){.msg-ed{opacity:1}}
+.msg-ed{opacity:.55;padding:0 6px}.mens:hover .msg-ed,.msg-ed:focus-visible{opacity:1}
 /* Lista de @ menciones */
 .sugmenc{position:fixed;z-index:70;background:#fff;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.18);border:1px solid var(--sep);overflow:hidden;max-height:300px;overflow-y:auto}
 .sugmenc button{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:#fff;color:var(--text);border-radius:0;padding:7px 12px;font-size:14px}
@@ -223,7 +237,80 @@ mark{background:#ffe27a;padding:0 2px;border-radius:3px}
 .drawer .user span{color:rgba(255,255,255,.72)}
 .drawer .nav-item{color:rgba(255,255,255,.92)}
 .drawer .nav-item:hover{background:rgba(255,255,255,.12)}
-.drawer .nav-item.active{background:#fff;color:#1a4c7c;font-weight:600}
+.drawer .nav-item.active{background:#dfe3ea;color:#16324f;font-weight:600}
+/* Icono + texto en cada opción del menú */
+.nav-item,.nav-salir{display:flex;align-items:center;gap:12px}
+.nav-salir{justify-content:center}
+.ni{width:19px;height:19px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav-item.sub .ni{width:17px;height:17px}
+/* Editor de versiones de un PDF (el original no se toca) */
+#editor{position:fixed;inset:0;z-index:85;display:flex;align-items:center;justify-content:center;padding:20px}
+.ed-caja{position:relative;display:flex;flex-direction:column;width:min(1280px,100%);height:100%;max-height:900px;background:var(--bg);border-radius:14px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+.ed-cab{display:flex;align-items:center;gap:12px;padding:12px 14px 12px 18px;background:#16324f;color:#fff}
+.ed-cab .small{color:rgba(255,255,255,.75)}
+.ed-cuerpo{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;padding:12px}
+.ed-pag{overflow:auto;background:#fff;border-radius:10px;border:1px solid var(--sep)}
+.ed-pag img{width:100%;display:block}
+.ed-texto{display:flex;flex-direction:column;gap:6px;min-height:0}
+.ed-texto textarea{flex:1;min-height:200px;resize:none;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;padding:12px;border-radius:10px}
+.ed-pie{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;background:#fff;border-top:1px solid var(--sep)}
+@media (max-width:800px){.ed-cuerpo{grid-template-columns:1fr;grid-template-rows:40% 60%}}
+/* Sección Versiones */
+.ver-fila{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--sep);margin-top:10px}
+.ver-fila .ghost{font-size:13px;padding:6px 12px}
+.ver-orig{background:#f7fbf8;border-radius:10px;padding:10px;border-top:none}
+.ver-cmp{background:#f7f7fa;border-radius:10px;padding:10px;margin-top:6px}
+.ver-col2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ver-col2 pre{margin:4px 0 0;max-height:360px;overflow:auto;background:#fff;border:1px solid var(--sep);border-radius:8px;padding:10px;white-space:pre-wrap;font-size:12px}
+@media (max-width:700px){.ver-col2{grid-template-columns:1fr}}
+/* Mi cuenta */
+.cta-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}
+.cuenta-card h3{margin:0 0 10px}
+.cuenta-card .cta-f .seg{justify-self:start}
+.cta-f{display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:5px 0;font-size:14px}
+.cta-f>span{color:var(--sec)}
+.cta-f b{font-weight:500;overflow-wrap:anywhere}
+.cta-pronto{margin:0;background:#fff4e0;color:#c76a00}
+.cuenta-card button[disabled]{opacity:.55;cursor:not-allowed}
+.cta-ses{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--sep);font-size:14px}
+.cta-ses .dot{margin-top:6px}
+.cta-ul{margin:0;padding-left:18px;font-size:14px;line-height:1.5}
+.cta-ul li+li{margin-top:4px}
+.cta-prev{color:var(--sec)}
+@media (max-width:1100px){.cta-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:700px){.cta-grid{grid-template-columns:1fr}}
+/* Pestañas de documentos abiertos (como Safari) */
+.tabs{display:flex;gap:4px;overflow-x:auto;margin:-4px 0 12px;padding:4px;background:#e5e5ea;border-radius:12px;scrollbar-width:thin}
+.tab{display:flex;align-items:center;flex:0 1 220px;min-width:120px;border-radius:9px;background:transparent}
+.tab:hover{background:rgba(255,255,255,.55)}
+.tab.on{background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.tab-b{all:unset;flex:1;min-width:0;display:flex;align-items:center;gap:4px;padding:7px 4px 7px 12px;font-size:13px;cursor:pointer;border-radius:9px}
+.tab.on .tab-b{font-weight:600}
+.tab-b:focus-visible,.tab-x:focus-visible{outline:2px solid var(--tint);outline-offset:-2px}
+.tab-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tab-x{background:none;color:var(--sec);width:24px;height:24px;padding:0;border-radius:6px;font-size:16px;line-height:24px;margin-right:4px;flex:none}
+.tab-x:hover{background:#d8d8de;color:var(--text)}
+/* Aviso emergente (10 s) con el mismo aspecto que las tarjetas de la campanita */
+#banners{position:fixed;top:66px;right:16px;width:min(380px,calc(100vw - 32px));z-index:60;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+#banners .banner{pointer-events:auto;margin:0;background:rgba(250,250,252,.97);backdrop-filter:blur(14px);box-shadow:0 10px 30px rgba(0,0,0,.18);animation:bannerIn .25s ease-out}
+@keyframes bannerIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){#banners .banner{animation:none}}
+/* Filtros de hallazgos en Inicio */
+.ffil{background:#fff;border-radius:12px;padding:12px;margin-bottom:12px;display:flex;flex-direction:column;gap:10px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.ffil input[type=search]{background:#f2f2f7;border:none}
+.fdec{align-self:flex-start}
+.fdec button.on{background:#16324f;color:#fff}
+.ln-add{background:#fff1b8;border-radius:3px}
+.ln-del{background:#ffd9d6;border-radius:3px;text-decoration:line-through;text-decoration-color:rgba(215,0,21,.45)}
+.fsel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.fsel select{width:100%}
+.fopt{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.fconf{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--sec);margin-right:4px}
+.fconf input{width:140px;accent-color:#16324f}
+.fconf output{font-variant-numeric:tabular-nums;min-width:32px}
+.fchk{display:inline-flex;align-items:center;gap:6px;background:#f2f2f7;border-radius:999px;padding:5px 12px;font-size:13px;cursor:pointer}
+.fchk input{margin:0;accent-color:#16324f}
+@media (max-width:700px){.fsel{grid-template-columns:1fr}}
 .drawer .nav-item.sub{color:rgba(255,255,255,.72)}
 .drawer .nav-item.sub.active{color:#1a4c7c}
 .drawer button.ghost{background:rgba(255,255,255,.14);color:#fff}
@@ -277,21 +364,24 @@ mark{background:#ffe27a;padding:0 2px;border-radius:3px}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
       <span class="badge hidden" id="bellN">0</span>
     </button>
-    <div class="who"><span class="av" id="uAv"></span><span id="uTop"></span></div>
+    <button class="who" data-act="cuenta" title="Mi cuenta" aria-label="Mi cuenta"><span class="av" id="uAv"></span><span id="uTop"></span></button>
   </div>
   <div class="avisos hidden" id="avisos" role="dialog" aria-label="Avisos"></div>
 
   <aside class="drawer" id="drawer" aria-label="Menú principal">
     <div class="user"><b id="uN"></b><span id="uC"></span></div>
-    <button class="nav-item" data-act="nav" data-v="inicio">Inicio</button>
-    <button class="nav-item" data-act="nav" data-v="ia">Panel de control IA</button>
-    <button class="nav-item" data-act="nav" data-v="historico">Histórico</button>
-    <button class="nav-item" data-act="nav" data-v="chat">Chat</button>
-    <button class="nav-item" data-act="nav" data-v="reglas">Configuración</button>
-    <button class="nav-item sub" data-act="nav" data-v="reglas">Reglas</button>
-    <button class="nav-item sub" data-act="nav" data-v="usuarios">Usuarios y roles</button>
+    <!-- Iconos de línea (estilo Feather): heredan el color del texto, así el activo cambia de color solo -->
+    <button class="nav-item" data-act="nav" data-v="inicio"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9v11h5v-6h4v6h5V9"/></svg>Inicio</button>
+    <button class="nav-item" data-act="nav" data-v="ia"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="13" width="3.5" height="7" rx="1"/><rect x="10.25" y="8" width="3.5" height="12" rx="1"/><rect x="16.5" y="4" width="3.5" height="16" rx="1"/></svg>Panel de control IA</button>
+    <button class="nav-item" data-act="nav" data-v="historico"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>Histórico</button>
+    <button class="nav-item" data-act="nav" data-v="versiones"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>Versiones</button>
+    <button class="nav-item" data-act="nav" data-v="chat"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Chat</button>
+    <button class="nav-item" data-act="nav" data-v="reglas"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>Configuración</button>
+    <button class="nav-item sub" data-act="nav" data-v="reglas"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>Reglas</button>
+    <button class="nav-item sub" data-act="nav" data-v="usuarios"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18.5 14.5A6.5 6.5 0 0 1 21.5 20"/></svg>Usuarios y roles</button>
+    <button class="nav-item" data-act="nav" data-v="cuenta"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Mi cuenta</button>
     <div style="flex:1"></div>
-    <button class="ghost" data-act="logout">Cerrar sesión</button>
+    <button class="ghost nav-salir" data-act="logout"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>Cerrar sesión</button>
   </aside>
   <div class="scrim hidden" id="scrim" data-act="drawer"></div>
 
@@ -320,6 +410,8 @@ const S={
   sel:{}, comment:'', q:'', tipo:'', uploads:[],
   criteriosOpen:false, extraOpen:false, extraForm:{ref:'',txt:''},
   iq:'', iest:'', itipo:'', agente:null, umbral:80,
+  // Filtros de hallazgos en Inicio: un documento se muestra si tiene algún hallazgo que los cumpla
+  hdec:'', htipo:'', hclau:'', hconf:0, hmios:false, hnuevos:false, hcoms:false,
   dec:{}, extra:[], hl:[],
   msgs:[{r:'a',t:'Hola. Busco en toda la aplicación: documentos, hallazgos, decisiones, agentes y métricas, reglas, equipo y chat. Si la respuesta está en una sección, te propongo ir a ella con los filtros puestos. Con la revisión en equipo encendida, además leo los PDF del corpus y te respondo con la IA citando las fuentes.'}],
   asisOpen:false, soloHl:false, hlTxt:''
@@ -372,12 +464,14 @@ function focoKey(){if(S.view!=='revision') return ''; const r=R()[S.foco]; retur
 async function sondear(){
   if(!SRV||!S.user.nombre) return;
   try{
-    const r=await fetch(`/api/estado?user=${encodeURIComponent(S.user.nombre)}&key=${encodeURIComponent(focoKey())}`,{cache:'no-store'});
+    const r=await fetch(`/api/estado?user=${encodeURIComponent(S.user.nombre)}&key=${encodeURIComponent(focoKey())}&sid=${SID}`,{cache:'no-store'});
     if(!r.ok) throw new Error(r.status);
     const d=await r.json();
     Object.assign(S,{dec:d.dec,coms:d.comentarios,avisos:d.avisos,pres:d.presencia,
-                     mensajes:d.mensajes||[],chats:d.chats||S.chats,ediciones:d.ediciones||{}});
+                     mensajes:d.mensajes||[],chats:d.chats||S.chats,ediciones:d.ediciones||{},versiones:d.versiones||{},
+                     sesiones:d.sesiones||[]});
     if(d.equipo&&d.equipo.length) S.equipo=d.equipo;
+    detectarNuevos(S.avisos||[]);
     if(!S.chats.some(c=>c.id===S.canal)) S.canal='general';         // el chat abierto se borró o ya no eres miembro
     const kAbierto='chat:'+S.canal;                                   // lo que ya estás viendo no queda como «nuevo»
     if(S.view==='chat'&&S.avisos.some(x=>x.key===kAbierto&&!x.leido)){
@@ -432,14 +526,19 @@ function vChat(){
   const msgs=(S.mensajes||[]).filter(m=>m.canal===canal);
   const ultMio=msgs.map(m=>m.user).lastIndexOf(S.user.nombre);
   const lista=msgs.map((m,i)=>{
-    const mio=m.user===S.user.nombre&&m.id;
+    const mio=m.user===S.user.nombre&&m.id, quedan=mio?minEditables(m):0;
+    // ✎ siempre visible mientras se pueda editar (antes dependía del ratón y «aparecía y se ocultaba» al enviar).
+    // El mensaje recién enviado aún no tiene id: se reserva el hueco para que la línea no salte al confirmarse.
+    const lapiz=S.editMsg===m.id?'':quedan>0
+      ?`<button class="mini-btn msg-ed" data-act="editarMsg" data-id="${m.id}" title="Editar mensaje (quedan ${quedan} min)" aria-label="Editar mensaje, quedan ${quedan} minutos">✎</button>`
+      :m.user===S.user.nombre&&!m.id?'<span class="mini-btn msg-ed" style="visibility:hidden" aria-hidden="true">✎</span>':'';
     const cuerpo=S.editMsg===m.id
       ?`<div class="chatin" style="margin-top:4px;align-items:flex-end"><textarea id="eMsg" rows="2" style="flex:1" aria-label="Editar mensaje">${esc(S.editTxt??m.texto)}</textarea>
          <button class="ghost" data-act="cancelarMsg" style="font-size:13px">Cancelar</button><button data-act="guardarMsg" data-id="${m.id}" style="font-size:13px">Guardar</button></div>`
       :`${m.texto?`<div style="white-space:pre-wrap;overflow-wrap:anywhere">${textoChat(m.texto)}</div>`:''}${vAdjuntos(m.adjuntos)}`;
     return `<div class="mens">${av(m.user)}<div style="min-width:0;flex:1">
       <div style="display:flex;align-items:center;gap:6px"><b>${esc(m.user)}</b> <span class="small">${hace(m.fecha)}${m.editado?' · editado':''}</span>
-        ${mio&&S.editMsg!==m.id?`<button class="mini-btn msg-ed" data-act="editarMsg" data-id="${m.id}" title="Editar mensaje" aria-label="Editar mensaje">✎</button>`:''}</div>
+        ${lapiz}</div>
       ${cuerpo}
       ${m.user===S.user.nombre?vVisto(m,actual,i===ultMio):''}</div></div>`;
   }).join('');
@@ -495,9 +594,10 @@ function vChat(){
     cab='#'+esc(actual.nombre);
     sub='Canal público del equipo. Escribe #número para enlazar un hallazgo y @nombre para avisar a alguien.';
   }
-  const accionesGrupo=actual.tipo==='grupo'?`<div style="display:flex;gap:6px">
-      ${gestiona(actual)?`<button class="ghost" data-act="gestionarGrupo" data-v="${esc(actual.id)}" style="font-size:13px;padding:6px 12px">Gestionar</button>`:''}
-      <button class="ghost" data-act="salirGrupo" data-v="${esc(actual.id)}" style="font-size:13px;padding:6px 12px">Salir</button></div>`:'';
+  const vaciar=msgs.length?`<button class="ghost" data-act="vaciarChat" data-v="${esc(actual.id)}" style="font-size:13px;padding:6px 12px" title="Borra los mensajes solo para ti">Vaciar chat</button>`:'';
+  const accionesGrupo=`<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">${vaciar}
+      ${actual.tipo==='grupo'&&gestiona(actual)?`<button class="ghost" data-act="gestionarGrupo" data-v="${esc(actual.id)}" style="font-size:13px;padding:6px 12px">Gestionar</button>`:''}
+      ${actual.tipo==='grupo'?`<button class="ghost" data-act="salirGrupo" data-v="${esc(actual.id)}" style="font-size:13px;padding:6px 12px">Salir</button>`:''}</div>`;
   return `<h2>Chat</h2>
     <div class="chatgrid">
       <div style="display:flex;flex-direction:column;gap:12px">
@@ -546,6 +646,15 @@ function vEquipo(){
     <div class="card" style="margin-top:16px"><h3>Roles</h3><div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
       ${Object.entries(ROLES).map(([r,d])=>`<div><b>${r}</b><div class="small">${d}</div></div>`).join('')}</div></div>`;
 }
+// Edición de mensajes: solo durante EDITAR_MIN minutos desde que se envió (el servidor aplica el mismo límite)
+const EDITAR_MIN=30;
+function minEditables(m){return Math.max(0,Math.ceil(EDITAR_MIN-(Date.now()-new Date(m.fecha))/60000));}
+// Cada 30 s: si algún ✎ ha caducado o cambia su «quedan N min», se redibuja el chat (salvo mientras editas)
+setInterval(()=>{
+  if(S.view!=='chat'||S.editMsg) return;
+  const firma=(S.mensajes||[]).filter(m=>m.canal===S.canal&&m.user===S.user.nombre&&m.id).map(minEditables).join(',');
+  if(firma!==S._firmaEd){S._firmaEd=firma; render();}
+},30000);
 // «Visto» de un mensaje tuyo: ✓ nadie lo ha visto · ✓✓ gris lo han visto algunos · ✓✓ azul lo han visto todos.
 // El texto con nombres solo va en tu último mensaje del chat (como en las apps de mensajería); en los demás, al pasar el ratón.
 function vVisto(m,chat,ultimo){
@@ -592,12 +701,40 @@ function vAdjuntos(as){
   return (as||[]).map(a=>{
     const u=urlAdj(a), t=a.tipo||'';
     if(!a.id) return '';
-    if(t.startsWith('image/')) return `<a href="${u}" target="_blank" rel="noopener" class="adj-img"><img src="${u}" alt="${esc(a.nombre)}" loading="lazy"></a>`;
+    // Imágenes, PDF y texto se previsualizan en una ventana dentro de la página (ya no en una pestaña nueva)
+    if(t.startsWith('image/')) return `<button class="adj-img" data-act="prevAdj" data-id="${esc(a.id)}" aria-label="Ver ${esc(a.nombre)}" title="Ver"><img src="${u}" alt="${esc(a.nombre)}" loading="lazy"></button>`;
     if(t.startsWith('video/')) return `<video class="adj-vid" controls preload="metadata" src="${u}" aria-label="${esc(a.nombre)}"></video>`;
     if(t.startsWith('audio/')) return `<div class="adj-aud"><audio controls preload="metadata" src="${u}" aria-label="${esc(a.nombre)}"></audio><div class="small">${esc(a.nombre)}</div></div>`;
     return `<div class="adj-arch"><span class="adj-ico">${iconoArchivo(a.nombre)}</span><div style="min-width:0;flex:1"><div class="adj-n">${esc(a.nombre)}</div><div class="small">${tam(a.tam||0)}</div></div>
-      ${t==='application/pdf'||t.startsWith('text/')?`<a class="ghostlink" href="${u}" target="_blank" rel="noopener">Abrir</a>`:''}<a class="ghostlink" href="${urlAdj(a,true)}">Descargar</a></div>`;
+      ${t==='application/pdf'||t==='text/plain'?`<button class="ghostlink" data-act="prevAdj" data-id="${esc(a.id)}">Abrir</button>`:''}<a class="ghostlink" href="${urlAdj(a,true)}">Descargar</a></div>`;
   }).join('');
+}
+// Ventana de vista previa de un adjunto: fondo oscuro, × para cerrar (también Esc o clic fuera) y «Descargar»
+function buscarAdj(id){for(const m of S.mensajes||[]) for(const a of m.adjuntos||[]) if(a.id===id) return a; return null;}
+function abrirPrev(id,origen){S.prev=buscarAdj(id); S._prevOrigen=origen; pintarPrev();}
+function cerrarPrev(){S.prev=null; pintarPrev(); if(S._prevOrigen&&document.body.contains(S._prevOrigen)) S._prevOrigen.focus();}
+function pintarPrev(){
+  let c=document.getElementById('prevAdj');
+  if(!S.prev){if(c) c.remove(); document.body.style.overflow=''; return;}
+  if(!c){c=document.createElement('div'); c.id='prevAdj'; document.body.appendChild(c);}
+  const a=S.prev, u=urlAdj(a), t=a.tipo||'';
+  const cuerpo=t.startsWith('image/')?`<img src="${u}" alt="${esc(a.nombre)}">`
+    :t==='application/pdf'?`<iframe src="${u}" title="${esc(a.nombre)}"></iframe>`
+    :t.startsWith('video/')?`<video src="${u}" controls autoplay></video>`
+    :t.startsWith('audio/')?`<audio src="${u}" controls autoplay></audio>`
+    :t==='text/plain'?'<pre id="prevTxt">Cargando…</pre>'
+    :`<p class="sub" style="color:#fff">Este tipo de archivo no tiene vista previa. Descárgalo para abrirlo.</p>`;
+  c.innerHTML=`<div class="prev-fondo" data-act="cerrarPrev"></div>
+    <div class="prev-caja" role="dialog" aria-modal="true" aria-label="Vista previa de ${esc(a.nombre)}">
+      <div class="prev-cab"><span class="adj-ico">${iconoArchivo(a.nombre)}</span><b class="adj-n" style="flex:1">${esc(a.nombre)}</b>
+        <a class="ghostlink" href="${urlAdj(a,true)}">Descargar</a>
+        <button class="prev-x" data-act="cerrarPrev" aria-label="Cerrar vista previa" title="Cerrar (Esc)">×</button></div>
+      <div class="prev-cuerpo">${cuerpo}</div></div>`;
+  document.body.style.overflow='hidden';
+  c.querySelector('.prev-x').focus();
+  if(t==='text/plain') fetch(u).then(r=>r.text()).then(x=>{const p=document.getElementById('prevTxt'); if(p) p.textContent=x.slice(0,200000);})
+    .catch(()=>{const p=document.getElementById('prevTxt'); if(p) p.textContent='No se pudo cargar el archivo.';});
+  aplicarIdioma();
 }
 async function subirArchivos(files){
   const canal=S.canal||'general';
@@ -692,6 +829,55 @@ function pintarBarra(){
   const p=document.getElementById('avisos'); p.classList.toggle('hidden',!S.avisosOpen);
   if(S.avisosOpen) p.innerHTML=vAvisos();
 }
+// Título e icono de un grupo de notificaciones (chat o hallazgo): lo usan la campanita y el aviso emergente
+function infoAviso(k){
+  if(k.startsWith('chat:')){
+    const ch=S.chats.find(c=>c.id===k.slice(5)), titulo=ch?nombreChat(ch):k.slice(5);
+    return {titulo,icono:!ch?'<span class="ico">💬</span>':ch.tipo==='privado'?av(titulo,40):`<span class="ico">${ch.tipo==='grupo'?'👥':'#'}</span>`};
+  }
+  const [doc,u]=k.split('|'); return {titulo:`${doc} · ${u}`,icono:'<span class="ico">📄</span>'};
+}
+// Aviso emergente: cuando llega una notificación nueva sale arriba a la derecha y se oculta sola a los 10 s
+// (el ratón encima lo pausa). La notificación sigue en la campanita. Uno por chat; como mucho 3 a la vez.
+const BANNER_S=10;
+let _avisosVistos=null;                       // firmas de las notificaciones ya conocidas (null = primera carga)
+const firmaAviso=a=>[a.key,a.de,a.fecha,a.texto].join('|');
+function detectarNuevos(avisos){
+  const firmas=new Set(avisos.map(firmaAviso));
+  if(_avisosVistos===null){_avisosVistos=firmas; return;}           // al entrar no salta lo que ya había
+  const nuevos=avisos.filter(a=>!_avisosVistos.has(firmaAviso(a))&&!a.leido);
+  _avisosVistos=firmas;
+  nuevos.forEach(a=>{
+    if(S.view==='chat'&&a.key==='chat:'+S.canal) return;            // ya lo estás viendo
+    S.banners=(S.banners||[]).filter(b=>b.k!==a.key);                // el más reciente sustituye al anterior del mismo chat
+    S.banners.unshift({id:Math.random().toString(36).slice(2),k:a.key,a}); S.banners=S.banners.slice(0,3);
+  });
+  if(nuevos.length) pintarBanners();
+}
+function quitarBanner(id){S.banners=(S.banners||[]).filter(b=>b.id!==id); clearTimeout((_tBanner[id]||{}).t); delete _tBanner[id]; pintarBanners();}
+const _tBanner={};
+function programarBanner(id,ms){clearTimeout((_tBanner[id]||{}).t); _tBanner[id]={t:setTimeout(()=>quitarBanner(id),ms),fin:Date.now()+ms};}
+function pintarBanners(){
+  let c=document.getElementById('banners');
+  if(!c){c=document.createElement('div'); c.id='banners'; c.setAttribute('aria-live','polite'); document.body.appendChild(c);}
+  c.innerHTML=(S.banners||[]).map(b=>{
+    const {icono,titulo}=infoAviso(b.k), n=(S.avisos||[]).filter(x=>x.key===b.k&&!x.leido).length;
+    return `<div class="noti banner" data-bid="${b.id}" role="status">
+      <button class="noti-x" data-act="cerrarBanner" data-bid="${b.id}" aria-label="Cerrar aviso" title="Cerrar">×</button>
+      ${icono}<div style="flex:1;min-width:0">
+        <div style="display:flex;gap:8px;align-items:baseline"><b class="noti-t">${esc(titulo)}</b><span class="small" style="margin-left:auto;white-space:nowrap">ahora</span></div>
+        <div class="small" style="color:var(--text)">${n>1?`${n} nuevos`:b.a.mencion?'te ha mencionado':'mensaje nuevo'}</div>
+        <div class="small noti-m"><b>${esc(b.a.de)}:</b> ${menciones(esc(b.a.texto))}</div></div>
+      <button class="noti-ver" data-act="irAviso" data-k="${esc(b.k)}" data-bid="${b.id}">Ver</button></div>`;
+  }).join('');
+  (S.banners||[]).forEach(b=>{if(!_tBanner[b.id]) programarBanner(b.id,BANNER_S*1000);});
+  c.querySelectorAll('.banner').forEach(el=>{
+    const id=el.dataset.bid;
+    el.onmouseenter=()=>{const t=_tBanner[id]; if(t){clearTimeout(t.t); t.resto=Math.max(1500,t.fin-Date.now());}};
+    el.onmouseleave=()=>{const t=_tBanner[id]; if(t) programarBanner(id,t.resto||BANNER_S*1000);};
+  });
+  aplicarIdioma();
+}
 // Notificaciones agrupadas por chat (o por hallazgo): una tarjeta con icono, resumen y último mensaje; «Ver» y «×»
 function vAvisos(){
   const grupos={};
@@ -699,14 +885,7 @@ function vAvisos(){
   const tarjetas=Object.entries(grupos).map(([k,as])=>{
     as.sort((x,y)=>x.fecha<y.fecha?-1:1);
     const ult=as[as.length-1], nuevos=as.filter(a=>!a.leido).length, menc=as.filter(a=>a.mencion||!k.startsWith('chat:')).length;
-    let icono, titulo;
-    if(k.startsWith('chat:')){
-      const ch=S.chats.find(c=>c.id===k.slice(5));
-      titulo=ch?nombreChat(ch):k.slice(5);
-      icono=!ch?'💬':ch.tipo==='privado'?av(titulo,40):`<span class="ico">${ch.tipo==='grupo'?'👥':'#'}</span>`;
-    }else{
-      const [doc,u]=k.split('|'); titulo=`${doc} · ${u}`; icono='<span class="ico">📄</span>';
-    }
+    const {icono,titulo}=infoAviso(k);
     const partes=[nuevos?`${nuevos} ${nuevos===1?'nuevo':'nuevos'}`:'leídos', menc&&k.startsWith('chat:')?`${menc} ${menc===1?'mención':'menciones'}`:''].filter(Boolean);
     // Cerrada: montón con el último mensaje. Abierta: todos los mensajes del grupo (desplegar NO los marca como leídos)
     const abierta=S.expAviso.has(k), n=as.length;
@@ -780,6 +959,38 @@ const EN={'Inicio':'Home','Revisión':'Review','Panel de control IA':'AI control
  'Mencionar a…':'Mention…','Abrir':'Open','Descargar':'Download','subiendo…':'uploading…',
  '@ para mencionar · 📎 o arrastra archivos aquí para adjuntarlos (máx. 25 MB)':'@ to mention · 📎 or drag files here to attach them (max 25 MB)',
  'Notificaciones':'Notifications','Borrar todas':'Clear all','Ver':'Show','No tienes notificaciones.':'No notifications.','leídos':'read',
+ 'Mi cuenta':'My account','Tus datos y cómo entras.':'Your details and how you sign in.','Perfil':'Profile','Nombre visible':'Display name',
+ 'Usuario':'Username','Correo':'Email','Rol':'Role','Esta sesión':'This session','Prototipo · sin contraseña real':'Prototype · no real password',
+ 'Sin rol · no está en el equipo':'No role · not in the team','Idioma':'Language','Próximamente':'Coming soon','Esta':'This one',
+ 'Llaves de acceso':'Passkeys','Añadir una llave de acceso':'Add a passkey','App de autenticación':'Authenticator app','Configurar':'Set up',
+ 'Códigos de recuperación':'Recovery codes','Generar códigos nuevos':'Generate new codes','Sesiones abiertas':'Open sessions',
+ 'Servirán como segundo paso y para entrar sin contraseña. Llegarán con el inicio de sesión de Microsoft (Entra ID).':'They will work as a second factor and for signing in without a password. They will come with Microsoft sign-in (Entra ID).',
+ 'Códigos de 6 dígitos con Microsoft Authenticator. Los pedirá Entra ID al entrar, no esta app.':'6-digit codes with Microsoft Authenticator. Entra ID will ask for them at sign-in, not this app.',
+ 'Para entrar si pierdes el segundo paso. Llegarán junto con la verificación en dos pasos.':'To sign in if you lose your second factor. They will come with two-step verification.',
+ 'Dónde has entrado ahora mismo. «Cerrar sesión» quita esta de la lista.':'Where you are signed in right now. «Log out» removes this one from the list.',
+ 'Sin la revisión en equipo (python servidor.py) no hay sesiones compartidas: estás solo en este navegador.':'Without team review (python servidor.py) there are no shared sessions: you are only in this browser.',
+ 'Política de acceso':'Access policy','Hoy, en este prototipo:':'Today, in this prototype:','Previsto:':'Planned:','activa ahora':'active now',
+ 'El inicio de sesión no comprueba contraseñas: cada decisión, comentario y mensaje queda firmado con tu nombre.':'Sign-in does not check passwords: every decision, comment and message is signed with your name.',
+ 'Solo un administrador da de alta o de baja a miembros, cambia roles y crea canales públicos.':'Only an administrator adds or removes members, changes roles and creates public channels.',
+ 'Cada persona solo recibe los chats en los que está, y los adjuntos solo se sirven a quien ve ese chat.':'Each person only receives the chats they are in, and attachments are only served to whoever can see that chat.',
+ 'Un mensaje del chat solo se puede editar durante 30 minutos.':'A chat message can only be edited for 30 minutes.',
+ 'El PDF original y respuestas.csv nunca se modifican: ediciones y versiones se guardan aparte.':'The original PDF and respuestas.csv are never modified: edits and versions are stored separately.',
+ 'Todo se guarda en el ordenador que ejecuta el servidor; nada sale fuera.':'Everything is stored on the computer running the server; nothing leaves it.',
+ 'Entrar con la cuenta de Microsoft (Entra ID) y verificación en dos pasos con Microsoft Authenticator.':'Sign in with the Microsoft account (Entra ID) and two-step verification with Microsoft Authenticator.',
+ 'Roles (Administrador, Aprobador, Revisor) asignados desde Entra ID.':'Roles (Administrator, Approver, Reviewer) assigned from Entra ID.',
+ 'Versiones':'Versions','Filtrar la lista':'Filter the list','Aceptado':'Accepted','Cualquier tipo':'Any type','Cualquier familia':'Any family',
+ 'Cualquier cláusula':'Any clause','Míos':'Mine','Nuevos':'New','Con comentarios':'With comments','Limpiar filtros':'Clear filters','Confianza ≥':'Confidence ≥',
+ 'Vaciar chat':'Clear chat','Chat vaciado':'Chat cleared','mensaje nuevo':'new message','Cargando…':'Loading…',
+ 'Este tipo de archivo no tiene vista previa. Descárgalo para abrirlo.':'This file type has no preview. Download it to open it.',
+ 'Original':'Original','Comparar':'Compare','rojo':'red','amarillo':'yellow','= quitado del original ·':'= removed from the original ·',
+ '= añadido o cambiado en la versión':'= added or changed in the version','✎ Editar':'✎ Edit','Editar a partir de esta':'Edit from this one','✎ Nueva versión':'✎ New version','PDF auditado':'Audited PDF',
+ 'Abrir en Revisión':'Open in Review','Todavía no hay versiones editadas.':'No edited versions yet.','Editar un documento:':'Edit a document:',
+ 'Elige un documento…':'Choose a document…','Guardar como versión nueva':'Save as new version','Volver al texto original':'Restore original text',
+ 'Modificada':'Modified','Página modificada:':'Modified page:','Nota de la versión (qué cambiaste y por qué)':'Version note (what you changed and why)',
+ 'Esta página no tiene texto extraído (por ejemplo, un escaneado sin transcripción). Puedes escribirlo tú.':'This page has no extracted text (e.g. a scan without transcription). You can type it yourself.',
+ 'No hay cambios respecto a la versión de partida':'No changes from the starting version','· intacto, nunca se modifica':'· untouched, never modified',
+ 'Aquí se guarda el original de cada PDF auditado, que nunca se modifica, y debajo las versiones editadas por el equipo: quién, cuándo, por qué y qué páginas cambió.':'The original of each audited PDF is kept here and never modified; below are the versions edited by the team: who, when, why and which pages changed.',
+ 'Aún no hay versiones. Abre un documento en Revisión y pulsa «✎ Editar documento», o elige uno arriba.':'No versions yet. Open a document in Review and press «✎ Edit document», or choose one above.',
  'Mostrar menos':'Show less','Enviado':'Sent','Enviando…':'Sending…','Visto por todos':'Seen by everyone',
  '+ Nuevo canal público':'+ New public channel','+ Nuevo privado ▾':'+ New direct message ▾','+ Nuevo privado ▴':'+ New direct message ▴',
  'Para hablar en privado con alguien que no está aquí, ábrelo desde':'To message someone who is not here, open it from',
@@ -801,6 +1012,13 @@ const EN_RE=[[/^(\d+) de (\d+) revisados$/,'$1 of $2 reviewed'],[/^Página (\d+)
  [/^(\d+) de (\d+) en línea$/,'$1 of $2 online'],[/^Mensaje para (.+)$/,'Message for $1'],[/^Chat · (.+) · (.+)$/,'Chat · $1 · $2'],
  [/^(\d+) personas: (.+)$/,'$1 people: $2'],[/^Miembros de (.+)$/,'Members of $1'],[/^(\d+) integrantes · (\d+) en línea$/,'$1 members · $2 online'],
  [/^(\d+) nuevos? · (\d+) menci(?:ón|ones)$/,'$1 new · $2 mentions'],[/^(\d+) nuevos?$/,'$1 new'],[/^leídos · (\d+) menci(?:ón|ones)$/,'read · $1 mentions'],[/^Agente (\d+)$/,'Agent $1'],
+ [/^Desde (.+) · activa ahora$/,'Since $1 · active now'],[/^Desde (.+) · última señal hace (\d+) min$/,'Since $1 · last seen $2 min ago'],
+ [/^Desde (.+) · última señal hace (\d+) h$/,'Since $1 · last seen $2 h ago'],[/^Desde (.+) · última señal (.+)$/,'Since $1 · last seen $2'],
+ [/^(\d+) de (\d+) coinciden$/,'$1 of $2 match'],[/^(\d+) páginas? cambiadas?$/,'$1 pages changed'],[/^Texto de la página (\d+)$/,'Text of page $1'],
+ [/^Editar ([A-Z0-9][\w.\-]+)$/,'Edit $1'],[/^A partir de: versión (\d+) · (.+)$/,'Starting from: version $1 · the original PDF is not modified: a new version is saved.'],
+ [/^A partir de: original del auditor · (.+)$/,'Starting from: auditor original · the original PDF is not modified: a new version is saved.'],
+ [/^Guardada la versión (\d+) de (.+)$/,'Saved version $1 of $2'],[/^✎ Editar · v(\d+)$/,'✎ Edit · v$1'],[/^(\d+) páginas$/,'$1 pages'],
+ [/^Páginas? (.+)$/,'Pages $1'],
  [/^Visto por (.+) y (\d+) más$/,'Seen by $1 and $2 more'],[/^Visto por (.+)$/,'Seen by $1'],[/^Visto hace (\d+) min$/,'Seen $1 min ago'],
  [/^Visto hace (\d+) h$/,'Seen $1 h ago'],[/^Visto ahora$/,'Seen just now'],[/^Visto (.+)$/,'Seen $1'],[/^En línea: (.+)$/,'Online: $1'],
  [/^(.+) · (\d+)$/,(m,a,b)=>(EN[a]||a)+' · '+b],[/^(.+) · v([\d.]+)$/,(m,a,b)=>(EN[a]||a)+' · v'+b]];
@@ -816,7 +1034,7 @@ function aplicarIdioma(){
   document.getElementById('lang-en').classList.toggle('on',S.lang==='en');
   const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT); let n;
   while((n=w.nextNode())){
-    if(n.parentElement&&n.parentElement.closest('script,style')) continue;
+    if(n.parentElement&&n.parentElement.closest('script,style,textarea,pre')) continue;   // texto de documentos: no se traduce
     if(n._es===undefined) n._es=n.nodeValue;
     const v=S.lang==='en'?(tr(n._es)??n._es):n._es;
     if(n.nodeValue!==v) n.nodeValue=v;
@@ -847,7 +1065,27 @@ function nextPending(from){
   return rs.findIndex(x=>!decOf(x));
 }
 function fmtFecha(iso){return new Date(iso).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});}
-function irA(i){const rs=R(); S.foco=i; if(rs[i]) S.pdfPag=rs[i].pagina; S.centrar=true;}
+function irA(i){const rs=R(); S.foco=i; if(rs[i]){S.pdfPag=rs[i].pagina; marcarAbierto(rs[i]);} S.centrar=true;}
+// «Nuevos» en Inicio = hallazgos que TÚ aún no has abierto (se recuerda en este navegador)
+let ABIERTOS=new Set();
+try{ABIERTOS=new Set(JSON.parse(localStorage.getItem(LS+'_abiertos')||'[]'));}catch(e){}
+function marcarAbierto(r){
+  if(ABIERTOS.has(key(r))) return; ABIERTOS.add(key(r));
+  try{localStorage.setItem(LS+'_abiertos',JSON.stringify([...ABIERTOS]));}catch(e){}
+}
+function pasaFiltroH(r){
+  const d=decOf(r);
+  if(S.hdec==='pend'&&d) return false;
+  if((S.hdec==='approved'||S.hdec==='rejected')&&(!d||d.dec!==S.hdec)) return false;
+  if(S.htipo&&r.tipo!==S.htipo) return false;
+  if(S.hclau&&r.clausula!==S.hclau) return false;
+  if(S.hconf>0&&(r.conf||0)<S.hconf) return false;
+  if(S.hmios&&(!d||d.user!==S.user.nombre)) return false;
+  if(S.hnuevos&&ABIERTOS.has(key(r))) return false;
+  if(S.hcoms&&!(S.coms||[]).some(c=>c.key===key(r))) return false;
+  return true;
+}
+function hayFiltroH(){return !!(S.hdec||S.htipo||S.hclau||S.hconf>0||S.hmios||S.hnuevos||S.hcoms);}
 // Tras dibujar, lleva la vista a la cita marcada del hallazgo activo.
 function centrarCita(){
   if(!S.centrar) return; S.centrar=false;
@@ -856,9 +1094,220 @@ function centrarCita(){
 }
 
 function abrirRevision(doc){
-  S.doc=doc; S.view='revision'; S.sel={}; S.comment=''; S.extraOpen=false;
+  guardarPestana();
+  S.view='revision'; S.sel={}; S.comment=''; S.extraOpen=false;
+  if(!S.tabs.includes(doc)) S.tabs.push(doc);                      // cada documento abierto queda como pestaña
+  const prev=S.tabEstado[doc]; S.doc=doc;
+  if(prev){S.foco=prev.foco; S.pdfPag=prev.pdfPag; S.centrar=true; return;}   // vuelve a donde estabas en ese documento
   const p=R().findIndex(x=>!decOf(x));
   irA(p>=0?p:0);
+}
+// Pestañas de documentos (como Safari): se recuerda en qué hallazgo y página estaba cada una
+S.tabs=[]; S.tabEstado={};
+function guardarPestana(){if(S.doc&&S.tabs.includes(S.doc)) S.tabEstado[S.doc]={foco:S.foco,pdfPag:S.pdfPag};}
+function cerrarPestana(doc){
+  const i=S.tabs.indexOf(doc); if(i<0) return;
+  S.tabs.splice(i,1); delete S.tabEstado[doc];
+  if(S.doc!==doc) return;
+  if(S.tabs.length){S.doc=null; abrirRevision(S.tabs[Math.min(i,S.tabs.length-1)]);}
+  else{S.doc=null; S.view='inicio';}                                  // al cerrar la última se vuelve a Inicio
+}
+// ---------- Versiones editables de los PDF auditados. El PDF original NUNCA se toca: cada versión es el texto
+// de las páginas cambiadas, guardado aparte por el servidor (salidas/versiones/). La sección «Versiones» enseña
+// siempre el original y, debajo, cada versión con quién, cuándo, su nota y qué páginas cambió.
+const _orig={}, _vers={};
+async function textoOriginal(doc,n){
+  const k=doc+'|'+n; if(k in _orig) return _orig[k];
+  try{const r=await fetch(`${D.carpeta}/${DOCS[doc].slug}_${n}.txt`,{cache:'no-store'}); _orig[k]=r.ok?await r.text():'';}catch(e){_orig[k]='';}
+  return _orig[k];
+}
+async function textoVersion(doc,n){
+  const k=doc+'|'+n; if(_vers[k]) return _vers[k];
+  const r=await fetch(`/api/version?doc=${encodeURIComponent(doc)}&n=${n}`,{cache:'no-store'});
+  if(!r.ok) throw new Error('versión no encontrada');
+  return (_vers[k]=(await r.json()).paginas||{});
+}
+function versionesDe(doc){return ((S.versiones||{})[doc]||[]).slice().sort((a,b)=>a.n-b.n);}
+async function abrirEditor(doc,base){
+  if(!SRV){aviso('Las versiones necesitan la revisión en equipo: python servidor.py'); return;}
+  const vs=versionesDe(doc); base=base??(vs.length?vs[vs.length-1].n:0);
+  S.ed={doc,base,pag:Math.min(S.doc===doc?S.pdfPag||1:1,DOCS[doc].paginas),textos:{},orig:{},basePags:{},nota:'',cargando:true};
+  pintarEditor();
+  try{S.ed.basePags=base?{...await textoVersion(doc,base)}:{};}catch(e){aviso('No se pudo cargar la versión de partida'); S.ed=null; pintarEditor(); return;}
+  await cargarPaginaEditor();
+}
+async function cargarPaginaEditor(){
+  const e=S.ed; if(!e) return; const p=e.pag;
+  e.cargando=true; pintarEditor();
+  if(!(p in e.orig)) e.orig[p]=await textoOriginal(e.doc,p);
+  if(!(p in e.textos)) e.textos[p]=e.basePags[p]??e.orig[p];
+  e.cargando=false; pintarEditor();
+}
+function cambiosEditor(){
+  const e=S.ed, final={...e.basePags};
+  for(const [p,t] of Object.entries(e.textos)){if(t!==e.orig[p]) final[p]=t; else delete final[p];}
+  const igual=JSON.stringify(Object.entries(final).sort())===JSON.stringify(Object.entries(e.basePags).sort());
+  return {final,igual};
+}
+function pintarEditor(){
+  let c=document.getElementById('editor');
+  if(!S.ed){if(c) c.remove(); document.body.style.overflow=''; return;}
+  if(!c){c=document.createElement('div'); c.id='editor'; document.body.appendChild(c);}
+  const e=S.ed, info=DOCS[e.doc], N=info.paginas, txt=e.textos[e.pag]??'', cambiada=e.pag in e.textos?txt!==e.orig[e.pag]:e.pag in e.basePags;
+  const nCamb=Object.keys(cambiosEditor().final).length;
+  const foco=document.activeElement&&document.activeElement.id, sel=foco==='edTxt'?[document.activeElement.selectionStart,document.activeElement.selectionEnd]:null;
+  c.innerHTML=`<div class="prev-fondo"></div>
+    <div class="ed-caja" role="dialog" aria-modal="true" aria-label="Editar ${esc(e.doc)}">
+      <div class="ed-cab"><div style="flex:1;min-width:0"><b>Editar ${esc(e.doc)}</b>
+        <div class="small">A partir de: ${e.base?`versión ${e.base}`:'original del auditor'} · El PDF original no se modifica: se guarda una versión nueva.</div></div>
+        <button class="prev-x" data-act="cerrarEditor" aria-label="Cerrar sin guardar" title="Cerrar sin guardar">×</button></div>
+      <div class="ed-cuerpo">
+        <div class="ed-pag"><img src="${D.carpeta}/${info.slug}_${e.pag}.jpg" alt="Página ${e.pag} del original"></div>
+        <div class="ed-texto">
+          <div class="small" style="display:flex;gap:8px;align-items:center">Texto de la página ${e.pag}${cambiada?'<span class="rolpill" style="margin:0;background:#fff4e0;color:#c76a00">Modificada</span>':''}
+            ${cambiada?`<button class="enlace" data-act="edRestaurar" style="margin-left:auto">Volver al texto original</button>`:''}</div>
+          ${e.cargando?'<p class="small">Cargando…</p>':`<textarea id="edTxt" aria-label="Texto de la página ${e.pag}">${esc(txt)}</textarea>`}
+          ${!e.cargando&&!e.orig[e.pag]&&!txt?'<p class="note" style="margin:0">Esta página no tiene texto extraído (por ejemplo, un escaneado sin transcripción). Puedes escribirlo tú.</p>':''}
+        </div>
+      </div>
+      <div class="ed-pie">
+        <div style="display:flex;align-items:center;gap:6px">
+          <button class="ghost" data-act="edPag" data-v="-1" ${e.pag<=1?'disabled':''} aria-label="Página anterior">◀</button>
+          <span class="small" style="min-width:96px;text-align:center">Página ${e.pag} de ${N}</span>
+          <button class="ghost" data-act="edPag" data-v="1" ${e.pag>=N?'disabled':''} aria-label="Página siguiente">▶</button></div>
+        <input id="edNota" placeholder="Nota de la versión (qué cambiaste y por qué)" value="${esc(e.nota)}" aria-label="Nota de la versión" style="flex:1;min-width:200px">
+        <span class="small" id="edCnt">${nCamb} ${nCamb===1?'página cambiada':'páginas cambiadas'}</span>
+        <button class="ghost" data-act="cerrarEditor">Cancelar</button>
+        <button class="ok" data-act="edGuardar" ${e.cargando?'disabled':''}>Guardar como versión nueva</button></div>
+    </div>`;
+  document.body.style.overflow='hidden';
+  const t=document.getElementById(foco||'');
+  if(t){t.focus(); if(sel) try{t.setSelectionRange(sel[0],sel[1]);}catch(err){}} else c.querySelector('.prev-x').focus();
+  aplicarIdioma();
+}
+async function guardarVersion(){
+  const e=S.ed, {final,igual}=cambiosEditor();
+  if(!Object.keys(final).length||igual){aviso('No hay cambios respecto a la versión de partida'); return;}
+  const r=await api('/api/version/guardar',{doc:e.doc,nota:e.nota,paginas:final});
+  if(r.ok){aviso(`Guardada la versión ${r.n} de ${e.doc}`); S.ed=null; pintarEditor(); await sondear(); render();}
+}
+async function descargarVersion(doc,n){
+  const N=DOCS[doc].paginas, pags=n?await textoVersion(doc,n):{}, partes=[];
+  for(let p=1;p<=N;p++) partes.push(`[página ${p}${p in pags?' · modificada':''}]\n${p in pags?pags[p]:await textoOriginal(doc,p)}`);
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([partes.join('\n\n')],{type:'text/plain;charset=utf-8'}));
+  a.download=`${doc}_${n?'v'+n:'original'}.txt`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+}
+async function compararVersion(doc,n,pag){
+  const vs=versionesDe(doc).find(v=>v.n===n); if(!vs) return;
+  pag=pag||vs.paginas[0];
+  S.cmp={doc,n,pag,cargando:true}; render();
+  try{const [o,v]=await Promise.all([textoOriginal(doc,pag),textoVersion(doc,n)]); if(S.cmp&&S.cmp.doc===doc&&S.cmp.n===n) Object.assign(S.cmp,{orig:o,txt:v[pag]??o,cargando:false});}
+  catch(err){S.cmp=null; aviso('No se pudo cargar la versión');}
+  render();
+}
+function vVersiones(){
+  if(!SRV) return `<h2>Versiones</h2><div class="card"><p class="sub" style="margin:0">Las versiones editables necesitan la revisión en equipo: en la carpeta del auditor ejecuta <b>python servidor.py</b> y abre la dirección que muestra.</p></div>`;
+  const conV=Object.keys(DOCS).filter(d=>versionesDe(d).length).sort();
+  const tarjeta=d=>{
+    const info=DOCS[d], vs=versionesDe(d).reverse();
+    const cmp=S.cmp&&S.cmp.doc===d?S.cmp:null;
+    const filaV=v=>`<div class="ver-fila"><span class="rolpill" style="margin:0">v${v.n}</span>
+        <div style="flex:1;min-width:0"><div><b>${esc(v.user)}</b> · <span class="small">${fmtFecha(v.fecha)}</span></div>
+        <div class="small">${v.nota?esc(v.nota)+' · ':''}${v.paginas.length===1?'Página':'Páginas'} ${v.paginas.join(', ')}</div></div>
+        <button class="ghost" data-act="verCmp" data-doc="${esc(d)}" data-n="${v.n}" aria-expanded="${!!(cmp&&cmp.n===v.n)}">Comparar</button>
+        <button class="ghost" data-act="editarDoc" data-doc="${esc(d)}" data-n="${v.n}">Editar a partir de esta</button>
+        <button class="ghost" data-act="descVer" data-doc="${esc(d)}" data-n="${v.n}" title="Texto completo del documento en esta versión">.txt</button></div>
+      ${cmp&&cmp.n===v.n?vComparar(cmp,v):''}`;
+    return `<div class="card" style="margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><div style="flex:1;min-width:0"><h3 style="margin:0">${esc(d)}</h3><div class="small">${esc(info.titulo)} · ${info.paginas} páginas</div></div>
+        <button class="ok" data-act="editarDoc" data-doc="${esc(d)}">✎ Nueva versión</button></div>
+      <div class="ver-fila ver-orig"><span class="rolpill" style="margin:0;background:#e8f7ed;color:#248a3d">Original</span>
+        <div style="flex:1;min-width:0"><b>PDF auditado</b> <span class="small">v${esc(info.version||'')} · intacto, nunca se modifica</span></div>
+        <button class="ghost" data-act="abrir" data-doc="${esc(d)}">Abrir en Revisión</button>
+        <button class="ghost" data-act="descVer" data-doc="${esc(d)}" data-n="0" title="Texto del original">.txt</button></div>
+      ${vs.map(filaV).join('')||'<p class="small" style="margin:8px 0 0">Todavía no hay versiones editadas.</p>'}</div>`;
+  };
+  const otros=Object.keys(DOCS).filter(d=>!conV.includes(d)).sort();
+  return `<h2>Versiones</h2>
+    <p class="sub">Aquí se guarda el original de cada PDF auditado, que nunca se modifica, y debajo las versiones editadas por el equipo: quién, cuándo, por qué y qué páginas cambió.</p>
+    <div class="card" style="margin-bottom:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <label class="small" for="verNuevo">Editar un documento:</label>
+      <select id="verNuevo" style="flex:1;min-width:220px"><option value="">Elige un documento…</option>${Object.keys(DOCS).sort().map(d=>`<option value="${esc(d)}">${esc(d)} · ${esc(DOCS[d].titulo)}</option>`).join('')}</select></div>
+    ${conV.map(tarjeta).join('')||'<div class="card small">Aún no hay versiones. Abre un documento en Revisión y pulsa «✎ Editar documento», o elige uno arriba.</div>'}
+    ${conV.length&&otros.length?`<p class="small">${otros.length} documentos más solo tienen su original.</p>`:''}`;
+}
+function vComparar(c,v){
+  if(c.cargando) return '<p class="small" style="margin:8px 0">Cargando…</p>';
+  return `<div class="ver-cmp">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><label class="small" for="cmpPag">Página modificada:</label>
+      <select id="cmpPag" data-doc="${esc(c.doc)}" data-n="${c.n}">${v.paginas.map(p=>`<option value="${p}" ${p===c.pag?'selected':''}>${p}</option>`).join('')}</select></div>
+    <div class="small" style="margin-bottom:6px"><span class="ln-del">rojo</span> = quitado del original · <span class="ln-add">amarillo</span> = añadido o cambiado en la versión</div>
+    <div class="ver-col2"><div><div class="small"><b>Original</b></div><pre>${lineasMarcadas(c.orig||'',c.txt||'','ln-del')||'(sin texto)'}</pre></div>
+      <div><div class="small"><b>Versión ${c.n}</b></div><pre>${lineasMarcadas(c.txt||'',c.orig||'','ln-add')||'(vacía)'}</pre></div></div></div>`;
+}
+// Comparación sencilla por líneas: se marca cada línea que no aparece (tal cual) en el otro texto
+function lineasMarcadas(texto,otro,clase){
+  const hay=new Set(otro.split('\n'));
+  return texto.split('\n').map(l=>hay.has(l)?esc(l):`<span class="${clase}">${esc(l)||' '}</span>`).join('\n');
+}
+// ---------- Mi cuenta: perfil, sesiones abiertas (reales, las da el servidor) y política de acceso REAL de la app.
+// Llaves de acceso, app de autenticación y códigos de recuperación aparecen como «Próximamente»: el inicio de sesión
+// es de prototipo y el plan del equipo es que la verificación en dos pasos la haga Microsoft Entra ID (AUTENTICACION.md).
+const SID=(()=>{try{let s=sessionStorage.getItem('rv_sid'); if(!s){s=Math.random().toString(36).slice(2,12); sessionStorage.setItem('rv_sid',s);} return s;}
+  catch(e){return Math.random().toString(36).slice(2,12);}})();
+function navegadorDe(ua){
+  const nav=/Edg\//.test(ua)?'Edge':/OPR\//.test(ua)?'Opera':/Firefox\//.test(ua)?'Firefox':/Chrome\//.test(ua)?'Chrome':/Safari\//.test(ua)?'Safari':'Navegador';
+  const so=/iPhone|iPad/.test(ua)?'iOS':/Android/.test(ua)?'Android':/Mac OS X|Macintosh/.test(ua)?'macOS':/Windows/.test(ua)?'Windows':/Linux/.test(ua)?'Linux':'';
+  return so?`${nav} (${so})`:nav;
+}
+function vCuenta(){
+  const yo=S.equipo.find(x=>x.n===S.user.nombre);
+  const fila=(k,v)=>`<div class="cta-f"><span>${k}</span><b>${v}</b></div>`;
+  const pronto=(t,d,b)=>`<div class="card cuenta-card"><div style="display:flex;align-items:center;gap:8px"><h3 style="margin:0">${t}</h3><span class="rolpill cta-pronto">Próximamente</span></div>
+      <p class="small">${d}</p><button class="ghost" disabled aria-disabled="true" style="width:100%">${b}</button></div>`;
+  const ses=SRV?(S.sesiones||[]).map(s=>{
+      const esta=s.sid===SID, viva=s.hace_s<20;
+      return `<div class="cta-ses"><span class="dot ${viva?'on':''}" title="${viva?'Activa':'Inactiva'}"></span>
+        <div style="min-width:0;flex:1"><div><b>${esc(navegadorDe(s.ua))}</b>${esta?' <span class="rolpill" style="margin:0 0 0 6px">Esta</span>':''}</div>
+        <div class="small">Desde ${fmtFecha(s.inicio)} · ${viva?'activa ahora':'última señal '+hace(new Date(Date.now()-s.hace_s*1000).toISOString())}</div></div></div>`;
+    }).join('')||'<p class="small">Cargando…</p>'
+    :'<p class="small">Sin la revisión en equipo (python servidor.py) no hay sesiones compartidas: estás solo en este navegador.</p>';
+  return `<h2 style="margin-bottom:2px">Mi cuenta</h2><p class="sub">Tus datos y cómo entras.</p>
+    <div class="cta-grid">
+      <div class="card cuenta-card"><h3>Perfil</h3>
+        ${fila('Nombre visible',esc(S.user.nombre))}${fila('Usuario',esc(S.user.login||'—'))}${fila('Correo',esc(S.user.correo||(yo&&yo.c)||'—'))}
+        ${fila('Rol',esc(yo?yo.rol:'Sin rol · no está en el equipo'))}${fila('Esta sesión',`Prototipo · sin contraseña real`)}
+        <div class="cta-f" style="align-items:center"><span>Idioma</span><div class="seg" role="group" aria-label="Idioma">
+          <button data-act="lang" data-v="es" class="${S.lang==='es'?'on':''}">ES</button><button data-act="lang" data-v="en" class="${S.lang==='en'?'on':''}">EN</button></div></div>
+        <button class="ghost" data-act="logout" style="width:100%;margin-top:6px">Cerrar sesión</button></div>
+      ${pronto('Llaves de acceso','Servirán como segundo paso y para entrar sin contraseña. Llegarán con el inicio de sesión de Microsoft (Entra ID).','Añadir una llave de acceso')}
+      ${pronto('App de autenticación','Códigos de 6 dígitos con Microsoft Authenticator. Los pedirá Entra ID al entrar, no esta app.','Configurar')}
+      ${pronto('Códigos de recuperación','Para entrar si pierdes el segundo paso. Llegarán junto con la verificación en dos pasos.','Generar códigos nuevos')}
+      <div class="card cuenta-card"><h3>Sesiones abiertas</h3><p class="small">Dónde has entrado ahora mismo. «Cerrar sesión» quita esta de la lista.</p>${ses}</div>
+      <div class="card cuenta-card"><h3>Política de acceso</h3>
+        <p class="small" style="margin-bottom:4px"><b style="color:var(--text)">Hoy, en este prototipo:</b></p>
+        <ul class="cta-ul">
+          <li>El inicio de sesión no comprueba contraseñas: cada decisión, comentario y mensaje queda firmado con tu nombre.</li>
+          <li>Solo un administrador da de alta o de baja a miembros, cambia roles y crea canales públicos.</li>
+          <li>Cada persona solo recibe los chats en los que está, y los adjuntos solo se sirven a quien ve ese chat.</li>
+          <li>Un mensaje del chat solo se puede editar durante 30 minutos.</li>
+          <li>El PDF original y respuestas.csv nunca se modifican: ediciones y versiones se guardan aparte.</li>
+          <li>Todo se guarda en el ordenador que ejecuta el servidor; nada sale fuera.</li></ul>
+        <p class="small" style="margin:10px 0 4px"><b style="color:var(--text)">Previsto:</b></p>
+        <ul class="cta-ul cta-prev">
+          <li>Entrar con la cuenta de Microsoft (Entra ID) y verificación en dos pasos con Microsoft Authenticator.</li>
+          <li>Roles (Administrador, Aprobador, Revisor) asignados desde Entra ID.</li></ul></div>
+    </div>`;
+}
+function vPestanas(){
+  return `<div class="tabs" role="tablist" aria-label="Documentos abiertos">${S.tabs.map(d=>{
+    const on=d===S.doc, pend=RES.filter(r=>r.documento===d&&!decOf(r)).length;
+    return `<div class="tab ${on?'on':''}" role="presentation">
+      <button role="tab" aria-selected="${on}" class="tab-b" data-act="irPestana" data-doc="${esc(d)}" title="${esc(d)} · ${esc((DOCS[d]||{}).titulo||'')}">
+        <span class="tab-n">${esc(d)}</span>${pend?`<span class="cnt" style="background:var(--sec)">${pend}</span>`:''}</button>
+      <button class="tab-x" data-act="cerrarPestana" data-doc="${esc(d)}" aria-label="Cerrar ${esc(d)}" title="Cerrar pestaña">×</button></div>`;
+  }).join('')}</div>`;
 }
 
 // Sobre qué se aplica la decisión: los seleccionados pendientes; si no hay ninguno, el hallazgo activo.
@@ -1109,13 +1558,14 @@ function vDecision(){
 
 function vRevision(){
   const info=DOCS[S.doc];
-  return `<div class="pnav" style="margin-bottom:14px">
+  return `${vPestanas()}<div class="pnav" style="margin-bottom:14px">
       <button class="ghost" data-act="volver">← Listado</button>
       <h2 style="margin:0">${esc(S.doc)}</h2><span class="small">v${esc(info.version)} · ${esc(info.titulo)}</span>
       <div class="sp"></div>
       <button class="ghost iconbtn" data-act="toggleExtra" aria-label="Comentario sin hallazgo de la IA" title="Comentario sin hallazgo de la IA">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
       </button>
+      ${SRV?`<button class="ghost" data-act="editarDoc" data-doc="${esc(S.doc)}" title="Crea una versión editada; el PDF original no se modifica${versionesDe(S.doc).length?` (${versionesDe(S.doc).length} ya guardadas en Versiones)`:''}">✎ Editar${versionesDe(S.doc).length?` · v${versionesDe(S.doc).length}`:''}</button>`:''}
       <button class="ghost" data-act="criterios">Criterios</button>
     </div>
     <div class="two">
@@ -1168,8 +1618,9 @@ function vInicio(){
             hechos:hechos.length,tipos,quien,est:estadoDoc(rs),abrir:rs.length>0};
   }).sort((a,b)=>(b.pend-a.pend)||(b.hall-a.hall)||a.nombre.localeCompare(b.nombre));
   S.uploads.forEach(u=>docs.push({nombre:u.nombre,titulo:'Cargado el '+fmtFecha(u.fecha),version:'',tipo:'Archivo manual',hall:0,pend:0,hechos:0,tipos:{},quien:[],est:'Cargado · sin procesar',abrir:false}));
-  const q=(S.iq||'').trim().toLowerCase();
-  const base=docs.filter(d=>(!q||(d.nombre+' '+d.titulo+' '+d.tipo+' '+d.quien.join(' ')).toLowerCase().includes(q))&&(!S.itipo||d.tipo===S.itipo));
+  const q=(S.iq||'').trim().toLowerCase(), fh=hayFiltroH();
+  docs.forEach(d=>{d.coinc=fh?RES.filter(r=>r.documento===d.nombre&&pasaFiltroH(r)).length:null;});
+  const base=docs.filter(d=>(!q||(d.nombre+' '+d.titulo+' '+d.tipo+' '+d.quien.join(' ')).toLowerCase().includes(q))&&(!S.itipo||d.tipo===S.itipo)&&(!fh||d.coinc>0));
   const vis=base.filter(d=>!S.iest||d.est===S.iest);
   const familias=[...new Set(docs.map(d=>d.tipo))].sort();
   const pestanas=[['','Todos'],['Pendiente','Pendientes'],['En revisión','En revisión'],['Completado','Completados'],['Sin hallazgos','Sin hallazgos']]
@@ -1181,17 +1632,34 @@ function vInicio(){
     return `<div class="drow ${d.abrir?'':'off'}" style="--c:${ec[2]}" ${d.abrir?`data-act="abrir" data-doc="${esc(d.nombre)}" role="button" tabindex="0" aria-label="Abrir ${esc(d.nombre)}"`:''}>
       <div><div class="cod">${esc(d.nombre)}</div><div class="small">${esc(d.tipo)}${d.version?' · v'+esc(d.version):''}</div></div>
       <div><div class="tit">${esc(d.titulo)}</div>${etiquetas||'<span class="small">El auditor no encontró defectos en este documento.</span>'}${d.quien.length?`<div class="small" style="margin-top:2px">Revisado por ${esc(d.quien.join(', '))}</div>`:''}</div>
-      <div class="estado">${pill('● '+esc(d.est),ec)}${avance}</div>
+      <div class="estado">${pill('● '+esc(d.est),ec)}${avance}${fh?`<div class="small" style="margin-top:4px;color:var(--tint);font-weight:600">${d.coinc} de ${d.hall} coinciden</div>`:''}</div>
     </div>`;
   });
+  // Filtros de hallazgos (como en la referencia): decisión, tipo, familia, cláusula, confianza y casillas
+  const tiposH=[...new Set(RES.map(r=>r.tipo))].sort(), clausulas=[...new Set(RES.map(r=>r.clausula).filter(Boolean))].sort();
+  const segDec=[['','Todos'],['pend','Pendiente'],['approved','Aceptado'],['rejected','Rechazado']]
+    .map(([v,l])=>`<button role="tab" aria-selected="${S.hdec===v}" data-act="hdec" data-v="${v}" class="${S.hdec===v?'on':''}">${l}</button>`).join('');
+  const casilla=(id,l)=>`<label class="fchk"><input type="checkbox" id="${id}" ${S[id]?'checked':''}><span>${l}</span></label>`;
+  const filtrosH=`<div class="ffil">
+      <input id="iq" type="search" placeholder="Filtrar la lista" value="${esc(S.iq||'')}" aria-label="Filtrar la lista de documentos" style="width:100%">
+      <div class="seg fdec" role="tablist" aria-label="Decisión sobre los hallazgos">${segDec}</div>
+      <div class="fsel">
+        <select id="htipo" aria-label="Tipo de hallazgo"><option value="">Cualquier tipo</option>${tiposH.map(t=>`<option ${S.htipo===t?'selected':''}>${esc(t)}</option>`).join('')}</select>
+        <select id="itipo" aria-label="Familia del documento"><option value="">Cualquier familia</option>${familias.map(t=>`<option ${S.itipo===t?'selected':''}>${esc(t)}</option>`).join('')}</select>
+        <select id="hclau" aria-label="Cláusula"><option value="">Cualquier cláusula</option>${clausulas.map(c=>`<option ${S.hclau===c?'selected':''}>${esc(c)}</option>`).join('')}</select>
+      </div>
+      <div class="fopt">
+        <label class="fconf">Confianza ≥ <input id="hconf" type="range" min="0" max="1" step="0.05" value="${S.hconf}" aria-label="Confianza mínima"><output id="hconfV">${S.hconf.toFixed(2)}</output></label>
+        ${casilla('hmios','Míos')}${casilla('hnuevos','Nuevos')}${casilla('hcoms','Con comentarios')}
+        ${fh||S.itipo||S.iq?'<button class="enlace" data-act="limpiarFiltros" style="margin-left:auto">Limpiar filtros</button>':''}
+      </div>
+    </div>`;
   return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><h2 style="margin:0">Inicio</h2>${pill(`${docs.length} documentos · ${RES.length} hallazgos`,GRIS)}</div>
     <p class="sub">Documentos auditados. Pulsa uno para revisar sus hallazgos junto al PDF.</p>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center">
-      <input id="iq" type="search" placeholder="Buscar documento, título, familia o revisor" value="${esc(S.iq||'')}" aria-label="Buscar documentos" style="flex:1;min-width:220px">
-      <select id="itipo" aria-label="Filtrar por familia"><option value="">Todas las familias</option>${familias.map(t=>`<option ${S.itipo===t?'selected':''}>${esc(t)}</option>`).join('')}</select>
-      <label style="cursor:pointer;padding:9px 16px;border-radius:10px;background:#e5e5ea;font-size:14px">Cargar archivo<input id="archivo" type="file" accept=".pdf,.docx,.csv,.xlsx" style="display:none"></label>
-    </div>
-    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px"><div class="seg" role="tablist" aria-label="Estado">${pestanas}</div><span class="small">${vis.length} de ${docs.length} documentos</span></div>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px"><div class="seg" role="tablist" aria-label="Estado del documento">${pestanas}</div>
+      <span class="small">${vis.length} de ${docs.length} documentos</span>
+      <label style="cursor:pointer;padding:9px 16px;border-radius:10px;background:#e5e5ea;font-size:14px;margin-left:auto">Cargar archivo<input id="archivo" type="file" accept=".pdf,.docx,.csv,.xlsx" style="display:none"></label></div>
+    ${filtrosH}
     <div class="dlist">${filas.join('')||'<div class="card small">Ningún documento coincide con el filtro.</div>'}</div>
     <p class="note">Al cargar un archivo, esta pantalla solo lo registra. La auditoría la hace la solución: <b>python auditar.py</b> genera respuestas.csv sin intervención manual.</p>`;
 }
@@ -1551,8 +2019,8 @@ function vCfg(){
   </div>${body}`;
 }
 
-const VIEWS={inicio:vInicio,revision:vRevision,ia:vIA,historico:vHist,chat:vChat,reglas:vCfg,usuarios:vCfg};
-const TITLES={inicio:'Inicio',revision:'Revisión',ia:'Panel de control IA',historico:'Histórico',chat:'Chat',reglas:'Configuración · Reglas',usuarios:'Configuración · Usuarios y roles'};
+const VIEWS={inicio:vInicio,revision:vRevision,ia:vIA,historico:vHist,versiones:vVersiones,chat:vChat,reglas:vCfg,usuarios:vCfg,cuenta:vCuenta};
+const TITLES={inicio:'Inicio',revision:'Revisión',ia:'Panel de control IA',historico:'Histórico',versiones:'Versiones',chat:'Chat',reglas:'Configuración · Reglas',usuarios:'Configuración · Usuarios y roles',cuenta:'Mi cuenta'};
 
 function render(){
   // Conserva lo que el usuario está escribiendo y el desplazamiento de las listas al redibujar (llegan novedades del equipo)
@@ -1614,7 +2082,10 @@ document.addEventListener('click',e=>{
   if(!el||el.disabled) return;
   const a=el.dataset.act;
   if(a==='elegirMencion'){elegirMencion(el.dataset.v); return;}
-  if(a==='editarMsg'){S.editMsg=Number(el.dataset.id); S.editTxt=undefined; render(); const t=document.getElementById('eMsg'); if(t){t.focus(); t.setSelectionRange(t.value.length,t.value.length);} return;}
+  if(a==='editarMsg'){
+    const m=(S.mensajes||[]).find(x=>x.id===Number(el.dataset.id));
+    if(!m||minEditables(m)<=0){aviso(`Solo se puede editar un mensaje durante ${EDITAR_MIN} minutos`); render(); return;}
+    S.editMsg=Number(el.dataset.id); S.editTxt=undefined; render(); const t=document.getElementById('eMsg'); if(t){t.focus(); t.setSelectionRange(t.value.length,t.value.length);} return;}
   if(a==='cancelarMsg'){S.editMsg=null; S.editTxt=undefined; render(); return;}
   if(a==='guardarMsg'){
     const id=Number(el.dataset.id), texto=(document.getElementById('eMsg').value||'').trim();
@@ -1636,8 +2107,31 @@ document.addEventListener('click',e=>{
     const b=[...document.querySelectorAll('#avisos .noti-cuerpo')].find(x=>x.dataset.k===k); if(b) b.focus();
     return;
   }
+  if(a==='cerrarBanner'){quitarBanner(el.dataset.bid); return;}
+  if(a==='vaciarChat'){
+    const c=S.chats.find(x=>x.id===el.dataset.v); if(!c) return;
+    if(!confirm(`¿Vaciar ${nombreChat(c)}? Los mensajes se borran solo para ti: los demás los siguen viendo. No se puede deshacer.`)) return;
+    S.mensajes=(S.mensajes||[]).filter(m=>m.canal!==c.id); S.avisos=(S.avisos||[]).filter(x=>x.key!=='chat:'+c.id); render();
+    api('/api/chat/vaciar',{id:c.id}).then(r=>{if(r.ok) aviso('Chat vaciado'); sondear();});
+    return;
+  }
+  if(a==='prevAdj'){abrirPrev(el.dataset.id,el); return;}
+  if(a==='editarDoc'){abrirEditor(el.dataset.doc,el.dataset.n?Number(el.dataset.n):undefined); return;}
+  if(a==='cerrarEditor'){
+    if(S.ed&&!cambiosEditor().igual&&!confirm('¿Cerrar sin guardar? Se perderán los cambios de esta edición.')) return;
+    S.ed=null; pintarEditor(); return;
+  }
+  if(a==='edPag'){const e=S.ed; if(!e) return; e.pag=Math.min(DOCS[e.doc].paginas,Math.max(1,e.pag+Number(el.dataset.v))); cargarPaginaEditor(); return;}
+  if(a==='edRestaurar'){const e=S.ed; if(!e) return; e.textos[e.pag]=e.orig[e.pag]; pintarEditor(); return;}
+  if(a==='edGuardar'){guardarVersion(); return;}
+  if(a==='verCmp'){const d=el.dataset.doc,n=Number(el.dataset.n); if(S.cmp&&S.cmp.doc===d&&S.cmp.n===n){S.cmp=null; render();} else compararVersion(d,n); return;}
+  if(a==='descVer'){descargarVersion(el.dataset.doc,Number(el.dataset.n)).catch(()=>aviso('No se pudo preparar el archivo')); return;}
+  if(a==='irPestana'){if(el.dataset.doc!==S.doc){abrirRevision(el.dataset.doc); render();} return;}
+  if(a==='cerrarPestana'){cerrarPestana(el.dataset.doc); render(); window.scrollTo(0,0); return;}
+  if(a==='cerrarPrev'){cerrarPrev(); return;}
   if(a==='irAviso'){                                          // «Ver»: abre el chat o el hallazgo y borra ese grupo de la campanita
     const k=el.dataset.k;
+    (S.banners||[]).filter(b=>b.k===k).forEach(b=>quitarBanner(b.id));
     S.avisos=(S.avisos||[]).filter(x=>x.key!==k); S.expAviso.delete(k); api('/api/avisos/borrar',{key:k});
   }
   if(a==='irAviso'&&el.dataset.k.startsWith('chat:')){
@@ -1720,6 +2214,8 @@ document.addEventListener('click',e=>{
   else if(a==='nav'){S.view=el.dataset.v; toggleDrawer(false); render(); window.scrollTo(0,0);}
   else if(a==='abrir'){abrirRevision(el.dataset.doc); render(); window.scrollTo(0,0);}
   else if(a==='iest'){S.iest=el.dataset.v; render();}
+  else if(a==='hdec'){S.hdec=el.dataset.v; render();}
+  else if(a==='limpiarFiltros'){Object.assign(S,{iq:'',itipo:'',hdec:'',htipo:'',hclau:'',hconf:0,hmios:false,hnuevos:false,hcoms:false}); render();}
   else if(a==='abrirH'){abrirRevision(el.dataset.doc); const i=R().findIndex(r=>r.ubicacion===el.dataset.u); if(i>=0) irA(i); render(); window.scrollTo(0,0);}
   else if(a==='volver'){S.view='inicio'; S.sel={}; S.comment=''; render(); window.scrollTo(0,0);}
   else if(a==='criterios'){S.criteriosOpen=true; render();}
@@ -1764,12 +2260,24 @@ document.addEventListener('click',e=>{
   else if(a==='exportar'){exportar(el.dataset.c,el.dataset.f);}
   else if(a==='exres') exportRespuestas();
   else if(a==='exfb') exportFeedback();
-  else if(a==='logout'){S.view='inicio'; document.getElementById('app').classList.add('hidden'); document.getElementById('login').classList.remove('hidden'); toggleDrawer(false);}
+  else if(a==='logout'){
+    if(SRV&&S.user.nombre) api('/api/sesion/cerrar',{sid:SID});     // deja de salir en «Sesiones abiertas» y «en línea»
+    clearInterval(S.sondeo); S.sondeo=null;                          // antes seguía sondeando con el usuario anterior
+    S.view='inicio'; document.getElementById('app').classList.add('hidden'); document.getElementById('login').classList.remove('hidden'); toggleDrawer(false);
+  }
+  else if(a==='cuenta'){S.view='cuenta'; toggleDrawer(false); render(); window.scrollTo(0,0);}
 });
 
 document.addEventListener('input',e=>{
   if(e.target.id==='flt'){S.q=e.target.value; render(); const f=document.getElementById('flt'); if(f){f.focus(); f.setSelectionRange(f.value.length,f.value.length);}}
   if(e.target.id==='iq'){S.iq=e.target.value; render(); const f=document.getElementById('iq'); if(f){f.focus(); f.setSelectionRange(f.value.length,f.value.length);}}
+  if(e.target.id==='edTxt'&&S.ed){                                   // editor de versión: sin redibujar (no se pierde el cursor)
+    S.ed.textos[S.ed.pag]=e.target.value;
+    const n=Object.keys(cambiosEditor().final).length, c=document.getElementById('edCnt');
+    if(c) c.textContent=`${n} ${n===1?'página cambiada':'páginas cambiadas'}`;
+  }
+  if(e.target.id==='edNota'&&S.ed){S.ed.nota=e.target.value;}
+  if(e.target.id==='hconf'){const o=document.getElementById('hconfV'); if(o) o.textContent=(+e.target.value).toFixed(2);}   // mientras se arrastra
   if(e.target.id==='fcom'){S.comment=e.target.value;}
   if(e.target.id==='ccom'){S.ccom=e.target.value;}
   if(e.target.id==='ctx'){S.ctx=e.target.value;}
@@ -1785,6 +2293,12 @@ document.addEventListener('input',e=>{
 document.addEventListener('change',e=>{
   if(e.target.id==='ftipo'){S.tipo=e.target.value; render();}
   if(e.target.id==='itipo'){S.itipo=e.target.value; render();}
+  if(e.target.id==='htipo'){S.htipo=e.target.value; render();}
+  if(e.target.id==='verNuevo'&&e.target.value){const d=e.target.value; e.target.value=''; abrirEditor(d);}
+  if(e.target.id==='cmpPag'){compararVersion(e.target.dataset.doc,Number(e.target.dataset.n),Number(e.target.value));}
+  if(e.target.id==='hclau'){S.hclau=e.target.value; render();}
+  if(e.target.id==='hconf'){S.hconf=Number(e.target.value)||0; render();}
+  if(['hmios','hnuevos','hcoms'].includes(e.target.id)){S[e.target.id]=e.target.checked; render();}
   if(e.target.id==='iest'){S.iest=e.target.value; render();}
   if(e.target.id==='umbral'){S.umbral=Math.min(100,Math.max(0,Number(e.target.value)||0)); render();}
   if(e.target.dataset&&e.target.dataset.rol){api('/api/equipo/rol',{n:e.target.dataset.rol,rol:e.target.value}).then(sondear);}
@@ -1808,6 +2322,12 @@ document.addEventListener('change',e=>{
 // En el chat, Intro envía y Mayúsculas+Intro hace salto de línea. Con la lista de @ abierta: ↑ ↓ eligen, Intro/Tab
 // mencionan y Esc la cierra.
 document.addEventListener('keydown',e=>{
+  if(S.ed&&e.key==='Escape'){e.preventDefault(); document.querySelector('#editor [data-act="cerrarEditor"]')?.click(); return;}
+  if(S.prev){                                                     // vista previa abierta: Esc cierra, Tab no sale de ella
+    if(e.key==='Escape'){e.preventDefault(); cerrarPrev(); return;}
+    if(e.key==='Tab'){const f=[...document.querySelectorAll('#prevAdj a,#prevAdj button,#prevAdj video,#prevAdj audio,#prevAdj iframe')];
+      const i=f.indexOf(document.activeElement); if(e.shiftKey?i<=0:i===f.length-1){e.preventDefault(); f[e.shiftKey?f.length-1:0].focus();}}
+  }
   if(S.sug&&e.target.id===S.sug.el){
     if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault(); S.sug.i=(S.sug.i+(e.key==='ArrowDown'?1:-1)+S.sug.items.length)%S.sug.items.length; pintarSugerencias(e.target); return;}
     if(e.key==='Enter'||e.key==='Tab'){e.preventDefault(); elegirMencion(S.sug.items[S.sug.i]); return;}
@@ -1835,6 +2355,8 @@ document.addEventListener('submit',e=>{
     const loc=em.split('@')[0].toLowerCase(), m=S.equipo.find(x=>x.c===em.toLowerCase()||x.n.toLowerCase()===loc.split(/[._\-\s]+/)[0]);
     S.user.nombre=m?m.n:(em.split('@')[0].split(/[._-]+/).filter(Boolean).map(w=>w[0].toUpperCase()+w.slice(1)).join(' ')||'Revisor');
     if(m) S.user.cargo=`${m.rol} · Calidad Part-IS`;
+    S.user.correo=em.includes('@')?em.toLowerCase():(m?m.c:'');          // para «Mi cuenta»
+    S.user.login=(S.user.correo||em).split('@')[0].toLowerCase(); S.user.desde=new Date().toISOString();
     document.getElementById('login').classList.add('hidden');
     document.getElementById('app').classList.remove('hidden');
     render();
