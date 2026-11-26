@@ -152,6 +152,10 @@ def main():
             img = destino / "paginas" / f"{slug}_{n}.jpg"
             if not img.exists():
                 img.write_bytes(pag.get_pixmap(matrix=pymupdf.Matrix(ZOOM, ZOOM)).tobytes("jpg", jpg_quality=72))
+            # Texto de la página (el del escaneado sale de la transcripción con visión, si hay caché): es el punto
+            # de partida de las versiones editables. El PDF original nunca se modifica.
+            txt = d.paginas[n - 1] if n - 1 < len(d.paginas) else ""
+            (destino / "paginas" / f"{slug}_{n}.txt").write_text(txt or "", encoding="utf-8")
         info_docs[cod] = {"slug": slug, "titulo": re.sub(r"\s*Documento$", "", d.titulo.strip()), "version": d.version, "familia": familia(f.parent.name),
                           "paginas": pdf.page_count, "escaneado": d.escaneado}
         for r in df[df.documento == cod].to_dict("records"):

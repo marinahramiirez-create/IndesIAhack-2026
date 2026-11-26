@@ -41,6 +41,7 @@ TIPOS_EN_LINEA = ("image/", "video/", "audio/", "application/pdf", "text/plain")
 
 # Equipo inicial (después se gestiona desde Configuración → Usuarios y roles; se guarda en colaboracion.json).
 ROLES = ("Administrador", "Aprobador", "Revisor")
+EDITAR_MIN = 30           # minutos durante los que se puede editar un mensaje del chat (la página usa el mismo valor)
 EQUIPO_INICIAL = [{"n": "Sergio", "c": "sergio@airbus.es", "rol": "Administrador"},
                   {"n": "Marina", "c": "marina@airbus.es", "rol": "Aprobador"},
                   {"n": "Nelson", "c": "nelson@airbus.es", "rol": "Revisor"},
@@ -51,7 +52,10 @@ _lock = threading.Lock()
 _estado = {"seq": 0, "dec": {}, "comentarios": [], "avisos": [], "mensajes": [], "equipo": [dict(m) for m in EQUIPO_INICIAL],
            "chats": [{"id": "general", "tipo": "canal", "nombre": "general", "autor": "", "miembros": {}}], "n_grupos": 0,
            "adjuntos": {},       # id → {nombre, tipo, tam, chat, user, fecha, archivo}
-           "ediciones": {}}      # clave del hallazgo → [{user, fecha, tipo, clausula, justificacion}] (el original no se toca)
+           "ediciones": {},      # clave del hallazgo → [{user, fecha, tipo, clausula, justificacion}] (el original no se toca)
+           "versiones": {}}      # documento → [{n, user, fecha, nota, paginas: [nº de página cambiadas]}]; el texto va aparte
+VERSIONES = RAIZ / "salidas" / "versiones"   # un JSON por versión; el PDF original del corpus nunca se modifica
+MAX_VERSION = 3_000_000                      # bytes del cuerpo al guardar una versión (el resto de peticiones: 20 KB)
 _presencia: dict[str, dict] = {}       # usuario → {"key", "t"}
 
 
@@ -161,9 +165,9 @@ class Manejador(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(cuerpo)
 
-    def _cuerpo(self) -> dict:
+    def _cuerpo(self, limite: int = 20000) -> dict:
         n = int(self.headers.get("Content-Length", 0) or 0)
-        if n > 20000:
+        if n > limite:
             return {}
         try:
             return json.loads(self.rfile.read(n).decode("utf-8") or "{}")
@@ -224,6 +228,13 @@ class Manejador(SimpleHTTPRequestHandler):
         u = urlparse(self.path)
         if u.path == "/api/adjunto":
             return self._adjunto(parse_qs(u.query))
+        if u.path == "/api/version":                  # texto completo de una versión (la lista va en /api/estado)
+            q = parse_qs(u.query)
+            doc, n = (q.get("doc") or [""])[0], (q.get("n") or [""])[0]
+            f = VERSIONES / f"{doc}_v{n}.json"
+            if not re.fullmatch(r"[\w.\-]+", doc) or not n.isdigit() or not f.exists():
+                return self._json({"error": "versión no encontrada"}, 404)
+            return self._json(json.loads(f.read_text(encoding="utf-8")))
         if u.path != "/api/estado":
             return super().do_GET()
         q = parse_qs(u.query)
@@ -235,16 +246,20 @@ class Manejador(SimpleHTTPRequestHandler):
             vivos = {n: p["key"] for n, p in _presencia.items() if time.time() - p["t"] < PRESENCIA_S}
             chats = [c for c in _estado["chats"] if _ve(user, c)]          # cada uno solo recibe lo que puede ver
             ids = {c["id"] for c in chats}
+            vaciado = _estado.setdefault("vaciados", {}).get(user, {})     # «Vaciar chat» es solo para quien lo pide
+            visibles = [m for m in _estado["mensajes"]
+                        if m["canal"] in ids and m.get("id", 0) > vaciado.get(m["canal"], 0)]
             self._json({"seq": _estado["seq"], "dec": _estado["dec"], "comentarios": _estado["comentarios"],
                         "avisos": [a for a in _estado["avisos"] if a["para"] == user], "presencia": vivos,
-                        "chats": chats, "mensajes": [m for m in _estado["mensajes"] if m["canal"] in ids][-800:],
-                        "equipo": _estado["equipo"], "ediciones": _estado["ediciones"]})
+                        "chats": chats, "mensajes": visibles[-800:],
+                        "equipo": _estado["equipo"], "ediciones": _estado["ediciones"],
+                        "versiones": _estado.get("versiones", {})})
 
     def do_POST(self):
         u = urlparse(self.path).path
         if u == "/api/subir":
             return self._subir()
-        d = self._cuerpo()
+        d = self._cuerpo(MAX_VERSION if u == "/api/version/guardar" else 20000)
         user = str(d.get("user", ""))[:80].strip()
         if not user:
             return self._json({"error": "falta el usuario"}, 400)
@@ -295,6 +310,8 @@ class Manejador(SimpleHTTPRequestHandler):
                 texto = str(d.get("texto", "")).strip()[:MAX_TEXTO]
                 if not m or m["user"] != user:
                     return self._json({"error": "solo puedes editar tus propios mensajes"}, 403)
+                if (datetime.now() - datetime.fromisoformat(m["fecha"])).total_seconds() > EDITAR_MIN * 60:
+                    return self._json({"error": f"solo se puede editar un mensaje durante {EDITAR_MIN} minutos"}, 403)
                 if not texto and not m.get("adjuntos"):
                     return self._json({"error": "el mensaje no puede quedar vacío"}, 400)
                 m.setdefault("original", m["texto"])
@@ -397,6 +414,28 @@ class Manejador(SimpleHTTPRequestHandler):
                     for m in eq:
                         if m["n"] == n:
                             m["rol"] = rol
+            elif u == "/api/version/guardar":              # versión editada de un PDF: nunca pisa el original ni otra versión
+                doc = str(d.get("doc", ""))[:120]
+                pags = d.get("paginas") if isinstance(d.get("paginas"), dict) else {}
+                pags = {str(int(k)): str(v)[:100_000] for k, v in list(pags.items())[:500]
+                        if str(k).isdigit() and isinstance(v, str)}
+                if not doc or not re.fullmatch(r"[\w.\-]+", doc) or not pags:
+                    return self._json({"error": "no hay cambios que guardar"}, 400)
+                lista = _estado.setdefault("versiones", {}).setdefault(doc, [])
+                n = max((v["n"] for v in lista), default=0) + 1
+                VERSIONES.mkdir(parents=True, exist_ok=True)
+                (VERSIONES / f"{doc}_v{n}.json").write_text(json.dumps({"doc": doc, "n": n, "paginas": pags}, ensure_ascii=False),
+                                                            encoding="utf-8")
+                lista.append({"n": n, "user": user, "fecha": _ahora(), "nota": str(d.get("nota", "")).strip()[:300],
+                              "paginas": sorted(int(k) for k in pags)})
+                extra = {"n": n}
+            elif u == "/api/chat/vaciar":                   # vacía el chat SOLO para este usuario; los demás lo siguen viendo
+                c = _chat(str(d.get("id", "")))
+                if not c or not _ve(user, c):
+                    return self._json({"error": "chat no disponible"}, 400)
+                ultimo = max((m.get("id", 0) for m in _estado["mensajes"] if m["canal"] == c["id"]), default=0)
+                _estado.setdefault("vaciados", {}).setdefault(user, {})[c["id"]] = ultimo
+                _estado["avisos"] = [a for a in _estado["avisos"] if not (a["para"] == user and a["key"] == f"chat:{c['id']}")]
             elif u == "/api/visto":                         # «Visto»: este usuario ha visto en pantalla esos mensajes
                 c = _chat(str(d.get("chat", "")))
                 if not c or not _ve(user, c):
