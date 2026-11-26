@@ -35,6 +35,9 @@ WEB = RAIZ / "salidas" / "revision"
 DATOS = RAIZ / "salidas" / "colaboracion.json"
 PRESENCIA_S = 20          # segundos sin señal para dejar de mostrar a alguien como presente
 MAX_TEXTO = 2000
+ADJUNTOS = RAIZ / "salidas" / "adjuntos"      # archivos enviados en el chat (solo se sirven a quien ve ese chat)
+MAX_ADJUNTO = 25 * 1024 * 1024                # 25 MB por archivo
+TIPOS_EN_LINEA = ("image/", "video/", "audio/", "application/pdf", "text/plain")
 
 # Equipo inicial (después se gestiona desde Configuración → Usuarios y roles; se guarda en colaboracion.json).
 ROLES = ("Administrador", "Aprobador", "Revisor")
@@ -46,7 +49,9 @@ EQUIPO_INICIAL = [{"n": "Sergio", "c": "sergio@airbus.es", "rol": "Administrador
 
 _lock = threading.Lock()
 _estado = {"seq": 0, "dec": {}, "comentarios": [], "avisos": [], "mensajes": [], "equipo": [dict(m) for m in EQUIPO_INICIAL],
-           "chats": [{"id": "general", "tipo": "canal", "nombre": "general", "autor": "", "miembros": {}}], "n_grupos": 0}
+           "chats": [{"id": "general", "tipo": "canal", "nombre": "general", "autor": "", "miembros": {}}], "n_grupos": 0,
+           "adjuntos": {},       # id → {nombre, tipo, tam, chat, user, fecha, archivo}
+           "ediciones": {}}      # clave del hallazgo → [{user, fecha, tipo, clausula, justificacion}] (el original no se toca)
 _presencia: dict[str, dict] = {}       # usuario → {"key", "t"}
 
 
@@ -131,6 +136,10 @@ def _miembros_validos(m: dict) -> dict:
 
 
 def _borrar_chat(cid: str):
+    for aid, meta in list(_estado["adjuntos"].items()):          # sus archivos adjuntos también se borran
+        if meta["chat"] == cid:
+            (ADJUNTOS / meta["archivo"]).unlink(missing_ok=True)
+            _estado["adjuntos"].pop(aid)
     _estado["chats"] = [c for c in _estado["chats"] if c["id"] != cid]
     _estado["mensajes"] = [m for m in _estado["mensajes"] if m["canal"] != cid]
     _estado["avisos"] = [a for a in _estado["avisos"] if a["key"] != f"chat:{cid}"]
@@ -161,8 +170,60 @@ class Manejador(SimpleHTTPRequestHandler):
         except (ValueError, UnicodeDecodeError):
             return {}
 
+    def _adjunto(self, q):
+        """Descarga o muestra un archivo del chat, solo si quien lo pide puede ver ese chat."""
+        aid = (q.get("id") or [""])[0]
+        user = (q.get("user") or [""])[0][:80]
+        with _lock:
+            meta = _estado["adjuntos"].get(aid)
+            c = _chat(meta["chat"]) if meta else None
+            if not meta or not c or not _ve(user, c):
+                return self._json({"error": "archivo no disponible"}, 404)
+        ruta = ADJUNTOS / meta["archivo"]
+        if not ruta.exists():
+            return self._json({"error": "archivo no encontrado"}, 404)
+        datos = ruta.read_bytes()
+        en_linea = meta["tipo"].startswith(TIPOS_EN_LINEA) and (q.get("descargar") or ["0"])[0] != "1"
+        nombre = re.sub(r'[^\w.\- ]', "_", meta["nombre"])
+        self.send_response(200)
+        self.send_header("Content-Type", meta["tipo"] or "application/octet-stream")
+        self.send_header("Content-Length", str(len(datos)))
+        self.send_header("Content-Disposition", f'{"inline" if en_linea else "attachment"}; filename="{nombre}"')
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.end_headers()
+        self.wfile.write(datos)
+
+    def _subir(self):
+        """Recibe un archivo (cuerpo binario) para adjuntarlo a un mensaje del chat."""
+        from urllib.parse import unquote
+        user = unquote(self.headers.get("X-User", ""))[:80].strip()
+        chat = unquote(self.headers.get("X-Chat", ""))[:200]
+        nombre = unquote(self.headers.get("X-Nombre", "archivo"))[:120] or "archivo"
+        tipo = (self.headers.get("Content-Type") or "application/octet-stream").split(";")[0][:100]
+        n = int(self.headers.get("Content-Length", 0) or 0)
+        with _lock:
+            c = _chat(chat)
+            permitido = bool(user and c and _ve(user, c))
+        if not permitido or n <= 0 or n > MAX_ADJUNTO:
+            self.close_connection = True          # no se lee el cuerpo: se cierra la conexión
+            if not permitido:
+                return self._json({"error": "no puedes adjuntar en ese chat"}, 403)
+            return self._json({"error": "el archivo está vacío o pasa de 25 MB"}, 400)
+        datos = self.rfile.read(n)
+        aid = f"{int(time.time() * 1000):x}{len(_estado['adjuntos']):x}"
+        ext = Path(nombre).suffix.lower()[:10]
+        ADJUNTOS.mkdir(parents=True, exist_ok=True)
+        (ADJUNTOS / f"{aid}{ext}").write_bytes(datos)
+        with _lock:
+            _estado["adjuntos"][aid] = {"nombre": nombre, "tipo": tipo, "tam": n, "chat": chat, "user": user,
+                                        "fecha": _ahora(), "archivo": f"{aid}{ext}"}
+            _guardar()
+        return self._json({"ok": True, "id": aid, "nombre": nombre, "tipo": tipo, "tam": n})
+
     def do_GET(self):
         u = urlparse(self.path)
+        if u.path == "/api/adjunto":
+            return self._adjunto(parse_qs(u.query))
         if u.path != "/api/estado":
             return super().do_GET()
         q = parse_qs(u.query)
@@ -177,10 +238,12 @@ class Manejador(SimpleHTTPRequestHandler):
             self._json({"seq": _estado["seq"], "dec": _estado["dec"], "comentarios": _estado["comentarios"],
                         "avisos": [a for a in _estado["avisos"] if a["para"] == user], "presencia": vivos,
                         "chats": chats, "mensajes": [m for m in _estado["mensajes"] if m["canal"] in ids][-800:],
-                        "equipo": _estado["equipo"]})
+                        "equipo": _estado["equipo"], "ediciones": _estado["ediciones"]})
 
     def do_POST(self):
         u = urlparse(self.path).path
+        if u == "/api/subir":
+            return self._subir()
         d = self._cuerpo()
         user = str(d.get("user", ""))[:80].strip()
         if not user:
@@ -206,10 +269,18 @@ class Manejador(SimpleHTTPRequestHandler):
             elif u == "/api/mensaje":
                 texto = str(d.get("texto", "")).strip()[:MAX_TEXTO]
                 c = _chat(str(d.get("chat") or d.get("canal") or "general"))
-                if not texto or not c or not _ve(user, c):
+                # Solo se adjuntan archivos subidos por esta persona a este mismo chat
+                adj = [{"id": a, **{k: _estado["adjuntos"][a][k] for k in ("nombre", "tipo", "tam")}}
+                       for a in d.get("adjuntos", [])[:10]
+                       if a in _estado["adjuntos"] and _estado["adjuntos"][a]["user"] == user
+                       and c and _estado["adjuntos"][a]["chat"] == c["id"]]
+                if not (texto or adj) or not c or not _ve(user, c):
                     return self._json({"error": "mensaje vacío o chat no disponible"}, 400)
-                mid = len(_estado["mensajes"]) + 1
-                _estado["mensajes"].append({"id": mid, "canal": c["id"], "user": user, "texto": texto, "fecha": _ahora()})
+                mid = max((m["id"] for m in _estado["mensajes"]), default=0) + 1
+                _estado["mensajes"].append({"id": mid, "canal": c["id"], "user": user, "texto": texto, "fecha": _ahora(),
+                                            **({"adjuntos": adj} if adj else {})})
+                if not texto:
+                    texto = "📎 " + ", ".join(a["nombre"] for a in adj)
                 mencion = _mencionados(texto, user)
                 # Canal público: solo avisa a quien mencionas. Grupo o privado: avisa a todos los que están dentro
                 # (como un chat de mensajería); quien está mencionado lo ve marcado como mención.
@@ -218,6 +289,25 @@ class Manejador(SimpleHTTPRequestHandler):
                     _estado["avisos"].append({"para": p, "de": user, "key": f"chat:{c['id']}", "texto": texto[:300],
                                               "fecha": _ahora(), "leido": False, "mid": mid,
                                               "mencion": p in mencion})
+            elif u == "/api/mensaje/editar":                # cada uno edita solo sus propios mensajes
+                m = next((x for x in _estado["mensajes"] if x["id"] == d.get("id")), None)
+                texto = str(d.get("texto", "")).strip()[:MAX_TEXTO]
+                if not m or m["user"] != user:
+                    return self._json({"error": "solo puedes editar tus propios mensajes"}, 403)
+                if not texto and not m.get("adjuntos"):
+                    return self._json({"error": "el mensaje no puede quedar vacío"}, 400)
+                m.setdefault("original", m["texto"])
+                m["texto"], m["editado"] = texto, _ahora()
+            elif u == "/api/edicion":                       # edición de un hallazgo: se guarda la versión, no se pisa
+                key = str(d.get("key", ""))[:200]
+                campos = {k: str(d.get(k, "")).strip()[:MAX_TEXTO] for k in ("tipo", "clausula", "justificacion")}
+                if not key or not all(campos.values()):
+                    return self._json({"error": "faltan el tipo, la cláusula o la justificación"}, 400)
+                if user not in {m["n"] for m in _estado["equipo"]}:
+                    return self._json({"error": "solo el equipo puede editar hallazgos"}, 403)
+                _estado["ediciones"].setdefault(key, []).append({"user": user, "fecha": _ahora(), **campos})
+            elif u == "/api/edicion/deshacer":              # vuelve al original (quita todas las ediciones)
+                _estado["ediciones"].pop(str(d.get("key", "")), None)
             elif u == "/api/chat/crear":
                 tipo = d.get("tipo")
                 if tipo == "canal":

@@ -125,6 +125,32 @@ mark{background:#ffe27a;padding:0 2px;border-radius:3px}
 .noti-x{position:absolute;top:-7px;left:-7px;width:22px;height:22px;border-radius:50%;padding:0;background:#e5e5ea;color:#3a3a3c;font-size:14px;line-height:22px;box-shadow:0 1px 3px rgba(0,0,0,.2);opacity:0;transition:opacity .15s}
 .noti:hover .noti-x,.noti-x:focus-visible{opacity:1}
 @media (hover:none){.noti-x{opacity:1}}
+/* Exportar en varios formatos */
+.exp-p{margin-top:8px;border:1px solid var(--sep);border-radius:12px;padding:10px 12px;background:#fff}
+.exp-g{padding:6px 0}.exp-g+.exp-g{border-top:1px solid var(--sep);margin-top:4px;padding-top:10px}
+.exp-b{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.exp-b button{font-size:13px;padding:6px 12px}
+/* Ediciones de un hallazgo */
+.editado{font-size:12px;color:#0a6fd6;background:#e5f1ff;border-radius:8px;padding:4px 8px;margin-top:6px}
+.orig{font-size:12px;color:var(--sec);background:#f7f7fa;border:1px dashed var(--sep);border-radius:8px;padding:8px 10px;margin-top:8px}
+.enlace{background:none;color:var(--tint);padding:0;font-size:12px;text-decoration:underline}
+/* Adjuntos del chat */
+.adj-img img{max-width:min(320px,100%);max-height:240px;border-radius:10px;margin-top:6px;display:block;border:1px solid var(--sep)}
+.adj-vid{max-width:min(420px,100%);border-radius:10px;margin-top:6px;display:block}
+.adj-aud{margin-top:6px}.adj-aud audio{max-width:100%}
+.adj-arch{display:flex;align-items:center;gap:10px;border:1px solid var(--sep);border-radius:12px;padding:8px 12px;margin-top:6px;max-width:420px;background:#fff}
+.adj-ico{font-size:24px}.adj-n{font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ghostlink{font-size:13px;color:var(--tint);text-decoration:none;padding:4px 8px;border-radius:8px;background:#f0f6ff;white-space:nowrap}
+.pend{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:#f0f0f5;border-radius:999px;padding:4px 6px 4px 10px;font-size:13px}
+.chip.err{background:#fdeef0;color:#d70015}
+.clip{cursor:pointer;font-size:20px;padding:6px 8px;border-radius:10px;background:#f0f0f5;align-self:flex-end}
+.chatbox.soltar{outline:3px dashed var(--tint);outline-offset:-6px}
+.msg-ed{opacity:0;padding:0 6px}.mens:hover .msg-ed,.msg-ed:focus-visible{opacity:1}
+@media (hover:none){.msg-ed{opacity:1}}
+/* Lista de @ menciones */
+.sugmenc{position:fixed;z-index:70;background:#fff;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.18);border:1px solid var(--sep);overflow:hidden;max-height:300px;overflow-y:auto}
+.sugmenc button{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:#fff;color:var(--text);border-radius:0;padding:7px 12px;font-size:14px}
+.sugmenc button.on,.sugmenc button:hover{background:#e5f1ff}
 .cnt{display:inline-flex;align-items:center;justify-content:center;background:var(--err);color:#fff;font-size:11px;font-weight:700;border-radius:999px;min-width:18px;height:18px;padding:0 5px;margin-left:6px;vertical-align:middle}
 /* Lista propia para «Nuevo privado»: siempre se despliega hacia abajo */
 .desplegable{margin-top:6px;border:1px solid var(--sep);border-radius:10px;overflow:hidden;background:#fff}
@@ -280,6 +306,7 @@ const LS='rv_real_'+D.id;
 try{S.dec=JSON.parse(localStorage.getItem(LS+'_dec')||'{}');}catch(e){S.dec={};}
 try{S.extra=JSON.parse(localStorage.getItem(LS+'_extra')||'[]');}catch(e){S.extra=[];}
 try{S.lang=localStorage.getItem('rv_lang')||'es';}catch(e){S.lang='es';}
+try{S.ediciones=JSON.parse(localStorage.getItem(LS+'_edic')||'{}');}catch(e){S.ediciones={};}
 
 // ---------- Revisión en equipo: con servidor.py (http://…) las decisiones, comentarios, menciones y presencia se
 // comparten; abierta con doble clic (file://) todo sigue funcionando solo en este navegador.
@@ -327,7 +354,7 @@ async function sondear(){
     if(!r.ok) throw new Error(r.status);
     const d=await r.json();
     Object.assign(S,{dec:d.dec,coms:d.comentarios,avisos:d.avisos,pres:d.presencia,
-                     mensajes:d.mensajes||[],chats:d.chats||S.chats});
+                     mensajes:d.mensajes||[],chats:d.chats||S.chats,ediciones:d.ediciones||{}});
     if(d.equipo&&d.equipo.length) S.equipo=d.equipo;
     if(!S.chats.some(c=>c.id===S.canal)) S.canal='general';         // el chat abierto se borró o ya no eres miembro
     const kAbierto='chat:'+S.canal;                                   // lo que ya estás viendo no queda como «nuevo»
@@ -380,9 +407,17 @@ function vChat(){
   if(!SRV) return `<h2>Chat</h2><div class="card"><p class="sub" style="margin:0">El chat del equipo necesita la revisión en equipo: en la carpeta del auditor ejecuta <b>python servidor.py</b> y abre la dirección que muestra.</p></div>`;
   const actual=S.chats.find(c=>c.id===S.canal)||S.chats[0];
   const canal=actual.id;
-  const lista=(S.mensajes||[]).filter(m=>m.canal===canal).map(m=>`<div class="mens">${av(m.user)}<div style="min-width:0;flex:1">
-      <div><b>${esc(m.user)}</b> <span class="small">${hace(m.fecha)}</span></div>
-      <div style="white-space:pre-wrap;overflow-wrap:anywhere">${textoChat(m.texto)}</div></div></div>`).join('');
+  const lista=(S.mensajes||[]).filter(m=>m.canal===canal).map(m=>{
+    const mio=m.user===S.user.nombre&&m.id;
+    const cuerpo=S.editMsg===m.id
+      ?`<div class="chatin" style="margin-top:4px;align-items:flex-end"><textarea id="eMsg" rows="2" style="flex:1" aria-label="Editar mensaje">${esc(S.editTxt??m.texto)}</textarea>
+         <button class="ghost" data-act="cancelarMsg" style="font-size:13px">Cancelar</button><button data-act="guardarMsg" data-id="${m.id}" style="font-size:13px">Guardar</button></div>`
+      :`${m.texto?`<div style="white-space:pre-wrap;overflow-wrap:anywhere">${textoChat(m.texto)}</div>`:''}${vAdjuntos(m.adjuntos)}`;
+    return `<div class="mens">${av(m.user)}<div style="min-width:0;flex:1">
+      <div style="display:flex;align-items:center;gap:6px"><b>${esc(m.user)}</b> <span class="small">${hace(m.fecha)}${m.editado?' · editado':''}</span>
+        ${mio&&S.editMsg!==m.id?`<button class="mini-btn msg-ed" data-act="editarMsg" data-id="${m.id}" title="Editar mensaje" aria-label="Editar mensaje">✎</button>`:''}</div>
+      ${cuerpo}</div></div>`;
+  }).join('');
   const gestiona=c=>c.tipo==='canal'?esAdmin():c.tipo==='grupo'?c.miembros[S.user.nombre]==='admin':false;
   const nl=id=>{const n=noLeidos(id); return n?`<span class="cnt" aria-label="${n} sin leer">${n}</span>`:'';};
   const fila=(c,icono)=>`<div class="fcanal">
@@ -453,9 +488,12 @@ function vChat(){
           <div style="flex:1;min-width:0"><h3 style="margin:0;display:flex;align-items:center;gap:8px">${cab}</h3>
           <div class="small">${sub}</div></div>${accionesGrupo}</div>
         <div class="chatlist" id="chatlist">${lista||'<p class="small" style="margin-top:12px">Todavía no hay mensajes en este chat.</p>'}</div>
+        ${vPendientes()}
         <form id="chatEq" class="chatin" style="margin-top:8px;align-items:flex-end">
+          <label class="clip" title="Adjuntar archivos (imágenes, vídeo, audio, PDF, Word, Excel…)" aria-label="Adjuntar archivos">📎<input id="adjInput" type="file" multiple style="display:none"></label>
           <textarea id="ctx" rows="2" placeholder="Mensaje para ${esc(nombreChat(actual))}" aria-label="Mensaje" style="flex:1;resize:vertical">${esc(S.ctx||'')}</textarea>
           <button type="submit">Enviar</button></form>
+        <div class="small" style="margin-top:4px">@ para mencionar · 📎 o arrastra archivos aquí para adjuntarlos (máx. 25 MB)</div>
       </div>
     </div>`;
 }
@@ -484,11 +522,79 @@ function vEquipo(){
       ${Object.entries(ROLES).map(([r,d])=>`<div><b>${r}</b><div class="small">${d}</div></div>`).join('')}</div></div>`;
 }
 async function enviarMensaje(){
-  const t=(S.ctx||'').trim(); if(!t) return;
+  const t=(S.ctx||'').trim(), listos=(S.pend||[]).filter(p=>p.id);
+  if(!t&&!listos.length) return;
+  if((S.pend||[]).some(p=>!p.id&&!p.error)){aviso('Espera a que terminen de subirse los archivos'); return;}
   const canal=S.canal||'general';
-  S.ctx=''; S.mensajes.push({canal,user:S.user.nombre,texto:t,fecha:new Date().toISOString()}); S.chatAbajo=true; render();
-  await api('/api/mensaje',{chat:canal,texto:t}); sondear();
+  S.ctx=''; S.pend=[]; cerrarSug();
+  S.mensajes.push({canal,user:S.user.nombre,texto:t,fecha:new Date().toISOString(),adjuntos:listos}); S.chatAbajo=true; render();
+  await api('/api/mensaje',{chat:canal,texto:t,adjuntos:listos.map(p=>p.id)}); sondear();
 }
+// ---------- Adjuntos del chat: imágenes, vídeos, audios, PDF, Word, Excel… (máx. 25 MB; solo los ve quien está en el chat)
+function tam(b){return b<1024?b+' B':b<1048576?(b/1024).toFixed(0)+' KB':(b/1048576).toFixed(1)+' MB';}
+function iconoArchivo(n){
+  const e=(n.split('.').pop()||'').toLowerCase();
+  return {pdf:'📕',doc:'📘',docx:'📘',odt:'📘',xls:'📗',xlsx:'📗',csv:'📗',ods:'📗',ppt:'📙',pptx:'📙',zip:'🗜️',rar:'🗜️','7z':'🗜️',txt:'📄',md:'📄',json:'🧾'}[e]||'📎';
+}
+function urlAdj(a,descargar){return `/api/adjunto?id=${encodeURIComponent(a.id)}&user=${encodeURIComponent(S.user.nombre)}${descargar?'&descargar=1':''}`;}
+function vAdjuntos(as){
+  return (as||[]).map(a=>{
+    const u=urlAdj(a), t=a.tipo||'';
+    if(!a.id) return '';
+    if(t.startsWith('image/')) return `<a href="${u}" target="_blank" rel="noopener" class="adj-img"><img src="${u}" alt="${esc(a.nombre)}" loading="lazy"></a>`;
+    if(t.startsWith('video/')) return `<video class="adj-vid" controls preload="metadata" src="${u}" aria-label="${esc(a.nombre)}"></video>`;
+    if(t.startsWith('audio/')) return `<div class="adj-aud"><audio controls preload="metadata" src="${u}" aria-label="${esc(a.nombre)}"></audio><div class="small">${esc(a.nombre)}</div></div>`;
+    return `<div class="adj-arch"><span class="adj-ico">${iconoArchivo(a.nombre)}</span><div style="min-width:0;flex:1"><div class="adj-n">${esc(a.nombre)}</div><div class="small">${tam(a.tam||0)}</div></div>
+      ${t==='application/pdf'||t.startsWith('text/')?`<a class="ghostlink" href="${u}" target="_blank" rel="noopener">Abrir</a>`:''}<a class="ghostlink" href="${urlAdj(a,true)}">Descargar</a></div>`;
+  }).join('');
+}
+async function subirArchivos(files){
+  const canal=S.canal||'general';
+  for(const f of files){
+    if(f.size>25*1024*1024){aviso(`«${f.name}» pasa de 25 MB`); continue;}
+    const p={nombre:f.name,tipo:f.type||'application/octet-stream',tam:f.size,id:null};
+    S.pend=[...(S.pend||[]),p]; render();
+    try{
+      const r=await fetch('/api/subir',{method:'POST',body:f,headers:{'Content-Type':p.tipo,'X-User':encodeURIComponent(S.user.nombre),
+        'X-Chat':encodeURIComponent(canal),'X-Nombre':encodeURIComponent(f.name)}});
+      const j=await r.json().catch(()=>({}));
+      if(!r.ok) throw new Error(j.error||r.status);
+      p.id=j.id;
+    }catch(e){p.error=true; aviso(`No se pudo subir «${f.name}»: ${e.message}`);}
+    render();
+  }
+}
+function vPendientes(){
+  return (S.pend||[]).length?`<div class="pend">${S.pend.map((p,i)=>`<span class="chip ${p.error?'err':''}">${iconoArchivo(p.nombre)} ${esc(p.nombre)} <span class="small">${p.error?'error':p.id?tam(p.tam):'subiendo…'}</span>
+    <button class="mini-btn" data-act="quitarPend" data-i="${i}" aria-label="Quitar ${esc(p.nombre)}" style="opacity:1;padding:0 4px">×</button></span>`).join('')}</div>`:'';
+}
+// ---------- @ menciones: al escribir «@» aparece la lista de personas (en grupos y privados, solo las de dentro)
+function textoMencion(el){const v=el.value.slice(0,el.selectionStart); const m=v.match(/(^|\s)@([\wáéíóúñü.\-]*)$/i); return m?m[2]:null;}
+function sinTildes(t){return String(t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');}
+function candidatosMencion(q){
+  const c=S.view==='chat'?S.chats.find(x=>x.id===S.canal):null;
+  const base=c&&c.tipo!=='canal'?S.equipo.filter(m=>m.n in c.miembros):S.equipo;
+  return base.filter(m=>m.n!==S.user.nombre&&sinTildes(m.n).startsWith(sinTildes(q||''))).slice(0,8);
+}
+function pintarSugerencias(el){
+  const q=textoMencion(el), c=q===null?[]:candidatosMencion(q);
+  let box=document.getElementById('sugMenc');
+  if(!c.length){cerrarSug(); return;}
+  const i=S.sug&&S.sug.el===el.id?Math.min(S.sug.i,c.length-1):0;
+  S.sug={el:el.id,items:c.map(m=>m.n),i};
+  if(!box){box=document.createElement('div'); box.id='sugMenc'; box.className='sugmenc'; box.setAttribute('role','listbox'); box.setAttribute('aria-label','Mencionar a'); document.body.appendChild(box);}
+  const r=el.getBoundingClientRect();
+  box.style.left=r.left+'px'; box.style.width=Math.min(330,r.width)+'px'; box.style.bottom=(window.innerHeight-r.top+6)+'px';
+  box.innerHTML='<div class="small" style="padding:6px 12px">Mencionar a…</div>'+c.map((m,j)=>`<button role="option" aria-selected="${j===i}" class="${j===i?'on':''}" data-act="elegirMencion" data-v="${esc(m.n)}">${av(m.n,24)}<span><b>${esc(m.n)}</b> <span class="small">${esc(m.c)}</span></span></button>`).join('');
+}
+function elegirMencion(n){
+  const el=S.sug&&document.getElementById(S.sug.el); if(!el){cerrarSug(); return;}
+  const pos=el.selectionStart, antes=el.value.slice(0,pos).replace(/@([\wáéíóúñü.\-]*)$/i,'@'+n+' ');
+  el.value=antes+el.value.slice(pos); el.focus(); el.setSelectionRange(antes.length,antes.length);
+  if(el.id==='ctx') S.ctx=el.value; else if(el.id==='ccom') S.ccom=el.value;
+  cerrarSug();
+}
+function cerrarSug(){const b=document.getElementById('sugMenc'); if(b) b.remove(); S.sug=null;}
 // Ventana para crear o gestionar un grupo: nombre, quién entra y quién lo administra
 function abrirDlgGrupo(c){
   const m={};
@@ -607,6 +713,14 @@ const EN={'Inicio':'Home','Revisión':'Review','Panel de control IA':'AI control
  'En esta conversación':'In this conversation','Añadir o quitar miembros':'Add or remove members',
  '+ Nuevo privado con…':'+ New direct message with…','Todavía no tienes conversaciones privadas.':'You have no direct messages yet.',
  'Añadir o quitar integrantes':'Add or remove members','Admin del grupo':'Group admin',
+ 'Exportar ▾':'Export ▾','Exportar ▴':'Export ▴','Respuestas del auditor':'Auditor answers','Revisión del equipo':'Team review',
+ 'La salida oficial, tal cual sale de la solución (la que se entrega).':'The official output, exactly as the solution produces it (the one submitted).',
+ 'Con decisiones, comentarios, ediciones y lo que la IA no vio.':'With decisions, comments, edits and what the AI missed.',
+ '✎ Editar':'✎ Edit','Editar hallazgo':'Edit finding','Justificación':'Justification','Guardar edición':'Save edit','Guardar':'Save',
+ 'Se guarda como una versión nueva: el original del auditor no se pierde y el CSV oficial no cambia.':'Saved as a new version: the auditor original is kept and the official CSV does not change.',
+ 'Ver original':'Show original','Ocultar original':'Hide original','Volver al original':'Restore original','Original del auditor':'Auditor original','Historial':'History',
+ 'Mencionar a…':'Mention…','Abrir':'Open','Descargar':'Download','subiendo…':'uploading…',
+ '@ para mencionar · 📎 o arrastra archivos aquí para adjuntarlos (máx. 25 MB)':'@ to mention · 📎 or drag files here to attach them (max 25 MB)',
  'Notificaciones':'Notifications','Borrar todas':'Clear all','Ver':'Show','No tienes notificaciones.':'No notifications.','leídos':'read',
  '+ Nuevo canal público':'+ New public channel','+ Nuevo privado ▾':'+ New direct message ▾','+ Nuevo privado ▴':'+ New direct message ▴',
  'Para hablar en privado con alguien que no está aquí, ábrelo desde':'To message someone who is not here, open it from',
@@ -743,6 +857,76 @@ function exportFeedback(){
   baja('feedback.csv',toCSV(feedbackRows(),['documento','ubicacion','ia_tipo','ia_clausula','decision','nota','usuario','fecha']));
 }
 
+// ---------- Exportar en varios formatos. «Respuestas del auditor» = la salida oficial, sin tocar (guía §6.2: el CSV
+// que se entrega sale de la solución, sin retoques a mano). «Revisión del equipo» = con decisiones y ediciones.
+function edicionDe(r){const e=(S.ediciones||{})[key(r)]; return e&&e.length?e[e.length-1]:null;}
+function datosExport(cual){
+  if(cual==='res') return {nombre:'respuestas',titulo:'Respuestas del auditor (salida oficial, sin retoques)',cols:COLS,
+    rows:RES.map(r=>({documento:r.documento,ubicacion:r.ubicacion,tipo:r.tipo,clausula:r.clausula,justificacion:r.justificacion}))};
+  const cols=['documento','ubicacion','tipo','clausula','justificacion','decision','revisor','comentario','editado_por','tipo_original','clausula_original','justificacion_original'];
+  const rows=RES.map(r=>{const d=decOf(r), e=edicionDe(r); return {documento:r.documento,ubicacion:r.ubicacion,
+    tipo:e?e.tipo:r.tipo,clausula:e?e.clausula:r.clausula,justificacion:e?e.justificacion:r.justificacion,
+    decision:d?DECTXT[d.dec]:'Pendiente',revisor:d?(d.user||''):'',comentario:d?(d.note||''):'',editado_por:e?e.user:'',
+    tipo_original:e?r.tipo:'',clausula_original:e?r.clausula:'',justificacion_original:e?r.justificacion:''};})
+    .concat(S.extra.map(x=>({documento:x.documento,ubicacion:x.referencia,tipo:'(sin hallazgo de la IA)',clausula:'',
+      justificacion:x.comentario,decision:'Omitido por la IA',revisor:S.user.nombre,comentario:'',editado_por:'',tipo_original:'',clausula_original:'',justificacion_original:''})));
+  return {nombre:'revision_equipo',titulo:'Revisión del equipo (decisiones, comentarios y ediciones)',cols,rows};
+}
+function bajaBlob(nombre,blob){
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nombre;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+}
+function tablaHTML(f){
+  return `<h1>${esc(f.titulo)}</h1><p>Auditoría Part-IS · NIMBUS Aerospace · ${esc(new Date().toLocaleString('es-ES'))} · ${f.rows.length} filas</p>
+    <table><thead><tr>${f.cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead>
+    <tbody>${f.rows.map(r=>'<tr>'+f.cols.map(c=>`<td>${esc(r[c])}</td>`).join('')+'</tr>').join('')}</tbody></table>`;
+}
+function cargarXLSX(){
+  return new Promise((ok,ko)=>{
+    if(window.XLSX) return ok(window.XLSX);
+    const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload=()=>ok(window.XLSX); s.onerror=ko; document.head.appendChild(s);
+  });
+}
+async function exportar(cual,fmt){
+  const f=datosExport(cual);
+  if(fmt==='csv') return bajaBlob(f.nombre+'.csv',new Blob([(cual==='res'?'':'﻿')+toCSV(f.rows,f.cols)],{type:'text/csv;charset=utf-8'}));
+  if(fmt==='json') return bajaBlob(f.nombre+'.json',new Blob([JSON.stringify(f.rows,null,2)],{type:'application/json'}));
+  if(fmt==='xlsx'){
+    try{
+      const X=await cargarXLSX(), ws=X.utils.json_to_sheet(f.rows,{header:f.cols}), wb=X.utils.book_new();
+      X.utils.book_append_sheet(wb,ws,'Hallazgos'); X.writeFile(wb,f.nombre+'.xlsx');
+    }catch(e){                                          // sin internet: hoja de Excel clásica (.xls), sin librerías
+      const filas=[f.cols].concat(f.rows.map(r=>f.cols.map(c=>r[c])));
+      const x=`<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Worksheet ss:Name="Hallazgos"><Table>${filas.map(fi=>'<Row>'+fi.map(v=>`<Cell><Data ss:Type="String">${esc(v)}</Data></Cell>`).join('')+'</Row>').join('')}</Table></Worksheet></Workbook>`;
+      bajaBlob(f.nombre+'.xls',new Blob([x],{type:'application/vnd.ms-excel'}));
+      aviso('Sin internet: se ha exportado como Excel clásico (.xls)');
+    }
+    return;
+  }
+  if(fmt==='doc'){
+    const h=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>${esc(f.titulo)}</title>
+      <style>@page{size:29.7cm 21cm;mso-page-orientation:landscape;margin:1.5cm}body{font-family:Calibri,Arial;font-size:9pt}h1{font-size:15pt;color:#1a4c7c}table{border-collapse:collapse}td,th{border:1px solid #999;padding:3px 5px;vertical-align:top}th{background:#1a4c7c;color:#fff}</style></head><body>${tablaHTML(f)}</body></html>`;
+    return bajaBlob(f.nombre+'.doc',new Blob(['﻿'+h],{type:'application/msword'}));
+  }
+  if(fmt==='pdf'){                                     // informe imprimible: en la ventana de imprimir, «Guardar como PDF»
+    const w=window.open('','_blank');
+    if(!w){aviso('El navegador ha bloqueado la ventana: permite las ventanas emergentes'); return;}
+    w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${esc(f.nombre)}</title>
+      <style>@page{size:A4 landscape;margin:12mm}body{font-family:-apple-system,"Segoe UI",Arial,sans-serif;font-size:9pt;color:#1c1c1e}h1{font-size:15pt;color:#1a4c7c;margin:0 0 4px}p{color:#6e6e73;margin:0 0 10px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #d1d1d6;padding:3px 5px;vertical-align:top;text-align:left}th{background:#1a4c7c;color:#fff}tr{page-break-inside:avoid}</style></head>
+      <body>${tablaHTML(f)}<script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>`);
+    w.document.close();
+  }
+}
+function menuExportar(){
+  const fmts=[['csv','CSV'],['xlsx','Excel'],['json','JSON'],['doc','Word'],['pdf','PDF']];
+  const grupo=(cual,t,nota)=>`<div class="exp-g"><b>${t}</b><div class="small">${nota}</div>
+    <div class="exp-b">${fmts.map(([f,n])=>`<button class="ghost" data-act="exportar" data-c="${cual}" data-f="${f}">${n}</button>`).join('')}</div></div>`;
+  return `<div style="margin-top:16px"><button class="ok" data-act="menuExp" aria-expanded="${!!S.expOpen}" style="width:100%">Exportar ${S.expOpen?'▴':'▾'}</button>
+    ${S.expOpen?`<div class="exp-p">${grupo('res','Respuestas del auditor','La salida oficial, tal cual sale de la solución (la que se entrega).')}
+      ${grupo('rev','Revisión del equipo','Con decisiones, comentarios, ediciones y lo que la IA no vio.')}</div>`:''}</div>`;
+}
+
 function vPdf(){
   const info=DOCS[S.doc];
   const pg=S.pdfPag;
@@ -784,16 +968,40 @@ function leido(r){return r.leido?`<div class="cita">«${esc(r.leido)}»</div>`:'
 // Motivo de un hallazgo: estado, cláusula, justificación de la IA y, si ya decidiste, tu decisión y comentario.
 function vMotivo(r){
   if(!r) return '';
-  const d=decOf(r);
+  const d=decOf(r), k=key(r), e=edicionDe(r), hist=(S.ediciones||{})[k]||[];
   const dec=d?`<div class="small" style="margin-top:8px">Tu decisión: <b style="color:var(--text)">${DECTXT[d.dec]}</b>${d.note?` · Comentario: ${esc(d.note)}`:''}</div>`:'';
+  // Modo edición: tipo, cláusula y justificación. El original del auditor se conserva siempre.
+  if(S.editH===k){
+    const v=S.editVals||{};
+    return `<div class="card" style="padding:14px 16px;background:#fff;box-shadow:none;border:2px solid var(--tint)">
+      <div class="small"><b>#${NUM.get(k)}</b> · ${esc(r.ubicacion)} · <b>Editar hallazgo</b></div>
+      <label class="small" for="eT" style="display:block;margin-top:8px">Tipo</label>
+      <select id="eT" style="width:100%">${TIPOS.map(t=>`<option ${t===(v.tipo??(e?e.tipo:r.tipo))?'selected':''}>${t}</option>`).join('')}</select>
+      <label class="small" for="eC" style="display:block;margin-top:8px">Cláusula</label>
+      <input id="eC" value="${esc(v.clausula??(e?e.clausula:r.clausula))}" style="width:100%" placeholder="IS.I.OR.2xx">
+      <label class="small" for="eJ" style="display:block;margin-top:8px">Justificación</label>
+      <textarea id="eJ" rows="4" style="width:100%">${esc(v.justificacion??(e?e.justificacion:r.justificacion))}</textarea>
+      <div class="fbtns"><button class="ghost" data-act="cancelarEdicion">Cancelar</button><button class="ok" data-act="guardarEdicion" data-k="${esc(k)}">Guardar edición</button></div>
+      <p class="note">Se guarda como una versión nueva: el original del auditor no se pierde y el CSV oficial no cambia.</p></div>`;
+  }
+  const tipo=e?e.tipo:r.tipo, clausula=e?e.clausula:r.clausula, just=e?e.justificacion:r.justificacion;
+  const marca=e?`<div class="editado">✎ Editado por <b>${esc(e.user)}</b> · ${hace(e.fecha)}${hist.length>1?` · ${hist.length} ediciones`:''}
+      · <button class="enlace" data-act="verOriginal" data-k="${esc(k)}">${S.verOrig===k?'Ocultar original':'Ver original'}</button></div>`:'';
+  const original=e&&S.verOrig===k?`<div class="orig"><b>Original del auditor</b>
+      <div>${esc(r.tipo)} · ${esc(r.clausula)}</div><div>${esc(r.justificacion)}</div>
+      ${hist.length>1?`<div style="margin-top:6px"><b>Historial</b>${hist.map(h=>`<div>· ${esc(h.user)} (${hace(h.fecha)}): ${esc(h.tipo)} · ${esc(h.clausula)}</div>`).join('')}</div>`:''}
+      <button class="enlace" data-act="deshacerEdicion" data-k="${esc(k)}">Volver al original</button></div>`:'';
   return `<div class="card" style="padding:14px 16px;background:#fafafc;box-shadow:none;border:1px solid var(--sep)">
-    <div class="small"><b title="Número para enlazarlo en el chat">#${NUM.get(key(r))}</b> · ${esc(r.ubicacion)} · página ${r.pagina} · ${esc(r.origen)} · confianza ${Math.round(r.conf*100)}%</div>
-    <div style="margin-top:6px">${st(sev(r.tipo),esc(r.tipo))}</div>
-    <div class="small" style="margin-top:4px">Cláusula ${esc(r.clausula)}</div>
+    <div style="display:flex;gap:8px;align-items:flex-start"><div class="small" style="flex:1"><b title="Número para enlazarlo en el chat">#${NUM.get(k)}</b> · ${esc(r.ubicacion)} · página ${r.pagina} · ${esc(r.origen)} · confianza ${Math.round(r.conf*100)}%</div>
+      <button class="ghost" data-act="editarHallazgo" data-k="${esc(k)}" style="font-size:12px;padding:4px 10px">✎ Editar</button></div>
+    ${marca}
+    <div style="margin-top:6px">${st(sev(tipo),esc(tipo))}</div>
+    <div class="small" style="margin-top:4px">Cláusula ${esc(clausula)}</div>
     <div class="small" style="margin-top:8px"><b style="color:var(--text)">Documento revisado:</b> ${esc(r.documento)}</div>
     <div class="small"><b style="color:var(--text)">Leído del documento:</b> ${leido(r)}</div>
     <div class="small"><b style="color:var(--text)">Contrastado con:</b> ${contrastado(r)}</div>
-    <div class="rule" style="margin:8px 0 0"><b>Por qué:</b> ${esc(r.justificacion)}</div>
+    <div class="rule" style="margin:8px 0 0"><b>Por qué:</b> ${esc(just)}</div>
+    ${original}
     ${dec}
   </div>`;
 }
@@ -806,12 +1014,9 @@ function vDecision(){
       <h2>Revisión completa</h2>
       <p class="sub">Todos los hallazgos tienen decisión.</p>
       ${rs.map(x=>vMotivo(x)).join('')}
-      <div class="fbtns">
-        <button class="ok" data-act="exfb">Exportar feedback.csv</button>
-        <button class="ghost" data-act="exres">Exportar respuestas.csv</button>
-      </div>
+      ${menuExportar()}
       <button data-act="volver" style="width:100%;margin-top:10px">Volver al listado</button>
-      <p class="note">respuestas.csv sale tal cual de la solución. feedback.csv contiene tus decisiones y sirve para mejorar el auditor; no altera el CSV oficial.</p>
+      <p class="note">Las respuestas del auditor salen tal cual de la solución. La revisión del equipo recoge vuestras decisiones y ediciones; no altera el CSV oficial.</p>
     </div>`;
   }
   const puedes=objetivosActuales().length>0;
@@ -1151,10 +1356,7 @@ function vHist(){
       <div class="small" style="margin-bottom:6px">${rows.length} de ${RES.length} hallazgos</div>
       <div class="hscroll"><table><thead><tr><th>Ubicación</th><th>Tipo</th><th>Cláusula</th><th>Tu decisión</th></tr></thead>
       <tbody>${rows.slice(0,MAX).map(r=>{const d=decOf(r);return `<tr class="${h.has(key(r))?'hl':''} clic" data-act="abrirH" data-doc="${esc(r.documento)}" data-u="${esc(r.ubicacion)}"><td><span class="small">${esc(r.documento)}</span><br><b>${esc(r.ubicacion)}</b><div class="small">${esc(r.justificacion)}</div></td><td>${esc(r.tipo)}</td><td>${esc(r.clausula)}</td><td>${d?st('neutral',DECTXT[d.dec]):'<span class="small">Pendiente</span>'}</td></tr>`;}).join('') || '<tr><td colspan="4" class="small">Sin resultados</td></tr>'}${mas}</tbody></table></div>
-      <div class="fbtns" style="margin-top:16px">
-        <button class="ghost" data-act="exres">Exportar respuestas.csv</button>
-        <button class="ok" data-act="exfb">Exportar feedback.csv</button>
-      </div>
+      ${menuExportar()}
   </div>`;
 }
 
@@ -1272,9 +1474,19 @@ function toggleDrawer(force){
 
 document.addEventListener('click',e=>{
   if(S.avisosOpen&&!e.target.closest('#avisos,#bell')){S.avisosOpen=false; pintarBarra(); aplicarIdioma();}
+  if(S.sug&&!e.target.closest('#sugMenc,#ctx,#ccom')) cerrarSug();
   const el=e.target.closest('[data-act]');
   if(!el||el.disabled) return;
   const a=el.dataset.act;
+  if(a==='elegirMencion'){elegirMencion(el.dataset.v); return;}
+  if(a==='editarMsg'){S.editMsg=Number(el.dataset.id); S.editTxt=undefined; render(); const t=document.getElementById('eMsg'); if(t){t.focus(); t.setSelectionRange(t.value.length,t.value.length);} return;}
+  if(a==='cancelarMsg'){S.editMsg=null; S.editTxt=undefined; render(); return;}
+  if(a==='guardarMsg'){
+    const id=Number(el.dataset.id), texto=(document.getElementById('eMsg').value||'').trim();
+    api('/api/mensaje/editar',{id,texto}).then(r=>{if(r.ok){S.editMsg=null; S.editTxt=undefined; sondear();}});
+    return;
+  }
+  if(a==='quitarPend'){S.pend.splice(Number(el.dataset.i),1); render(); return;}
   if(a==='lang'){S.lang=el.dataset.v; try{localStorage.setItem('rv_lang',S.lang);}catch(err){} render(); return;}
   if(a==='avisos'){S.avisosOpen=!S.avisosOpen; pintarBarra(); aplicarIdioma(); return;}
   if(a==='borrarAviso'){                                      // × de una tarjeta, o «Borrar todas» (clave vacía)
@@ -1388,6 +1600,25 @@ document.addEventListener('click',e=>{
     S.pdfPag=n; render();
   }
   else if(a==='agente'){const i=Number(el.dataset.i); S.agente=S.agente===i?null:i; render();}
+  else if(a==='editarHallazgo'){S.editH=el.dataset.k; S.editVals={}; render();}
+  else if(a==='cancelarEdicion'){S.editH=null; S.editVals={}; render();}
+  else if(a==='verOriginal'){S.verOrig=S.verOrig===el.dataset.k?null:el.dataset.k; render();}
+  else if(a==='guardarEdicion'||a==='deshacerEdicion'){
+    const k=el.dataset.k;
+    if(a==='deshacerEdicion'&&!confirm('¿Quitar todas las ediciones y volver al original del auditor?')) return;
+    const campos=a==='guardarEdicion'?{tipo:document.getElementById('eT').value,clausula:document.getElementById('eC').value.trim(),justificacion:document.getElementById('eJ').value.trim()}:null;
+    if(campos&&(!campos.clausula||!campos.justificacion)){aviso('Pon la cláusula y la justificación'); return;}
+    if(SRV){
+      api(campos?'/api/edicion':'/api/edicion/deshacer',{key:k,...(campos||{})}).then(r=>{if(r.ok){S.editH=null; S.verOrig=null; sondear();}});
+    }else{                                                   // sin servidor: se guarda en este navegador
+      S.ediciones=S.ediciones||{};
+      if(campos) (S.ediciones[k]=S.ediciones[k]||[]).push({user:S.user.nombre,fecha:new Date().toISOString(),...campos}); else delete S.ediciones[k];
+      try{localStorage.setItem(LS+'_edic',JSON.stringify(S.ediciones));}catch(err){}
+      S.editH=null; S.verOrig=null; render();
+    }
+  }
+  else if(a==='menuExp'){S.expOpen=!S.expOpen; render();}
+  else if(a==='exportar'){exportar(el.dataset.c,el.dataset.f);}
   else if(a==='exres') exportRespuestas();
   else if(a==='exfb') exportFeedback();
   else if(a==='logout'){S.view='inicio'; document.getElementById('app').classList.add('hidden'); document.getElementById('login').classList.remove('hidden'); toggleDrawer(false);}
@@ -1400,6 +1631,9 @@ document.addEventListener('input',e=>{
   if(e.target.id==='ccom'){S.ccom=e.target.value;}
   if(e.target.id==='ctx'){S.ctx=e.target.value;}
   if(e.target.id==='gN'&&S.dlg){S.dlg.nombre=e.target.value;}
+  if(['eT','eC','eJ'].includes(e.target.id)){S.editVals=S.editVals||{}; S.editVals[{eT:'tipo',eC:'clausula',eJ:'justificacion'}[e.target.id]]=e.target.value;}
+  if(e.target.id==='eMsg'){S.editTxt=e.target.value;}
+  if(e.target.id==='ctx'||e.target.id==='ccom') pintarSugerencias(e.target);
   if(e.target.id==='cq'){S.cq=e.target.value;}
   if(e.target.id==='xref'){S.extraForm.ref=e.target.value;}
   if(e.target.id==='xtxt'){S.extraForm.txt=e.target.value;}
@@ -1418,6 +1652,7 @@ document.addEventListener('change',e=>{
     render();
   }
   if(S.dlg&&e.target.dataset&&e.target.dataset.grol){S.dlg.miembros[e.target.dataset.grol]=e.target.value;}
+  if(e.target.id==='adjInput'&&e.target.files.length){subirArchivos([...e.target.files]); e.target.value='';}
   if(e.target.id==='nuevoPrivado'&&e.target.value){
     api('/api/chat/crear',{tipo:'privado',con:e.target.value}).then(r=>{if(r.ok){S.canal=r.id; S.chatAbajo=true; S.abierto.privados=true; sondear();}});
   }
@@ -1427,10 +1662,26 @@ document.addEventListener('change',e=>{
   }
 });
 
-// En el chat, Intro envía y Mayúsculas+Intro hace salto de línea
+// En el chat, Intro envía y Mayúsculas+Intro hace salto de línea. Con la lista de @ abierta: ↑ ↓ eligen, Intro/Tab
+// mencionan y Esc la cierra.
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'&&S.asisOpen){S.asisOpen=false; render(); return;}
+  if(S.sug&&e.target.id===S.sug.el){
+    if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault(); S.sug.i=(S.sug.i+(e.key==='ArrowDown'?1:-1)+S.sug.items.length)%S.sug.items.length; pintarSugerencias(e.target); return;}
+    if(e.key==='Enter'||e.key==='Tab'){e.preventDefault(); elegirMencion(S.sug.items[S.sug.i]); return;}
+    if(e.key==='Escape'){cerrarSug(); return;}
+  }
+  if(e.key==='Escape'&&S.asisOpen){S.asisOpen=false; render(); return;}      // cierra el Asistente IA
   if(e.target.id==='ctx'&&e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault(); enviarMensaje();}
+  if(e.target.id==='eMsg'&&e.key==='Enter'&&!e.shiftKey){e.preventDefault(); document.querySelector('[data-act="guardarMsg"]')?.click();}
+  if(e.target.id==='eMsg'&&e.key==='Escape'){S.editMsg=null; render();}
+});
+// Arrastrar archivos sobre el chat para adjuntarlos
+document.addEventListener('dragover',e=>{if(e.target.closest&&e.target.closest('.chatbox')){e.preventDefault(); e.target.closest('.chatbox').classList.add('soltar');}});
+document.addEventListener('dragleave',e=>{const c=e.target.closest&&e.target.closest('.chatbox'); if(c&&!c.contains(e.relatedTarget)) c.classList.remove('soltar');});
+document.addEventListener('drop',e=>{
+  const c=e.target.closest&&e.target.closest('.chatbox'); if(!c) return;
+  e.preventDefault(); c.classList.remove('soltar');
+  if(e.dataTransfer&&e.dataTransfer.files.length) subirArchivos([...e.dataTransfer.files]);
 });
 
 document.addEventListener('submit',e=>{
