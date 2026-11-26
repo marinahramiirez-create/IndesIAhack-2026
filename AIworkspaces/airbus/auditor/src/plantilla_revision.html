@@ -337,6 +337,61 @@ button.adj-img:focus-visible{outline:2px solid var(--tint);outline-offset:2px}
 .ver-col2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .ver-col2 pre{margin:4px 0 0;max-height:360px;overflow:auto;background:#fff;border:1px solid var(--sep);border-radius:8px;padding:10px;white-space:pre-wrap;font-size:12px}
 @media (max-width:700px){.ver-col2{grid-template-columns:1fr}}
+/* Inicio: prioridad, antigüedad, equipo y carga */
+.cargar-btn{cursor:pointer;padding:9px 16px;border-radius:10px;background:#16324f;color:#fff;font-size:14px;font-weight:600}
+.cargar-btn:hover{background:#1f4670}
+.antig{margin-top:4px}
+.antig.venc{color:#d70015;font-weight:600}
+.eqfila{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px}
+.eqchips{display:inline-flex}
+.eqchips .av+.av{margin-left:-6px}
+.eqchips .av{box-shadow:0 0 0 2px #fff;font-size:9px}
+/* Auditorías: columna Prioridad entre Estado y Días para responder */
+.dcab,.drow{grid-template-columns:240px minmax(0,1fr) 170px 96px 160px}
+.drow .prio{justify-self:start}
+@media (max-width:900px){.dcab{display:none}.drow{grid-template-columns:1fr}.drow .prio,.drow .dias{justify-self:start}}
+/* Revisión: barra del documento */
+.rev-barra{margin-bottom:14px;flex-wrap:wrap}
+.rev-sub{flex:1 1 160px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rev-prio{display:flex;align-items:center;gap:6px}
+.rev-prio select{padding:6px 8px}
+.rev-barra .ghost{display:inline-flex;align-items:center;gap:6px}
+/* Versiones dentro del documento y comparación */
+.ver-acc{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.ver-acc .ghost,.ver-acc .ghostlink{font-size:12px;padding:5px 10px}
+.ver-col{display:flex;flex-direction:column;gap:4px;min-height:0}
+.ver-col pre{flex:1;margin:0;overflow:auto;background:#fff;border:1px solid var(--sep);border-radius:8px;padding:12px;white-space:pre-wrap;font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+#cmpModal{position:fixed;inset:0;z-index:86;display:flex;align-items:center;justify-content:center;padding:20px}
+/* Editor: capa de resaltado detrás del cuadro de texto (mismas medidas y tipografía) */
+.ed-area{position:relative;flex:1;min-height:200px;background:#fff;border:1px solid var(--sep);border-radius:10px;overflow:hidden}
+.ed-area textarea,.ed-capa{position:absolute;inset:0;margin:0;border:0;border-radius:0;padding:12px;box-sizing:border-box;width:100%;height:100%;
+  font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:0;white-space:pre-wrap;overflow-wrap:break-word;word-break:normal;
+  overflow-y:scroll;tab-size:4}
+.ed-area textarea{background:transparent;color:var(--text);resize:none;outline:none;z-index:1}
+.ed-area:focus-within{border-color:var(--tint);box-shadow:0 0 0 3px rgba(10,132,255,.18)}
+.ed-capa{color:transparent;pointer-events:none;z-index:0;scrollbar-width:none}
+.ed-capa::-webkit-scrollbar{display:none}
+.ed-add{background:#fff1b8;border-radius:2px}
+.ed-capa .ed-add{background:#ffe27a}
+.ed-del{position:relative}
+.ed-del::before{content:'';position:absolute;left:-1px;top:-1px;width:3px;height:1.3em;background:#ff3b30;border-radius:2px}
+.ed-ley{color:var(--sec)}
+.ed-del-ley{display:inline-block;width:3px;height:12px;background:#ff3b30;border-radius:2px;vertical-align:middle}
+.ed-quit{min-height:18px}
+/* Documento cargado y documento sin hallazgos */
+.cg-vista{background:#fff;border-radius:10px;padding:16px;max-height:calc(100vh - 260px);overflow:auto;border:1px solid var(--sep)}
+.cg-tabla{overflow:auto;margin-bottom:10px}
+.cg-tabla table{border-collapse:collapse;font-size:13px;min-width:100%}
+.cg-tabla th,.cg-tabla td{border:1px solid var(--sep);padding:5px 8px;text-align:left;vertical-align:top}
+.cg-tabla th{background:#f2f2f7}
+.sh-rev{margin:14px 0;padding:12px;background:#f7f7fa;border-radius:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+/* Diálogos de carga y de compartir */
+#cargaDlg,#compDlg{position:fixed;inset:0;z-index:80}
+#cargaDlg .dialog,#compDlg .dialog{max-height:90vh;overflow:auto}
+.comp-lista{display:flex;flex-direction:column;gap:2px;max-height:260px;overflow:auto}
+.comp-p{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:10px;cursor:pointer}
+.comp-p:hover{background:#f2f2f7}
+.dialog .comp-p input[type=checkbox]{width:18px;flex:none}   /* .dialog input{width:100%} empujaba el nombre fuera */
 /* Mi cuenta */
 .cta-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}
 .cuenta-card h3{margin:0 0 10px}
@@ -471,7 +526,6 @@ button.adj-img:focus-visible{outline:2px solid var(--tint);outline-offset:2px}
     <button class="nav-item" data-act="nav" data-v="inicio"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9v11h5v-6h4v6h5V9"/></svg>Auditorías</button>
     <button class="nav-item" data-act="nav" data-v="ia"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="13" width="3.5" height="7" rx="1"/><rect x="10.25" y="8" width="3.5" height="12" rx="1"/><rect x="16.5" y="4" width="3.5" height="16" rx="1"/></svg>Panel de control IA</button>
     <button class="nav-item" data-act="nav" data-v="historico"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>Histórico</button>
-    <button class="nav-item" data-act="nav" data-v="versiones"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>Versiones</button>
     <button class="nav-item" data-act="nav" data-v="chat"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Chat</button>
     <button class="nav-item" data-act="navCfg" aria-expanded="false" id="navCfg"><span style="display:flex;align-items:center;gap:12px"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>Configuración</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
     <button class="nav-item sub" data-act="nav" data-v="reglas"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>Reglas</button>
@@ -505,8 +559,10 @@ const S={
   criteriosOpen:false, extraOpen:false, extraForm:{ref:'',txt:''},
   iq:'', iest:'', itipo:'', agente:null, umbral:80,
   // Filtros de hallazgos en Inicio: un documento se muestra si tiene algún hallazgo que los cumpla
-  hdec:'', htipo:'', hclau:'', hconf:0, hmios:false, hnuevos:false, hcoms:false, orden:null, pag:1, porPag:10,
+  hdec:'', htipo:'', hclau:'', hmios:false, hnuevos:false, hcoms:false, hequipo:false, hesc:false, orden:null, pag:1, porPag:10,
   config:{plazo_dias:15,inicio:null},
+  // Auditorías: filtros de prioridad y antigüedad (el plazo es el común de Configuración → Reglas)
+  iprio:'', iant:'',
   dec:{}, extra:[], hl:[],
   msgs:[{r:'a',t:'Hola. Busco en toda la aplicación: documentos, hallazgos, decisiones, agentes y métricas, reglas, equipo y chat. Si la respuesta está en una sección, te propongo ir a ella con los filtros puestos. Con la revisión en equipo encendida, además leo los PDF del corpus y te respondo con la IA citando las fuentes.'}],
   asisOpen:false, soloHl:false, hlTxt:''
@@ -595,9 +651,11 @@ async function sondear(){
     Object.assign(S,{dec:d.dec,coms:d.comentarios,avisos:d.avisos,pres:d.presencia,
                      mensajes:d.mensajes||[],chats:d.chats||S.chats,ediciones:d.ediciones||{},versiones:d.versiones||{},
                      sesiones:d.sesiones||[],roles:d.roles||S.roles,modulos:d.modulos||[],permisos:d.permisos||null,
-                     escalados:d.escalados||{},escHist:d.escalados_hist||[],editables:d.editables||{},cargado:true,config:d.config||S.config});
+                     escalados:d.escalados||{},escHist:d.escalados_hist||[],editables:d.editables||{},cargado:true,config:d.config||S.config,
+                     docs_meta:d.docs_meta||{},compartidos:d.compartidos||[],cargados:d.cargados||[]});
     if(d.equipo&&d.equipo.length) S.equipo=d.equipo;
     const yo=S.equipo.find(m=>m.n===S.user.nombre); if(yo) S.user.cargo=`${nombreRol(yo.rol)} · Calidad Part-IS`;   // si te cambian el rol
+    fusionarCargados();                                               // documentos cargados → DOCS (se abren como los demás)
     detectarNuevos(S.avisos||[]);
     if(!S.chats.some(c=>c.id===S.canal)) S.canal='general';         // el chat abierto se borró o ya no eres miembro
     const kAbierto='chat:'+S.canal;                                   // lo que ya estás viendo no queda como «nuevo»
@@ -611,7 +669,7 @@ async function sondear(){
   }catch(e){if(S.online!==false){S.online=false; render();}}
 }
 async function enviarComentario(){
-  const txt=(S.ccom||'').trim(), r=R()[S.foco];
+  const txt=(S.ccom||'').trim(), r=R().length?R()[S.foco]:(S.doc?docPseudo():null);
   if(!txt||!r) return;
   S.ccom=''; S.coms.push({key:key(r),user:S.user.nombre,texto:txt,fecha:new Date().toISOString()}); render();
   await api('/api/comentario',{key:key(r),texto:txt}); sondear();
@@ -1053,6 +1111,7 @@ function infoAviso(k){
     const ch=S.chats.find(c=>c.id===k.slice(5)), titulo=ch?nombreChat(ch):k.slice(5);
     return {titulo,icono:!ch?`<span class="ico">${I('chat',20)}</span>`:ch.tipo==='privado'?av(titulo,40):`<span class="ico">${ch.tipo==='grupo'?I('grupo',20):'#'}</span>`};
   }
+  if(k.startsWith('compartir:')) return {titulo:k.slice(10),icono:`<span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg></span>`};
   const [doc,u]=k.split('|'); return {titulo:`${doc} · ${u}`,icono:`<span class="ico">${I('archivo',20)}</span>`};
 }
 // Aviso emergente: cuando llega una notificación nueva sale arriba a la derecha y se oculta sola a los 10 s
@@ -1084,7 +1143,7 @@ function pintarBanners(){
       <button class="noti-x" data-act="cerrarBanner" data-bid="${b.id}" aria-label="Cerrar aviso" title="Cerrar">×</button>
       ${icono}<div style="flex:1;min-width:0">
         <div style="display:flex;gap:8px;align-items:baseline"><b class="noti-t">${esc(titulo)}</b><span class="small" style="margin-left:auto;white-space:nowrap">ahora</span></div>
-        <div class="small" style="color:var(--text)">${n>1?`${n} nuevos`:b.a.mencion?'te ha mencionado':'mensaje nuevo'}</div>
+        <div class="small" style="color:var(--text)">${n>1?`${n} nuevos`:b.k.startsWith('compartir:')?'te ha compartido un documento':b.a.mencion?'te ha mencionado':'mensaje nuevo'}</div>
         <div class="small noti-m"><b>${esc(b.a.de)}:</b> ${menciones(esc(b.a.texto))}</div></div>
       <button class="noti-ver" data-act="irAviso" data-k="${esc(b.k)}" data-bid="${b.id}">Ver</button></div>`;
   }).join('');
@@ -1177,6 +1236,28 @@ const EN={'Inicio':'Home','Auditorías':'Audits','Ver documentos en Auditorías'
  'Mencionar a…':'Mention…','Abrir':'Open','Descargar':'Download','subiendo…':'uploading…',
  '@ para mencionar · usa el clip o arrastra archivos aquí para adjuntarlos (máx. 25 MB)':'@ to mention · use the clip or drag files here to attach them (max 25 MB)',
  'Notificaciones':'Notifications','Borrar todas':'Clear all','Ver':'Show','No tienes notificaciones.':'No notifications.','leídos':'read',
+ 'Cualquier prioridad':'Any priority','Prioridad alta':'High priority','Prioridad media':'Medium priority','Prioridad baja':'Low priority',
+ 'Prioridad Alta':'High priority','Prioridad Media':'Medium priority','Prioridad Baja':'Low priority','Prioridad':'Priority','Alta':'High','Media':'Medium','Baja':'Low',
+ 'Cualquier antigüedad':'Any age','Entraron hoy':'Arrived today','Esta semana':'This week','Más de 7 días':'Older than 7 days',
+ 'Ordenar: urgencia':'Sort: urgency','Ordenar: más antiguos':'Sort: oldest','Ordenar: más recientes':'Sort: newest','Ordenar: más pendientes':'Sort: most pending',
+ 'Ordenar: nombre':'Sort: name','En equipo':'Team work','Al día':'Up to date','Cargar archivo':'Upload file',
+ 'Cargado manualmente: aún sin auditar.':'Uploaded manually: not audited yet.','Compartir':'Share','Versiones':'Versions',
+ 'Documentos auditados y cargados. Pulsa uno para revisarlo junto al PDF. «Urgencia» ordena por prioridad y, dentro de cada una, por el que más lleva esperando (plazos: alta 2 días, media 5, baja 10).':'Audited and uploaded documents. Click one to review it next to the PDF. «Urgency» sorts by priority and, within each, by the one waiting longest (deadlines: high 2 days, medium 5, low 10).',
+ 'Sin hallazgos':'No findings','Marcar como revisado':'Mark as reviewed','Deshacer':'Undo','Descargar original':'Download original',
+ 'Descargar archivo original':'Download original file','Original del auditor':'Auditor original','Comparar con el original':'Compare with the original',
+ 'Todavía no hay versiones editadas de este documento.':'There are no edited versions of this document yet.',
+ 'Por ahora solo se pueden editar los PDF.':'For now only PDFs can be edited.','Nombre (opcional)':'Name (optional)',
+ 'Sin cambios en esta página respecto al original.':'No changes on this page compared with the original.',
+ 'Solo hay texto añadido o cambiado (en amarillo).':'Only added or changed text (in yellow).','= se quitó algo':'= something was removed',
+ '= añadido o cambiado respecto al original ·':'= added or changed compared with the original ·','Documento cargado':'Uploaded document','Título':'Title',
+ 'Familia':'Family','Elige una familia…':'Choose a family…','Otra…':'Other…','Nombre de la familia':'Family name','Guardar':'Save',
+ 'Elegida a mano.':'Chosen manually.','No se pudo identificar automáticamente: elígela.':'Could not be identified automatically: choose it.',
+ 'Plazo de revisión: alta 2 días, media 5, baja 10.':'Review deadline: high 2 days, medium 5, low 10.','Cargando…':'Loading…',
+ 'Les llega una notificación con un enlace que abre el documento. Aparecerá en «En equipo».':'They get a notification with a link that opens the document. It will appear under «Team work».',
+ 'Nota (opcional)':'Note (optional)','Ya compartido':'Already shared','te ha compartido un documento':'shared a document with you',
+ 'Documento cargado: ya puedes abrirlo':'Document uploaded: you can open it now',
+ 'Un documento cargado se puede abrir, comentar, compartir y versionar enseguida. Sus hallazgos llegan al auditarlo con la solución:':'An uploaded document can be opened, commented on, shared and versioned right away. Its findings arrive when it is audited with the solution:',
+ 'El auditor no encontró defectos en este documento.':'The auditor found no defects in this document.',
  'Mi cuenta':'My account','Tus datos y cómo entras.':'Your details and how you sign in.','Perfil':'Profile','Nombre visible':'Display name',
  'Usuario':'Username','Correo':'Email','Rol':'Role','Esta sesión':'This session','Prototipo · sin contraseña real':'Prototype · no real password',
  'Sin rol · no está en el equipo':'No role · not in the team','Idioma':'Language','Próximamente':'Coming soon','Esta':'This one',
@@ -1192,6 +1273,7 @@ const EN={'Inicio':'Home','Auditorías':'Audits','Ver documentos en Auditorías'
  'Solo un administrador da de alta o de baja a miembros, cambia roles y crea canales públicos.':'Only an administrator adds or removes members, changes roles and creates public channels.',
  'Cada persona solo recibe los chats en los que está, y los adjuntos solo se sirven a quien ve ese chat.':'Each person only receives the chats they are in, and attachments are only served to whoever can see that chat.',
  'Un mensaje del chat solo se puede editar durante 30 minutos.':'A chat message can only be edited for 30 minutes.',
+ 'Cargar documentos, compartirlos, cambiar su prioridad y marcar como revisado uno sin hallazgos son permisos de tu rol.':'Uploading documents, sharing them, changing their priority and marking one without findings as reviewed are permissions of your role.',
  'El PDF original y respuestas.csv nunca se modifican: ediciones y versiones se guardan aparte.':'The original PDF and respuestas.csv are never modified: edits and versions are stored separately.',
  'Todo se guarda en el ordenador que ejecuta el servidor; nada sale fuera.':'Everything is stored on the computer running the server; nothing leaves it.',
  'Entrar con la cuenta de Microsoft (Entra ID) y verificación en dos pasos con Microsoft Authenticator.':'Sign in with the Microsoft account (Entra ID) and two-step verification with Microsoft Authenticator.',
@@ -1235,6 +1317,11 @@ const EN_RE=[[/^(\d+) de (\d+) revisados$/,'$1 of $2 reviewed'],[/^Página (\d+)
  [/^(\d+) de (\d+) en línea$/,'$1 of $2 online'],[/^Mensaje para (.+)$/,'Message for $1'],[/^Chat · (.+) · (.+)$/,'Chat · $1 · $2'],
  [/^(\d+) personas: (.+)$/,'$1 people: $2'],[/^Miembros de (.+)$/,'Members of $1'],[/^(\d+) integrantes · (\d+) en línea$/,'$1 members · $2 online'],
  [/^(\d+) nuevos? · (\d+) menci(?:ón|ones)$/,'$1 new · $2 mentions'],[/^(\d+) nuevos?$/,'$1 new'],[/^leídos · (\d+) menci(?:ón|ones)$/,'read · $1 mentions'],[/^Agente (\d+)$/,'Agent $1'],
+ [/^Vencido hace (\d+) d$/,'Overdue by $1 d'],[/^Lleva (\d+) d · vence en (\d+) d$/,'Waiting $1 d · due in $2 d'],[/^Entró hoy · vence en (\d+) d$/,'Arrived today · due in $1 d'],
+ [/^Vencidos \((\d+)\)$/,'Overdue ($1)'],[/^Cargado por (.+)$/,'Uploaded by $1'],[/^Compartido por ti con (.+)$/,'Shared by you with $1'],
+ [/^Te lo compartió (.+)$/,'Shared with you by $1'],[/^Trabajado con (.+)$/,'Worked on with $1'],[/^(\d+) versi(?:ón|ones)$/,'$1 versions'],
+ [/^Versiones · (\d+)$/,'Versions · $1'],[/^Compartir con (\d+)$/,'Share with $1'],[/^Compartido con (.+)$/,'Shared with $1'],
+ [/^Compartir (.+)$/,'Share $1'],[/^Guardar como (.+)$/,'Save as $1'],[/^Nueva versión a partir de (.+)$/,'New version from $1'],
  [/^Desde (.+) · activa ahora$/,'Since $1 · active now'],[/^Desde (.+) · última señal hace (\d+) min$/,'Since $1 · last seen $2 min ago'],
  [/^Desde (.+) · última señal hace (\d+) h$/,'Since $1 · last seen $2 h ago'],[/^Desde (.+) · última señal (.+)$/,'Since $1 · last seen $2'],
  [/^(\d+) de (\d+) coinciden$/,'$1 of $2 match'],[/^(\d+) páginas? cambiadas?$/,'$1 pages changed'],[/^Texto de la página (\d+)$/,'Text of page $1'],
@@ -1302,13 +1389,12 @@ function pasaFiltroH(r){
   if((S.hdec==='approved'||S.hdec==='rejected')&&(!d||d.dec!==S.hdec)) return false;
   if(S.htipo&&r.tipo!==S.htipo) return false;
   if(S.hclau&&r.clausula!==S.hclau) return false;
-  if(S.hconf>0&&(r.conf||0)<S.hconf) return false;
   if(S.hmios&&(!d||d.user!==S.user.nombre)) return false;
   if(S.hnuevos&&ABIERTOS.has(key(r))) return false;
   if(S.hcoms&&!(S.coms||[]).some(c=>c.key===key(r))) return false;
   return true;
 }
-function hayFiltroH(){return !!(S.hdec||S.htipo||S.hclau||S.hconf>0||S.hmios||S.hnuevos||S.hcoms);}
+function hayFiltroH(){return !!(S.hdec||S.htipo||S.hclau||S.hmios||S.hnuevos||S.hcoms);}
 // Tras dibujar, lleva la vista a la cita marcada del hallazgo activo.
 function centrarCita(){
   if(!S.centrar) return; S.centrar=false;
@@ -1320,8 +1406,9 @@ function abrirRevision(doc){
   guardarPestana();
   S.view='revision'; S.sel={}; S.comment=''; S.extraOpen=false;
   if(!S.tabs.includes(doc)) S.tabs.push(doc);                      // cada documento abierto queda como pestaña
-  const prev=S.tabEstado[doc]; S.doc=doc;
+  const prev=S.tabEstado[doc]; if(S.doc!==doc) S.verOpen=false; S.doc=doc;
   if(prev){S.foco=prev.foco; S.pdfPag=prev.pdfPag; S.centrar=true; return;}   // vuelve a donde estabas en ese documento
+  if(!R().length){S.foco=0; S.pdfPag=1; return;}                     // sin hallazgos: desde la primera página
   const p=R().findIndex(x=>!decOf(x));
   irA(p>=0?p:0);
 }
@@ -1335,9 +1422,9 @@ function cerrarPestana(doc){
   if(S.tabs.length){S.doc=null; abrirRevision(S.tabs[Math.min(i,S.tabs.length-1)]);}
   else{S.doc=null; S.view='inicio';}                                  // al cerrar la última se vuelve a Inicio
 }
-// ---------- Versiones editables de los PDF auditados. El PDF original NUNCA se toca: cada versión es el texto
-// de las páginas cambiadas, guardado aparte por el servidor (salidas/versiones/). La sección «Versiones» enseña
-// siempre el original y, debajo, cada versión con quién, cuándo, su nota y qué páginas cambió.
+// ---------- Versiones editables de los PDF. El PDF original NUNCA se toca: cada versión es el texto de las páginas
+// cambiadas, guardado aparte por el servidor (salidas/versiones/). Se ven dentro del propio documento (Revisión →
+// «Versiones») y se numeran a partir de la versión oficial: v3.0 es el original; v3.0.1, v3.0.2… las ediciones.
 const _orig={}, _vers={};
 async function textoOriginal(doc,n){
   const k=doc+'|'+n; if(k in _orig) return _orig[k];
@@ -1351,11 +1438,64 @@ async function textoVersion(doc,n){
   return (_vers[k]=(await r.json()).paginas||{});
 }
 function versionesDe(doc){return ((S.versiones||{})[doc]||[]).slice().sort((a,b)=>a.n-b.n);}
+function etiquetaVersion(doc,n){const v=(DOCS[doc]||{}).version; return n?(v?`v${v}.${n}`:`Edición ${n}`):(v?`v${v}`:'Original');}
+function editable(doc){const c=(DOCS[doc]||{}).cargado; return !c||c.vista==='pdf';}
+
+// Diferencias por palabras (LCS en dos niveles: líneas y, dentro de lo cambiado, palabras).
+function tokensDe(s){return s.match(/\s+|[0-9A-Za-zÀ-ÿ]+|[^\s0-9A-Za-zÀ-ÿ]/g)||[];}
+function lcsOps(a,b){
+  const n=a.length,m=b.length; let i0=0,e=0;
+  while(i0<n&&i0<m&&a[i0]===b[i0]) i0++;
+  while(e<n-i0&&e<m-i0&&a[n-1-e]===b[m-1-e]) e++;
+  const A=a.slice(i0,n-e),B=b.slice(i0,m-e),N=A.length,M=B.length,ops=a.slice(0,i0).map(v=>({t:'=',v}));
+  if(N*M>3e6){A.forEach(v=>ops.push({t:'-',v})); B.forEach(v=>ops.push({t:'+',v}));}   // muy largo: bloque entero
+  else{
+    const W=M+1,T=new Uint32Array((N+1)*W);
+    for(let i=N-1;i>=0;i--) for(let j=M-1;j>=0;j--) T[i*W+j]=A[i]===B[j]?T[(i+1)*W+j+1]+1:Math.max(T[(i+1)*W+j],T[i*W+j+1]);
+    let i=0,j=0;
+    while(i<N&&j<M){
+      if(A[i]===B[j]){ops.push({t:'=',v:A[i]});i++;j++;}
+      else if(T[(i+1)*W+j]>=T[i*W+j+1]) ops.push({t:'-',v:A[i++]});
+      else ops.push({t:'+',v:B[j++]});
+    }
+    while(i<N) ops.push({t:'-',v:A[i++]}); while(j<M) ops.push({t:'+',v:B[j++]});
+  }
+  a.slice(n-e).forEach(v=>ops.push({t:'=',v}));
+  return ops;
+}
+function diffTexto(a,b){
+  const out=[], push=(t,s)=>{if(!s) return; const u=out[out.length-1]; if(u&&u.t===t) u.s+=s; else out.push({t,s});};
+  const ol=lcsOps(a.split('\n'),b.split('\n'));
+  for(let k=0;k<ol.length;){
+    if(ol[k].t==='='){push('=',ol[k].v+'\n'); k++; continue;}
+    const del=[],ins=[]; while(k<ol.length&&ol[k].t!=='='){(ol[k].t==='-'?del:ins).push(ol[k].v); k++;}
+    lcsOps(del.length?tokensDe(del.join('\n')+'\n'):[],ins.length?tokensDe(ins.join('\n')+'\n'):[]).forEach(o=>push(o.t,o.v));
+  }
+  return out;
+}
+// Un lado del diff en HTML. lado 'b' (versión): '=' y '+' resaltado; lado 'a' (original): '=' y '-' tachado.
+// Con marcarQuitado, en el lado 'b' se deja una marquita roja donde se quitó algo (sin mover el texto).
+function ladoHTML(ops,lado,marcarQuitado){
+  const piezas=[];
+  ops.forEach(o=>{
+    if(o.t==='=') piezas.push([o.s,'']);
+    else if(o.t==='+'&&lado==='b') piezas.push([o.s,'ed-add']);
+    else if(o.t==='-'&&lado==='a') piezas.push([o.s,'ln-del']);
+    else if(o.t==='-'&&lado==='b'&&marcarQuitado&&o.s.trim()) piezas.push(['','ed-del']);
+  });
+  for(let i=piezas.length-1;i>=0;i--){if(piezas[i][0]){if(piezas[i][0].endsWith('\n')) piezas[i][0]=piezas[i][0].slice(0,-1); break;}}
+  return piezas.map(([s,c])=>c?`<span class="${c}">${esc(s)}</span>`:esc(s)).join('');
+}
+function quitadosDe(ops){return ops.filter(o=>o.t==='-'&&o.s.trim()).map(o=>o.s.trim().replace(/\s+/g,' '));}
+
+// ---- Editor
 async function abrirEditor(doc,base){
   if(!SRV){aviso('Las versiones necesitan la revisión en equipo: python servidor.py'); return;}
+  if(!editable(doc)){aviso('Por ahora solo se pueden editar los PDF'); return;}
   const mot=motivoEditar(doc); if(mot){aviso(mot); return;}
   const vs=versionesDe(doc); base=base??(vs.length?vs[vs.length-1].n:0);
-  S.ed={doc,base,pag:Math.min(S.doc===doc?S.pdfPag||1:1,DOCS[doc].paginas),textos:{},orig:{},basePags:{},nota:'',cargando:true};
+  S.verOpen=false;
+  S.ed={doc,base,pag:Math.min(S.doc===doc?S.pdfPag||1:1,DOCS[doc].paginas),textos:{},orig:{},basePags:{},nota:'',nombre:'',cargando:true};
   pintarEditor();
   try{S.ed.basePags=base?{...await textoVersion(doc,base)}:{};}catch(e){aviso('No se pudo cargar la versión de partida'); S.ed=null; pintarEditor(); return;}
   await cargarPaginaEditor();
@@ -1373,24 +1513,40 @@ function cambiosEditor(){
   const igual=JSON.stringify(Object.entries(final).sort())===JSON.stringify(Object.entries(e.basePags).sort());
   return {final,igual};
 }
+// Resaltado en vivo: detrás del cuadro de texto hay una capa con el mismo texto y las mismas medidas, donde lo
+// añadido o cambiado respecto al ORIGINAL va en amarillo y donde se quitó algo hay una marca roja. Debajo, lo quitado.
+let _tMarcas=null;
+function pintarMarcas(){
+  const e=S.ed, t=document.getElementById('edTxt'), capa=document.getElementById('edCapa'), q=document.getElementById('edQuit');
+  if(!e||!t||!capa) return;
+  const ops=diffTexto(e.orig[e.pag]||'',t.value);
+  capa.innerHTML=ladoHTML(ops,'b',true)+' ';
+  capa.scrollTop=t.scrollTop;
+  const qs=quitadosDe(ops), hay=ops.some(o=>o.t!=='=');
+  if(q) q.innerHTML=!hay?'<span class="small">Sin cambios en esta página respecto al original.</span>'
+    :qs.length?`<span class="small"><span class="ln-del" style="text-decoration:none">Quitado</span> en esta página: ${qs.slice(0,4).map(x=>`«${esc(x.length>80?x.slice(0,80)+'…':x)}»`).join(' · ')}${qs.length>4?` y ${qs.length-4} más`:''}</span>`
+    :'<span class="small">Solo hay texto añadido o cambiado (en amarillo).</span>';
+}
 function pintarEditor(){
   let c=document.getElementById('editor');
   if(!S.ed){if(c) c.remove(); document.body.style.overflow=''; return;}
   if(!c){c=document.createElement('div'); c.id='editor'; document.body.appendChild(c);}
   const e=S.ed, info=DOCS[e.doc], N=info.paginas, txt=e.textos[e.pag]??'', cambiada=e.pag in e.textos?txt!==e.orig[e.pag]:e.pag in e.basePags;
-  const nCamb=Object.keys(cambiosEditor().final).length;
-  const foco=document.activeElement&&document.activeElement.id, sel=foco==='edTxt'?[document.activeElement.selectionStart,document.activeElement.selectionEnd]:null;
+  const nCamb=Object.keys(cambiosEditor().final).length, sig=etiquetaVersion(e.doc,versionesDe(e.doc).reduce((m,v)=>Math.max(m,v.n),0)+1);
+  const foco=document.activeElement&&document.activeElement.id, sel=foco==='edTxt'?[document.activeElement.selectionStart,document.activeElement.selectionEnd,document.activeElement.scrollTop]:null;
   c.innerHTML=`<div class="prev-fondo"></div>
     <div class="ed-caja" role="dialog" aria-modal="true" aria-label="Editar ${esc(e.doc)}">
-      <div class="ed-cab"><div style="flex:1;min-width:0"><b>Editar ${esc(e.doc)}</b>
-        <div class="small">A partir de: ${e.base?`versión ${e.base}`:'original del auditor'} · El PDF original no se modifica: se guarda una versión nueva.</div></div>
+      <div class="ed-cab"><div style="flex:1;min-width:0"><b>Editar ${esc(e.doc)} · se guardará como ${esc(sig)}</b>
+        <div class="small">A partir de: ${e.base?esc(etiquetaVersion(e.doc,e.base)):'el original del auditor'} · El PDF original no se modifica: se guarda una versión nueva.</div></div>
         <button class="prev-x" data-act="cerrarEditor" aria-label="Cerrar sin guardar" title="Cerrar sin guardar">×</button></div>
       <div class="ed-cuerpo">
         <div class="ed-pag"><img src="${D.carpeta}/${info.slug}_${e.pag}.jpg" alt="Página ${e.pag} del original"></div>
         <div class="ed-texto">
-          <div class="small" style="display:flex;gap:8px;align-items:center">Texto de la página ${e.pag}${cambiada?'<span class="rolpill" style="margin:0;background:#fff4e0;color:#c76a00">Modificada</span>':''}
+          <div class="small" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">Texto de la página ${e.pag}${cambiada?'<span class="rolpill" style="margin:0;background:#fff4e0;color:#c76a00">Modificada</span>':''}
+            <span class="ed-ley"><span class="ed-add">amarillo</span> = añadido o cambiado respecto al original · <span class="ed-del-ley"></span> = se quitó algo</span>
             ${cambiada?`<button class="enlace" data-act="edRestaurar" style="margin-left:auto">Volver al texto original</button>`:''}</div>
-          ${e.cargando?'<p class="small">Cargando…</p>':`<textarea id="edTxt" aria-label="Texto de la página ${e.pag}">${esc(txt)}</textarea>`}
+          ${e.cargando?'<p class="small">Cargando…</p>':`<div class="ed-area"><div class="ed-capa" id="edCapa" aria-hidden="true"></div><textarea id="edTxt" spellcheck="false" aria-label="Texto de la página ${e.pag}">${esc(txt)}</textarea></div>
+          <div id="edQuit" class="ed-quit" aria-live="polite"></div>`}
           ${!e.cargando&&!e.orig[e.pag]&&!txt?'<p class="note" style="margin:0">Esta página no tiene texto extraído (por ejemplo, un escaneado sin transcripción). Puedes escribirlo tú.</p>':''}
         </div>
       </div>
@@ -1399,89 +1555,223 @@ function pintarEditor(){
           <button class="ghost" data-act="edPag" data-v="-1" ${e.pag<=1?'disabled':''} aria-label="Página anterior">◀</button>
           <span class="small" style="min-width:96px;text-align:center">Página ${e.pag} de ${N}</span>
           <button class="ghost" data-act="edPag" data-v="1" ${e.pag>=N?'disabled':''} aria-label="Página siguiente">▶</button></div>
+        <input id="edNombre" placeholder="Nombre (opcional)" value="${esc(e.nombre)}" aria-label="Nombre de la versión (opcional)" maxlength="60" style="width:180px">
         <input id="edNota" placeholder="Nota de la versión (qué cambiaste y por qué)" value="${esc(e.nota)}" aria-label="Nota de la versión" style="flex:1;min-width:200px">
         <span class="small" id="edCnt">${nCamb} ${nCamb===1?'página cambiada':'páginas cambiadas'}</span>
         <button class="ghost" data-act="cerrarEditor">Cancelar</button>
-        <button class="ok" data-act="edGuardar" ${e.cargando?'disabled':''}>Guardar como versión nueva</button></div>
+        <button class="ok" data-act="edGuardar" ${e.cargando?'disabled':''}>Guardar como ${esc(sig)}</button></div>
     </div>`;
   document.body.style.overflow='hidden';
-  const t=document.getElementById(foco||'');
-  if(t){t.focus(); if(sel) try{t.setSelectionRange(sel[0],sel[1]);}catch(err){}} else c.querySelector('.prev-x').focus();
+  const t=document.getElementById('edTxt');
+  if(t){
+    t.onscroll=()=>{const capa=document.getElementById('edCapa'); if(capa) capa.scrollTop=t.scrollTop;};
+    pintarMarcas();
+  }
+  const f=document.getElementById(foco||'');
+  if(f){f.focus(); if(sel) try{f.setSelectionRange(sel[0],sel[1]); f.scrollTop=sel[2];}catch(err){}} else c.querySelector('.prev-x').focus();
   aplicarIdioma();
 }
 async function guardarVersion(){
   const e=S.ed, {final,igual}=cambiosEditor();
   if(!Object.keys(final).length||igual){aviso('No hay cambios respecto a la versión de partida'); return;}
-  const r=await api('/api/version/guardar',{doc:e.doc,nota:e.nota,paginas:final});
-  if(r.ok){aviso(`Guardada la versión ${r.n} de ${e.doc}`); S.ed=null; pintarEditor(); await sondear(); render();}
+  const r=await api('/api/version/guardar',{doc:e.doc,nota:e.nota,nombre:e.nombre,base:e.base,paginas:final});
+  if(r.ok){aviso(`Guardada la ${etiquetaVersion(e.doc,r.n)} de ${e.doc}`); S.ed=null; pintarEditor(); await sondear(); S.verOpen=true; render();}
 }
 async function descargarVersion(doc,n){
   const N=DOCS[doc].paginas, pags=n?await textoVersion(doc,n):{}, partes=[];
   for(let p=1;p<=N;p++) partes.push(`[página ${p}${p in pags?' · modificada':''}]\n${p in pags?pags[p]:await textoOriginal(doc,p)}`);
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([partes.join('\n\n')],{type:'text/plain;charset=utf-8'}));
-  a.download=`${doc}_${n?'v'+n:'original'}.txt`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  a.download=`${doc}_${etiquetaVersion(doc,n).replace(/\s+/g,'_')}${n?'':'_original'}.txt`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+}
+
+// ---- Panel «Versiones» dentro del documento y ventana de comparación
+function vPanelVersiones(){
+  const d=S.doc, info=DOCS[d], vs=versionesDe(d).reverse(), mot=SRV&&editable(d)?motivoEditar(d):null, ed=SRV&&editable(d)&&!mot;
+  const fila=v=>`<div class="ver-fila"><span class="rolpill" style="margin:0">${esc(etiquetaVersion(d,v.n))}</span>
+      <div style="flex:1;min-width:0">${v.nombre?`<div><b>${esc(v.nombre)}</b></div>`:''}<div><b>${esc(v.user)}</b> · <span class="small">${fmtFecha(v.fecha)}</span></div>
+      <div class="small">${v.nota?esc(v.nota)+' · ':''}${v.paginas.length===1?'Página':'Páginas'} ${v.paginas.join(', ')}${v.base?` · a partir de ${esc(etiquetaVersion(d,v.base))}`:''}</div>
+      <div class="ver-acc"><button class="ghost" data-act="verCmp" data-doc="${esc(d)}" data-n="${v.n}">Comparar con el original</button>
+        ${ed?`<button class="ghost" data-act="editarDoc" data-doc="${esc(d)}" data-n="${v.n}">Editar a partir de esta</button>`:''}
+        <button class="ghost" data-act="descVer" data-doc="${esc(d)}" data-n="${v.n}" title="Texto completo del documento en esta versión">.txt</button></div></div></div>`;
+  return `<div class="scrim" data-act="cerrarVersiones"></div>
+    <aside class="sidemodal" role="dialog" aria-label="Versiones de ${esc(d)}">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px">
+        <h2 style="margin:0">Versiones</h2><button class="ghost" data-act="cerrarVersiones">Cerrar</button></div>
+      <p class="sub" style="margin-top:0">${esc(d)} · ${esc(info.titulo)}. El original nunca se modifica; cada edición se guarda como una versión nueva.</p>
+      ${ed?`<button class="ok" data-act="editarDoc" data-doc="${esc(d)}" style="width:100%;margin-bottom:10px">${I('lapiz')} Nueva versión${vs.length?` a partir de ${esc(etiquetaVersion(d,vs[0].n))}`:''}</button>`
+        :mot?`<p class="note" title="${esc(mot)}">${esc(mot)}</p>`
+        :`<p class="note">${SRV?'Por ahora solo se pueden editar los PDF.':'Las versiones necesitan la revisión en equipo: python servidor.py'}</p>`}
+      ${vs.map(fila).join('')}
+      <div class="ver-fila ver-orig"><span class="rolpill" style="margin:0;background:#e8f7ed;color:#248a3d">${esc(etiquetaVersion(d,0))}</span>
+        <div style="flex:1;min-width:0"><b>Original del auditor</b> <span class="small">· intacto, nunca se modifica</span>
+        <div class="ver-acc">${editable(d)?`<button class="ghost" data-act="descVer" data-doc="${esc(d)}" data-n="0" title="Texto del original">.txt</button>`:''}
+          ${info.cargado?`<a class="ghostlink" href="${esc(info.cargado.ruta)}" download="${esc(info.cargado.archivo)}">Descargar archivo original</a>`:''}</div></div></div>
+      ${!vs.length?'<p class="small" style="margin-top:10px">Todavía no hay versiones editadas de este documento.</p>':''}
+    </aside>`;
 }
 async function compararVersion(doc,n,pag){
-  const vs=versionesDe(doc).find(v=>v.n===n); if(!vs) return;
-  pag=pag||vs.paginas[0];
-  S.cmp={doc,n,pag,cargando:true}; render();
-  try{const [o,v]=await Promise.all([textoOriginal(doc,pag),textoVersion(doc,n)]); if(S.cmp&&S.cmp.doc===doc&&S.cmp.n===n) Object.assign(S.cmp,{orig:o,txt:v[pag]??o,cargando:false});}
+  const v=versionesDe(doc).find(x=>x.n===n); if(!v) return;
+  pag=pag||v.paginas[0];
+  S.cmp={doc,n,pag,cargando:true}; pintarCmp();
+  try{const [o,pv]=await Promise.all([textoOriginal(doc,pag),textoVersion(doc,n)]); if(S.cmp&&S.cmp.doc===doc&&S.cmp.n===n) Object.assign(S.cmp,{orig:o,txt:pv[pag]??o,cargando:false});}
   catch(err){S.cmp=null; aviso('No se pudo cargar la versión');}
-  render();
+  pintarCmp();
 }
-function vVersiones(){
-  if(!SRV) return `<h2>Versiones</h2><div class="card"><p class="sub" style="margin:0">Las versiones editables necesitan la revisión en equipo: en la carpeta del auditor ejecuta <b>python servidor.py</b> y abre la dirección que muestra.</p></div>`;
-  const conV=Object.keys(DOCS).filter(d=>versionesDe(d).length).sort();
-  const tarjeta=d=>{
-    const info=DOCS[d], vs=versionesDe(d).reverse();
-    const cmp=S.cmp&&S.cmp.doc===d?S.cmp:null;
-    const filaV=v=>`<div class="ver-fila"><span class="rolpill" style="margin:0">v${v.n}</span>
-        <div style="flex:1;min-width:0"><div><b>${esc(v.user)}</b> · <span class="small">${fmtFecha(v.fecha)}</span></div>
-        <div class="small">${v.nota?esc(v.nota)+' · ':''}${v.paginas.length===1?'Página':'Páginas'} ${v.paginas.join(', ')}</div></div>
-        <button class="ghost" data-act="verCmp" data-doc="${esc(d)}" data-n="${v.n}" aria-expanded="${!!(cmp&&cmp.n===v.n)}">Comparar</button>
-        ${motivoEditar(d)?'':`<button class="ghost" data-act="editarDoc" data-doc="${esc(d)}" data-n="${v.n}">Editar a partir de esta</button>`}
-        <button class="ghost" data-act="descVer" data-doc="${esc(d)}" data-n="${v.n}" title="Texto completo del documento en esta versión">.txt</button></div>
-      ${cmp&&cmp.n===v.n?vComparar(cmp,v):''}`;
-    return `<div class="card" style="margin-bottom:14px">
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><div style="flex:1;min-width:0"><h3 style="margin:0">${esc(d)}</h3><div class="small">${esc(info.titulo)} · ${info.paginas} páginas</div></div>
-        ${motivoEditar(d)?`<span class="small" title="${esc(motivoEditar(d))}">Sin permiso de edición</span>`:`<button class="ok" data-act="editarDoc" data-doc="${esc(d)}">Nueva versión</button>`}</div>
-      <div class="ver-fila ver-orig"><span class="rolpill" style="margin:0;background:#e8f7ed;color:#248a3d">Original</span>
-        <div style="flex:1;min-width:0"><b>PDF auditado</b> <span class="small">v${esc(info.version||'')} · intacto, nunca se modifica</span></div>
-        <button class="ghost" data-act="abrir" data-doc="${esc(d)}">Abrir en Revisión</button>
-        <button class="ghost" data-act="descVer" data-doc="${esc(d)}" data-n="0" title="Texto del original">.txt</button></div>
-      ${vs.map(filaV).join('')||'<p class="small" style="margin:8px 0 0">Todavía no hay versiones editadas.</p>'}</div>`;
-  };
-  const otros=Object.keys(DOCS).filter(d=>!conV.includes(d)).sort();
-  return `<h2>Versiones</h2>
-    <p class="sub">Aquí se guarda el original de cada PDF auditado, que nunca se modifica, y debajo las versiones editadas por el equipo: quién, cuándo, por qué y qué páginas cambió.</p>
-    ${(()=>{const mios=Object.keys(DOCS).filter(d=>!motivoEditar(d)).sort();
-      return mios.length?`<div class="card" style="margin-bottom:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <label class="small" for="verNuevo">Editar un documento escalado a ti:</label>
-      <select id="verNuevo" style="flex:1;min-width:220px"><option value="">Elige un documento…</option>${mios.map(d=>`<option value="${esc(d)}">${esc(d)} · ${esc(DOCS[d].titulo)}</option>`).join('')}</select></div>`
-      :`<div class="card small" style="margin-bottom:14px">No tienes documentos para editar. Un documento solo se edita cuando se escala a una persona con el rol Dueño de Proceso, y solo esa persona puede editarlo.</div>`;})()}
-    ${conV.map(tarjeta).join('')||'<div class="card small">Aún no hay versiones. Abre un documento en Revisión y pulsa «Editar», o elige uno arriba.</div>'}
-    ${conV.length&&otros.length?`<p class="small">${otros.length} documentos más solo tienen su original.</p>`:''}`;
+function pintarCmp(){
+  let c=document.getElementById('cmpModal');
+  if(!S.cmp){if(c) c.remove(); if(!S.ed&&!S.prev) document.body.style.overflow=''; return;}
+  if(!c){c=document.createElement('div'); c.id='cmpModal'; document.body.appendChild(c);}
+  const m=S.cmp, v=versionesDe(m.doc).find(x=>x.n===m.n)||{paginas:[]}, ops=m.cargando?[]:diffTexto(m.orig||'',m.txt||'');
+  c.innerHTML=`<div class="prev-fondo" data-act="cerrarCmp"></div>
+    <div class="ed-caja" role="dialog" aria-modal="true" aria-label="Comparar versión">
+      <div class="ed-cab"><div style="flex:1;min-width:0"><b>${esc(m.doc)} · ${esc(etiquetaVersion(m.doc,m.n))}${v.nombre?' · '+esc(v.nombre):''} comparada con el original</b>
+        <div class="small">${esc(v.user||'')} · ${v.fecha?fmtFecha(v.fecha):''}${v.nota?' · '+esc(v.nota):''}</div></div>
+        <button class="prev-x" data-act="cerrarCmp" aria-label="Cerrar" title="Cerrar (Esc)">×</button></div>
+      <div style="padding:10px 14px 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <label class="small" for="cmpPag">Página modificada:</label>
+        <select id="cmpPag" data-doc="${esc(m.doc)}" data-n="${m.n}">${v.paginas.map(p=>`<option value="${p}" ${p===m.pag?'selected':''}>${p}</option>`).join('')}</select>
+        <span class="small"><span class="ln-del">rojo</span> = quitado del original · <span class="ed-add">amarillo</span> = añadido o cambiado en la versión</span></div>
+      <div class="ed-cuerpo">${m.cargando?'<p class="small">Cargando…</p>':`
+        <div class="ver-col"><div class="small"><b>Original del auditor</b></div><pre>${ladoHTML(ops,'a')||'(sin texto)'}</pre></div>
+        <div class="ver-col"><div class="small"><b>${esc(etiquetaVersion(m.doc,m.n))}</b></div><pre>${ladoHTML(ops,'b')||'(vacía)'}</pre></div>`}</div>
+    </div>`;
+  document.body.style.overflow='hidden';
+  c.querySelector('.prev-x').focus();
+  aplicarIdioma();
 }
-function vComparar(c,v){
-  if(c.cargando) return '<p class="small" style="margin:8px 0">Cargando…</p>';
-  return `<div class="ver-cmp">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><label class="small" for="cmpPag">Página modificada:</label>
-      <select id="cmpPag" data-doc="${esc(c.doc)}" data-n="${c.n}">${v.paginas.map(p=>`<option value="${p}" ${p===c.pag?'selected':''}>${p}</option>`).join('')}</select></div>
-    <div class="small" style="margin-bottom:6px"><span class="ln-del">rojo</span> = quitado del original · <span class="ln-add">amarillo</span> = añadido o cambiado en la versión</div>
-    <div class="ver-col2"><div><div class="small"><b>Original</b></div><pre>${lineasMarcadas(c.orig||'',c.txt||'','ln-del')||'(sin texto)'}</pre></div>
-      <div><div class="small"><b>Versión ${c.n}</b></div><pre>${lineasMarcadas(c.txt||'',c.orig||'','ln-add')||'(vacía)'}</pre></div></div></div>`;
+
+// ---- Documento sin hallazgos o cargado: vista del contenido y panel lateral
+const _contenido={};
+function vCargadoContenido(info){
+  const c=info.cargado, url=esc(c.ruta);
+  let cuerpo;
+  if(c.vista==='imagen') cuerpo=`<img src="${url}" alt="${esc(c.archivo)}" style="max-width:100%;display:block;margin:0 auto;border-radius:8px">`;
+  else if(c.vista==='contenido'){
+    const bl=_contenido[c.id];
+    if(!bl){fetch(`cargados/${c.id}/contenido.json`,{cache:'no-store'}).then(r=>r.json()).then(j=>{_contenido[c.id]=j; render();}).catch(()=>{_contenido[c.id]=[{t:'p',x:'No se pudo cargar el contenido.'}]; render();});
+      cuerpo='<p class="small">Cargando…</p>';}
+    else cuerpo=bl.map(b=>b.t==='h'?`<h3 style="margin:14px 0 6px">${esc(b.x)}</h3>`:b.t==='p'?`<p style="margin:0 0 8px;line-height:1.5">${esc(b.x)}</p>`
+      :`${b.t==='hoja'?`<div class="small" style="margin:12px 0 4px"><b>${esc(b.nombre)}</b> · ${b.filas.length} filas</div>`:''}<div class="cg-tabla"><table>${b.filas.map((f,i)=>`<tr>${f.map(x=>i===0?`<th>${esc(x)}</th>`:`<td>${esc(x)}</td>`).join('')}</tr>`).join('')}</table></div>`).join('')
+      ||'<p class="small">El archivo no tiene contenido legible.</p>';
+  } else cuerpo='<p class="small">Este formato no tiene vista previa. Descárgalo para abrirlo.</p>';
+  return `<div class="card">
+    <div class="pnav"><span class="small">${esc(c.archivo)} · ${tam(c.tam||0)}</span><div class="sp"></div>
+      <a class="ghostlink" href="${url}" download="${esc(c.archivo)}">Descargar original</a></div>
+    <div class="cg-vista">${cuerpo}</div></div>`;
 }
-// Comparación sencilla por líneas: se marca cada línea que no aparece (tal cual) en el otro texto
-function lineasMarcadas(texto,otro,clase){
-  const hay=new Set(otro.split('\n'));
-  return texto.split('\n').map(l=>hay.has(l)?esc(l):`<span class="${clase}">${esc(l)||' '}</span>`).join('\n');
+function docPseudo(){return {documento:S.doc,ubicacion:'(documento)'};}   // para el debate de un documento sin hallazgos
+function vSinHallazgos(){
+  const d=S.doc, info=DOCS[d], c=info.cargado, rev=metaDoc(d).revisado;
+  return `<div class="card right" style="overflow:auto">
+    <h2 style="margin-top:0">Sin hallazgos</h2>
+    <p class="sub">${c?'Documento cargado manualmente: aún no se ha auditado. Sus hallazgos llegarán al auditarlo con <b>python auditar.py</b>.':'El auditor no encontró defectos en este documento.'}</p>
+    ${c?`<div class="small">Cargado por <b>${esc(c.user)}</b> · ${fmtFecha(c.fecha)} · familia ${esc(c.familia||'—')}</div>`:''}
+    <div class="sh-rev">${rev?`<div>Revisado por <b>${esc(rev.user)}</b> · ${fmtFecha(rev.fecha)}</div>${SRV&&puede('revisiones','marcar_revisado')?'<button class="enlace" data-act="docRevisado" data-v="0">Deshacer</button>':''}`
+      :!SRV?'<p class="note">Para marcarlo como revisado, abrid la revisión en equipo: <b>python servidor.py</b>.</p>'
+      :puede('revisiones','marcar_revisado')?'<button class="ok" data-act="docRevisado" data-v="1" style="width:100%">Marcar como revisado</button>'
+      :`<p class="note">${esc(sinPermiso('revisiones','marcar_revisado'))}</p>`}</div>
+    <div class="motivo-scroll">${vPresencia(docPseudo())}${vDebate(docPseudo())}</div>
+  </div>`;
 }
+function cambiarPrioridad(doc,valor){
+  if(!SRV){aviso('Para cambiar la prioridad abrid la revisión en equipo: python servidor.py'); render(); return;}
+  S.docs_meta=S.docs_meta||{}; S.docs_meta[doc]={...metaDoc(doc),prioridad:{valor,user:S.user.nombre,fecha:new Date().toISOString()}}; render();
+  api('/api/doc/prioridad',{doc,prioridad:valor}).then(sondear);
+}
+
+// ---- Cargar un documento desde Inicio: se sube, el servidor lo prepara y aquí se confirman familia y prioridad
+async function cargarArchivo(f){
+  if(!SRV){aviso('Para cargar documentos abrid la revisión en equipo: python servidor.py'); return;}
+  if(f.size>25*1024*1024){aviso(`«${f.name}» pasa de 25 MB`); return;}
+  S.carga={paso:'subiendo',archivo:f.name}; pintarCarga();
+  try{
+    const r=await fetch('/api/cargar',{method:'POST',body:f,headers:{'Content-Type':f.type||'application/octet-stream',
+      'X-Sesion':S.token||'','X-Nombre':encodeURIComponent(f.name)}});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(j.error||r.status);
+    const fam=familiaSugerida(j.codigo);
+    S.carga={paso:'confirmar',...j,familia:fam,familiaAuto:!!fam,prioridad:'Media',titulo:j.titulo||j.archivo};
+  }catch(e){S.carga=null; aviso(`No se pudo cargar «${f.name}»: ${e.message||e}`);}
+  pintarCarga();
+}
+function pintarCarga(){
+  let c=document.getElementById('cargaDlg');
+  if(!S.carga){if(c) c.remove(); return;}
+  if(!c){c=document.createElement('div'); c.id='cargaDlg'; document.body.appendChild(c);}
+  const g=S.carga;
+  if(g.paso==='subiendo'){
+    c.innerHTML=`<div class="prev-fondo"></div><div class="dialog" role="dialog" aria-modal="true" aria-label="Cargando documento"><h2 style="margin:0 0 6px">Cargando…</h2>
+      <p class="small">«${esc(g.archivo)}»: subiendo y preparando sus páginas para verlo en Revisión.</p></div>`;
+    return;
+  }
+  const fams=familiasConocidas(), otra=g.familia&&!fams.includes(g.familia);
+  const det=g.codigo?`Código detectado: <b>${esc(g.codigo)}</b>${g.version?` · v${esc(g.version)}`:''}`:'No se detectó un código de documento';
+  c.innerHTML=`<div class="prev-fondo"></div>
+    <div class="dialog" role="dialog" aria-modal="true" aria-label="Datos del documento cargado">
+      <h2 style="margin:0 0 4px">Documento cargado</h2>
+      <p class="small" style="margin:0 0 12px">${esc(g.archivo)} · ${g.paginas} ${g.paginas===1?'página':'páginas'} · ${det}</p>
+      <label class="small" for="cgTit">Título</label>
+      <input id="cgTit" value="${esc(g.titulo||'')}" style="width:100%;margin:4px 0 10px">
+      <label class="small" for="cgFam">Familia</label>
+      <select id="cgFam" style="width:100%;margin-top:4px"><option value="" ${!g.familia?'selected':''}>Elige una familia…</option>
+        ${fams.map(x=>`<option ${x===g.familia?'selected':''}>${esc(x)}</option>`).join('')}<option value="__otra" ${otra||g.familia==='__otra'?'selected':''}>Otra…</option></select>
+      ${otra||g.familia==='__otra'?`<input id="cgFamOtra" placeholder="Nombre de la familia" value="${esc(g.familiaOtra??(otra?g.familia:''))}" style="width:100%;margin-top:6px">`:''}
+      <div class="small" style="margin:4px 0 10px;color:${g.familia&&g.familia!=='__otra'?'var(--sec)':'#c76a00'}">${g.familiaAuto?`Rellenada automáticamente a partir del código ${esc(g.codigo)}. Puedes cambiarla.`
+        :g.familia&&g.familia!=='__otra'?'Elegida a mano.':'No se pudo identificar automáticamente: elígela.'}</div>
+      <div class="small" style="margin-bottom:4px">Prioridad</div>
+      <div class="seg" role="radiogroup" aria-label="Prioridad">${['Alta','Media','Baja'].map(p=>`<button role="radio" aria-checked="${g.prioridad===p}" class="${g.prioridad===p?'on':''}" data-act="cgPrio" data-v="${p}">${p}</button>`).join('')}</div>
+      <div class="small" style="margin-top:4px">Plazo de revisión: alta 2 días, media 5, baja 10.</div>
+      <div class="fbtns" style="margin-top:14px"><button class="ghost" data-act="cgCancelar">Cancelar</button><button class="ok" data-act="cgGuardar">Guardar</button></div>
+    </div>`;
+  aplicarIdioma();
+}
+async function guardarCarga(){
+  const g=S.carga; if(!g||g.paso!=='confirmar') return;
+  g.titulo=(document.getElementById('cgTit')||{}).value||g.titulo;
+  const fam=g.familia==='__otra'||(g.familia&&!familiasConocidas().includes(g.familia))?((document.getElementById('cgFamOtra')||{}).value||'').trim():g.familia;
+  if(!fam){aviso('Elige la familia del documento'); return;}
+  const r=await api('/api/cargado/guardar',{id:g.id,familia:fam,prioridad:g.prioridad,titulo:g.titulo});
+  if(r.ok){S.carga=null; pintarCarga(); await sondear(); render(); aviso('Documento cargado: ya puedes abrirlo');}
+}
+
+// ---- Compartir un documento con personas del equipo (les llega una notificación con enlace)
+function abrirCompartir(doc){
+  if(!SRV){aviso('Para compartir abrid la revisión en equipo: python servidor.py'); return;}
+  S.comp={doc,para:new Set(),nota:''}; pintarComp();
+}
+function pintarComp(){
+  let c=document.getElementById('compDlg');
+  if(!S.comp){if(c) c.remove(); return;}
+  if(!c){c=document.createElement('div'); c.id='compDlg'; document.body.appendChild(c);}
+  const m=S.comp, hist=(S.compartidos||[]).filter(x=>x.doc===m.doc).slice().reverse();
+  c.innerHTML=`<div class="prev-fondo" data-act="cerrarComp"></div>
+    <div class="dialog" role="dialog" aria-modal="true" aria-label="Compartir ${esc(m.doc)}">
+      <h2 style="margin:0 0 4px">Compartir ${esc(m.doc)}</h2>
+      <p class="small" style="margin:0 0 10px">Les llega una notificación con un enlace que abre el documento. Aparecerá en «En equipo».</p>
+      <div class="comp-lista">${S.equipo.filter(x=>x.n!==S.user.nombre).map(x=>`<label class="comp-p">
+        <input type="checkbox" data-comp="${esc(x.n)}" ${m.para.has(x.n)?'checked':''}>${av(x.n,26)}<span><b>${esc(x.n)}</b><span class="small"> · ${esc(x.rol||'')}</span></span>
+        <span class="dot ${enLinea(x.n)?'on':''}" style="margin-left:auto" title="${enLinea(x.n)?'En línea':'Desconectado'}"></span></label>`).join('')}</div>
+      <label class="small" for="compNota" style="display:block;margin-top:10px">Nota (opcional)</label>
+      <textarea id="compNota" rows="2" style="width:100%;margin-top:4px" placeholder="Por ejemplo: revisa la tabla 5, el plazo me parece mal">${esc(m.nota)}</textarea>
+      ${hist.length?`<div class="small" style="margin-top:10px"><b>Ya compartido</b>${hist.slice(0,5).map(x=>`<div>· ${esc(x.de)} → ${esc(x.para.join(', '))} · ${fmtFecha(x.fecha)}${x.nota?` · «${esc(x.nota)}»`:''}</div>`).join('')}</div>`:''}
+      <div class="fbtns" style="margin-top:12px"><button class="ghost" data-act="cerrarComp">Cancelar</button>
+        <button class="ok" data-act="enviarComp" ${m.para.size?'':'disabled'}>Compartir${m.para.size?` con ${m.para.size}`:''}</button></div>
+    </div>`;
+  aplicarIdioma();
+}
+async function enviarCompartir(){
+  const m=S.comp; if(!m||!m.para.size) return;
+  const r=await api('/api/compartir',{doc:m.doc,para:[...m.para],nota:m.nota});
+  if(r.ok){aviso(`Compartido con ${[...m.para].join(', ')}`); S.comp=null; pintarComp(); sondear();}
+}
+
 // ---------- Mi cuenta: perfil, sesiones abiertas (reales, las da el servidor) y política de acceso REAL de la app.
 // Llaves de acceso, app de autenticación y códigos de recuperación aparecen como «Próximamente»: el inicio de sesión
 // es de prototipo y el plan del equipo es que la verificación en dos pasos la haga Microsoft Entra ID (AUTENTICACION.md).
-const SID=(()=>{try{let s=sessionStorage.getItem('rv_sid'); if(!s){s=Math.random().toString(36).slice(2,12); sessionStorage.setItem('rv_sid',s);} return s;}
+let SID=(()=>{try{let s=sessionStorage.getItem('rv_sid'); if(!s){s=Math.random().toString(36).slice(2,12); sessionStorage.setItem('rv_sid',s);} return s;}
   catch(e){return Math.random().toString(36).slice(2,12);}})();
+function nuevaSesion(){SID=Math.random().toString(36).slice(2,12); try{sessionStorage.setItem('rv_sid',SID);}catch(e){}}
 function navegadorDe(ua){
   const nav=/Edg\//.test(ua)?'Edge':/OPR\//.test(ua)?'Opera':/Firefox\//.test(ua)?'Firefox':/Chrome\//.test(ua)?'Chrome':/Safari\//.test(ua)?'Safari':'Navegador';
   const so=/iPhone|iPad/.test(ua)?'iOS':/Android/.test(ua)?'Android':/Mac OS X|Macintosh/.test(ua)?'macOS':/Windows/.test(ua)?'Windows':/Linux/.test(ua)?'Linux':'';
@@ -1517,6 +1807,7 @@ function vCuenta(){
           <li>Solo entra quien está dado de alta. El servidor te da una sesión y comprueba el permiso de tu rol en cada operación; el inicio de sesión todavía no pide contraseña.</li>
           <li>Solo el rol Admin crea, edita o elimina roles y crea canales públicos. Los usuarios los gestiona quien tenga ese permiso en su rol.</li>
           <li>Un documento solo lo edita la persona con rol Dueño de Proceso a la que se ha escalado, y solo mientras su revisión no esté completada.</li>
+          <li>Cargar documentos, compartirlos, cambiar su prioridad y marcar como revisado uno sin hallazgos son permisos de tu rol.</li>
           <li>Cada persona solo recibe los chats en los que está, y los adjuntos solo se sirven a quien ve ese chat.</li>
           <li>Un mensaje del chat solo se puede editar durante 30 minutos.</li>
           <li>El PDF original y respuestas.csv nunca se modifican: ediciones y versiones se guardan aparte.</li>
@@ -1794,23 +2085,28 @@ function vDecision(){
 }
 
 function vRevision(){
-  const info=DOCS[S.doc];
-  return `${vPestanas()}<div class="pnav pnav-rev" style="margin-bottom:14px">
+  const info=DOCS[S.doc], d=S.doc, nv=versionesDe(d).length, prio=prioridadDe(d), pm=metaDoc(d).prioridad;
+  const icono=p=>`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+  return `${vPestanas()}<div class="pnav pnav-rev rev-barra" style="margin-bottom:14px">
       <button class="ghost iconbtn" data-act="volver" aria-label="Volver al listado" title="Volver al listado">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
-      <div class="pnav-tit"><h2 style="margin:0">${esc(S.doc)}</h2><span class="small" title="${esc(info.titulo)}">v${esc(info.version)} · ${esc(info.titulo)}</span></div>
+      <div class="pnav-tit"><h2 style="margin:0">${esc(d)}</h2><span class="small" title="${esc(info.titulo)}">${info.version?'v'+esc(info.version)+' · ':''}${esc(info.titulo)}</span></div>
+      <label class="rev-prio" title="${!puede('revisiones','prioridad')?esc(sinPermiso('revisiones','prioridad')):pm?`Cambiada por ${esc(pm.user)} · ${fmtFecha(pm.fecha)}`:'Sugerida según los hallazgos'}"><span class="small">Prioridad</span>
+        <select id="docPrio" aria-label="Prioridad del documento" ${SRV&&puede('revisiones','prioridad')?'':'disabled'}>${['Alta','Media','Baja'].map(p=>`<option ${p===prio?'selected':''}>${p}</option>`).join('')}</select></label>
       <button class="ghost iconbtn" data-act="toggleExtra" aria-label="Comentario sin hallazgo de la IA" ${puede('revisiones','comentar')?'title="Comentario sin hallazgo de la IA"':`disabled title="${esc(sinPermiso('revisiones','comentar'))}"`}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
       </button>
       ${SRV&&puede('revisiones','escalar')?`<button class="ghost" data-act="escAbrir" aria-expanded="${!!S.escOpen}">${(S.escalados||{})[S.doc]?'Cambiar escalamiento':'Escalar'}</button>`:''}
-      ${SRV?(()=>{const mot=motivoEditar(S.doc), nv=versionesDe(S.doc).length;
-        return `<button class="ghost" data-act="editarDoc" data-doc="${esc(S.doc)}" ${mot?`disabled aria-disabled="true" title="${esc(mot)}"`:`title="Crea una versión editada; el PDF original no se modifica${nv?` (${nv} ya guardadas en Versiones)`:''}"`}>Editar${nv?` · v${nv}`:''}</button>`;})():''}
+      ${SRV&&puede('revisiones','compartir')?`<button class="ghost" data-act="compartir" data-doc="${esc(d)}" title="Compartir con personas del equipo">${icono('<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>')} Compartir</button>`:''}
+      <button class="ghost" data-act="abrirVersiones" aria-expanded="${!!S.verOpen}" title="El original y las versiones editadas de este documento">${icono('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>')} Versiones${nv?` · ${nv}`:''}</button>
+      ${SRV&&editable(d)?(()=>{const mot=motivoEditar(d);
+        return `<button class="ghost" data-act="editarDoc" data-doc="${esc(d)}" ${mot?`disabled aria-disabled="true" title="${esc(mot)}"`:'title="Crea una versión editada; el original no se modifica"'}>${icono('<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>')} Editar</button>`;})():''}
       <button class="ghost pnav-fijo" data-act="criterios">Criterios</button>
     </div>
     ${vEscalado(S.doc)}
     <div class="two">
-      <div>${vPdf()}</div>
-      ${vDecision()}
+      <div>${info.cargado&&info.cargado.vista!=='pdf'?vCargadoContenido(info):vPdf()}</div>
+      ${R().length?vDecision():vSinHallazgos()}
     </div>`;
 }
 
@@ -1889,15 +2185,97 @@ const ECOL={'Pendiente':['#0a6fd6','rgba(10,132,255,.12)','var(--tint)'],'En rev
   'Completado':['#248a3d','rgba(52,199,89,.15)','var(--ok)'],'Sin hallazgos':GRIS,'Cargado · sin procesar':GRIS};
 function pill(txt,c){return `<span class="pill" style="--pc:${c[0]};--pb:${c[1]}">${txt}</span>`;}
 
+// ---------- Documentos: prioridad, plazo, trabajo en equipo y documentos cargados
+const CORPUS=new Set(Object.keys(DOCS));                         // los del corpus auditado; el resto se cargó desde Auditorías
+const PRANGO={Alta:0,Media:1,Baja:2};
+const PCOL={Alta:['#d70015','rgba(255,59,48,.12)'],Media:['#c76a00','rgba(255,159,10,.16)'],Baja:GRIS};
+function metaDoc(d){return (S.docs_meta||{})[d]||{};}
+// Índice por documento: hallazgos, decisiones, comentarios, ediciones y compartidos, recorriendo cada lista UNA vez.
+// Auditorías lo prepara una vez por redibujo y cada fila solo consulta su entrada (antes, cada fila recorría todas
+// las listas, varias veces). Se conserva el orden original de cada lista: «Trabajado con …» sale en el mismo orden.
+// Con `solo`, prepara solo la entrada de ese documento (para Revisión).
+const VACIO_DOC={rs:[],dec:[],coms:[],eds:[],comp:[]};
+function indiceDocs(solo){
+  const ix=new Map(), doc=k=>{const s=String(k), i=s.indexOf('|'); return i<0?null:s.slice(0,i);};
+  const g=d=>{if(d===null||(solo!==undefined&&d!==solo)) return null; let x=ix.get(d); if(!x){x={rs:[],dec:[],coms:[],eds:[],comp:[]}; ix.set(d,x);} return x;};
+  RES.forEach(r=>{const x=g(r.documento); if(x) x.rs.push(r);});
+  Object.entries(S.dec||{}).forEach(([k,v])=>{const x=g(doc(k)); if(x) x.dec.push(v);});
+  (S.coms||[]).forEach(c=>{const x=g(doc(c.key)); if(x) x.coms.push(c);});
+  Object.entries(S.ediciones||{}).forEach(([k,l])=>{const x=g(doc(k)); if(x) (l||[]).forEach(e=>x.eds.push(e));});
+  (S.compartidos||[]).forEach(c=>{const x=g(c.doc); if(x) x.comp.push(c);});
+  return ix;
+}
+function datosDoc(d,x){return x||indiceDocs(d).get(d)||VACIO_DOC;}
+// Sugerencia: 5 o más «No cumple» → Alta; algún hallazgo → Media; sin hallazgos → Baja. Un cargado: la que se eligió.
+function prioridadSugerida(d,x){
+  const c=(DOCS[d]||{}).cargado; if(c) return c.prioridad||'Media';
+  const rs=datosDoc(d,x).rs, nc=rs.filter(r=>r.tipo==='No cumple').length;
+  return nc>=5?'Alta':rs.length?'Media':'Baja';
+}
+function prioridadDe(d,x){const p=metaDoc(d).prioridad; return p?p.valor:prioridadSugerida(d,x);}
+// Un documento sin hallazgos que alguien ha marcado como revisado cuenta como Completado
+function estadoDocDe(d,x){const rs=datosDoc(d,x).rs; return rs.length?estadoDoc(rs):metaDoc(d).revisado?'Completado':'Sin hallazgos';}
+// Necesita revisión: tiene hallazgos sin decidir, o es un documento cargado (sin auditar) que nadie ha dado por revisado
+function necesitaRevision(d,x){const e=estadoDocDe(d,x); return e==='Pendiente'||e==='En revisión'||(!!(DOCS[d]||{}).cargado&&e!=='Completado');}
+// «En equipo»: compartido contigo o por ti, o trabajado por ti y al menos otra persona (decisiones, comentarios,
+// ediciones de hallazgos, versiones o carga del documento)
+function equipoDe(d,x){
+  x=datosDoc(d,x);
+  const u=new Set(), add=v=>{if(v) u.add(v);}, yo=S.user.nombre;
+  x.dec.forEach(v=>add(v.user));
+  x.coms.forEach(c=>add(c.user));
+  x.eds.forEach(e=>add(e.user));
+  versionesDe(d).forEach(v=>add(v.user));
+  if((DOCS[d]||{}).cargado) add(DOCS[d].cargado.user);
+  const comp=x.comp;
+  comp.forEach(c=>{add(c.de); c.para.forEach(add);});
+  const otros=[...u].filter(v=>v!==yo);
+  const motivos=comp.map(c=>c.de===yo?`Compartido por ti con ${c.para.join(', ')}`:`Te lo compartió ${c.de}`);
+  const en=comp.length>0||(u.has(yo)&&otros.length>0);
+  if(en&&!comp.length) motivos.push(`Trabajado con ${otros.join(', ')}`);
+  return {en,gente:[...u].sort(),motivos:[...new Set(motivos)]};
+}
+// Documentos cargados (los manda el servidor): se añaden a DOCS para abrirlos en Revisión como los del corpus.
+// Su clave la decide el servidor al confirmarlos (código, o nombre del archivo; «.c» + final del id si ya existe).
+function claveCargado(c,usadas){
+  let k=c.clave;
+  if(!k){
+    const base=(c.codigo||String(c.archivo||'').replace(/\.[^.]+$/,'')).replace(/[^\w.\-]+/g,'_').slice(0,100)||'documento';
+    k=CORPUS.has(base)||usadas.has(base)?`${base}.c${c.id.slice(-5)}`:base;
+  }
+  if(usadas.has(k)) k='UP-'+c.id;
+  usadas.add(k); return k;
+}
+function fusionarCargados(){
+  for(const k of Object.keys(DOCS)) if(!CORPUS.has(k)) delete DOCS[k];
+  const usadas=new Set();
+  (S.cargados||[]).forEach(c=>{
+    DOCS[claveCargado(c,usadas)]={slug:'up_'+c.id,titulo:c.titulo||c.archivo,version:c.version||'',familia:c.familia||'Sin familia',
+      paginas:c.paginas||1,escaneado:!!c.escaneado,cargado:c};
+  });
+  S.tabs=(S.tabs||[]).filter(d=>DOCS[d]);
+  if(S.view==='revision'&&!DOCS[S.doc]) S.view='inicio';
+}
+function familiaSugerida(cod){
+  if(!cod) return '';
+  const pre=cod.split('-')[0], n={};
+  for(const k of CORPUS) if(k.split('-')[0]===pre) n[DOCS[k].familia]=(n[DOCS[k].familia]||0)+1;
+  return (Object.entries(n).sort((a,b)=>b[1]-a[1])[0]||[''])[0];
+}
+function familiasConocidas(){return [...new Set(Object.values(DOCS).map(x=>x.familia).filter(Boolean))].sort();}
+
 // Días para responder: plazo (Configuración → Reglas) menos los días pasados desde el inicio de la auditoría.
-// Un documento completado ya está respondido; uno sin hallazgos no necesita respuesta.
+// Un documento completado ya está respondido; uno sin hallazgos no necesita respuesta. Un documento CARGADO cuenta
+// desde el día en que se cargó y, mientras nadie lo dé por revisado, sí necesita respuesta.
 function hoyISO(){const d=new Date(); return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);}
-function diasRestantes(est){
+function inicioDe(d){const c=(DOCS[d]||{}).cargado; return c?String(c.fecha).slice(0,10):(S.config||{}).inicio;}
+function diasRestantes(est,d){
   if(est==='Completado') return {tipo:'hecho'};
-  if(est==='Sin hallazgos') return {tipo:'na'};
-  const c=S.config||{}; if(!c.inicio) return {tipo:'na'};
-  const pasados=Math.floor((Date.parse(hoyISO())-Date.parse(c.inicio))/86400000);
-  return {tipo:'dias',n:(c.plazo_dias||15)-pasados};
+  const cargado=d&&(DOCS[d]||{}).cargado;
+  if(est==='Sin hallazgos'&&!cargado) return {tipo:'na'};
+  const ini=d?inicioDe(d):(S.config||{}).inicio; if(!ini) return {tipo:'na'};
+  const pasados=Math.floor((Date.parse(hoyISO())-Date.parse(ini))/86400000);
+  return {tipo:'dias',n:((S.config||{}).plazo_dias||15)-pasados,pasados};
 }
 function celdaDias(x){
   if(x.tipo==='hecho') return pill('✓ Respondido',['#248a3d','rgba(52,199,89,.14)']);
@@ -1908,83 +2286,104 @@ function celdaDias(x){
   return pill(`${n} ${n===1?'día':'días'}`,n<=3?['#c76a00','rgba(255,159,10,.16)']:['#00205b','rgba(0,32,91,.08)']);
 }
 const ORD_EST={'Pendiente':0,'En revisión':1,'Completado':2,'Sin hallazgos':3};
+const valDias=d=>d.dias.tipo==='dias'?d.dias.n:d.dias.tipo==='hecho'?1e6:1e7;
+// Sin orden elegido: URGENCIA = primero lo que hay que revisar, por prioridad y, dentro de cada una, lo que menos
+// plazo tiene (o más lleva esperando). Con una columna elegida, el orden de esa columna (Prioridad incluida).
 function ordenarDocs(ds){
-  const o=S.orden; if(!o) return ds;                     // sin orden elegido: lo más pendiente primero
-  const val=d=>o.col==='est'?(ORD_EST[d.est]??9):o.col==='dias'?(d.dias.tipo==='dias'?d.dias.n:d.dias.tipo==='hecho'?1e6:1e7):String(d[o.col]||'').toLowerCase();
+  const o=S.orden;
+  if(!o) return ds.slice().sort((a,b)=>(b.nec-a.nec)||(PRANGO[a.prio]-PRANGO[b.prio])||(valDias(a)-valDias(b))||(b.pend-a.pend)||a.nombre.localeCompare(b.nombre));
+  const val=d=>o.col==='est'?(ORD_EST[d.est]??9):o.col==='dias'?valDias(d):o.col==='prio'?PRANGO[d.prio]:String(d[o.col]||'').toLowerCase();
   const s=o.dir==='asc'?1:-1;
   return ds.slice().sort((a,b)=>{const x=val(a),y=val(b); return (x<y?-1:x>y?1:0)*s||a.nombre.localeCompare(b.nombre);});
 }
 
-// Inicio: lista de documentos con la estructura de Marina (barra de estado, etiquetas, pestañas con contador).
+// Auditorías (diseño de Valentina: filtros en una línea, columnas ordenables, paginador) con prioridad, antigüedad,
+// «En equipo», documentos cargados y documentos sin hallazgos que se pueden abrir.
 function vInicio(){
+  const ix=indiceDocs();                                             // una sola pasada por cada lista
   const docs=Object.keys(DOCS).map(c=>{
-    const info=DOCS[c], rs=RES.filter(r=>r.documento===c);
+    const info=DOCS[c], x=ix.get(c)||VACIO_DOC, rs=x.rs;
     const hechos=rs.filter(r=>decOf(r));
     const tipos={}; rs.forEach(r=>{tipos[r.tipo]=(tipos[r.tipo]||0)+1;});
     const quien=[...new Set(hechos.map(r=>decOf(r).user).filter(Boolean))];
+    const est=estadoDocDe(c,x);
     return {nombre:c,titulo:info.titulo,version:info.version,tipo:info.familia,hall:rs.length,pend:rs.length-hechos.length,
-            hechos:hechos.length,tipos,quien,est:estadoDoc(rs),abrir:rs.length>0,dias:diasRestantes(estadoDoc(rs))};
-  }).sort((a,b)=>(b.pend-a.pend)||(b.hall-a.hall)||a.nombre.localeCompare(b.nombre));
-  S.uploads.forEach(u=>docs.push({nombre:u.nombre,titulo:'Cargado el '+fmtFecha(u.fecha),version:'',tipo:'Archivo manual',hall:0,pend:0,hechos:0,tipos:{},quien:[],est:'Cargado · sin procesar',abrir:false}));
+            hechos:hechos.length,tipos,quien,est,cargado:info.cargado,prio:prioridadDe(c,x),nec:necesitaRevision(c,x),
+            dias:diasRestantes(est,c),eq:equipoDe(c,x),nver:versionesDe(c).length,x};
+  });
   const q=(S.iq||'').trim().toLowerCase(), fh=hayFiltroH();
-  docs.forEach(d=>{d.coinc=fh?RES.filter(r=>r.documento===d.nombre&&pasaFiltroH(r)).length:null;});
-  const base=docs.filter(d=>(!q||(d.nombre+' '+d.titulo+' '+d.tipo+' '+d.quien.join(' ')).toLowerCase().includes(q))&&(!S.itipo||d.tipo===S.itipo)&&(!fh||d.coinc>0));
+  docs.forEach(d=>{d.coinc=fh?d.x.rs.filter(pasaFiltroH).length:null;});
+  const pas=d=>d.dias.pasados??0, venc=d=>d.dias.tipo==='dias'&&d.dias.n<0;
+  const pasaAnt=d=>!S.iant||(S.iant==='vencidos'?venc(d):S.iant==='hoy'?d.dias.tipo==='dias'&&pas(d)<1:S.iant==='semana'?d.dias.tipo==='dias'&&pas(d)<7:pas(d)>=7);
+  const base=docs.filter(d=>(!q||(d.nombre+' '+d.titulo+' '+d.tipo+' '+d.quien.join(' ')+' '+(d.cargado?d.cargado.archivo+' '+d.cargado.user:'')).toLowerCase().includes(q))
+    &&(!S.itipo||d.tipo===S.itipo)&&(!fh||d.coinc>0)&&(!S.iprio||d.prio===S.iprio)&&pasaAnt(d)&&(!S.hequipo||d.eq.en)
+    &&(!S.hesc||((S.escalados||{})[d.nombre]||{}).para===S.user.nombre));
   const vis=ordenarDocs(base.filter(d=>!S.iest||d.est===S.iest));
   // Paginador: si cambian los filtros o el orden, se vuelve a la página 1
-  const firmaF=JSON.stringify([S.iq,S.iest,S.itipo,S.htipo,S.hclau,S.hconf,S.hmios,S.hnuevos,S.hcoms,S.orden,S.porPag]);
+  const firmaF=JSON.stringify([S.iq,S.iest,S.itipo,S.hdec,S.htipo,S.hclau,S.hmios,S.hnuevos,S.hcoms,S.hequipo,S.hesc,S.iprio,S.iant,S.orden,S.porPag]);
   if(firmaF!==S._firmaF){S._firmaF=firmaF; S.pag=1;}
   const nPag=Math.max(1,Math.ceil(vis.length/S.porPag)); S.pag=Math.min(Math.max(1,S.pag||1),nPag);
   const desde=(S.pag-1)*S.porPag, pagina=vis.slice(desde,desde+S.porPag);
-  const familias=[...new Set(docs.map(d=>d.tipo))].sort();
+  const familias=familiasConocidas();
   const filas=pagina.map(d=>{
     const ec=ECOL[d.est]||GRIS;
     const etiquetas=Object.entries(d.tipos).sort((a,b)=>b[1]-a[1]).map(([t,n])=>pill(`${esc(t)} · ${n}`,TCOL[t]||GRIS)).join('');
     const avance=d.hall?`<div class="small" style="margin-top:4px">${d.hechos} de ${d.hall} revisados</div><div class="mini"><div style="width:${d.hechos/d.hall*100}%;height:100%;background:var(--ok)"></div></div>`:'';
-    return `<div class="drow ${d.abrir?'':'off'}" style="--c:${ec[2]}" ${d.abrir?`data-act="abrir" data-doc="${esc(d.nombre)}" role="button" tabindex="0" aria-label="Abrir ${esc(d.nombre)}"`:''}>
+    const vacio=d.cargado?'<span class="small">Cargado manualmente: aún sin auditar.</span>':'<span class="small">El auditor no encontró defectos en este documento.</span>';
+    const carga=d.cargado?`<div class="small" style="margin-top:2px">Cargado por <b>${esc(d.cargado.user)}</b> · ${fmtFecha(d.cargado.fecha)} · ${esc(d.cargado.archivo)}</div>`:'';
+    const extra=[d.nver?pill(`${d.nver} ${d.nver===1?'versión':'versiones'}`,GRIS):'',
+      d.eq.en?`<span class="eqchips" title="${esc(d.eq.gente.join(', '))}">${d.eq.gente.map(n=>av(n,20)).join('')}</span><span class="small">${esc(d.eq.motivos.join(' · '))}</span>`:''].filter(Boolean).join(' ');
+    return `<div class="drow" style="--c:${ec[2]}" data-act="abrir" data-doc="${esc(d.nombre)}" role="button" tabindex="0" aria-label="Abrir ${esc(d.nombre)}">
       <div><div class="cod">${esc(d.nombre)}</div><div class="small">${esc(d.tipo)}${d.version?' · v'+esc(d.version):''}</div></div>
-      <div><div class="tit">${esc(d.titulo)}</div>${etiquetas||'<span class="small">El auditor no encontró defectos en este documento.</span>'}${d.quien.length?`<div class="small" style="margin-top:2px">Revisado por ${esc(d.quien.join(', '))}</div>`:''}</div>
+      <div><div class="tit">${esc(d.titulo)}</div>${etiquetas||vacio}${d.quien.length?`<div class="small" style="margin-top:2px">Revisado por ${esc(d.quien.join(', '))}</div>`:''}${carga}
+        ${extra?`<div class="eqfila">${extra}</div>`:''}</div>
       <div class="estado">${pill('● '+esc(d.est),ec)}${(S.escalados||{})[d.nombre]?`<div class="small" style="margin-top:4px;color:var(--tint);font-weight:600">Devuelto a ${esc(S.escalados[d.nombre].para)}${S.escalados[d.nombre].para===S.user.nombre?' (tú)':''}</div>`:''}${avance}${fh?`<div class="small" style="margin-top:4px;color:var(--tint);font-weight:600">${d.coinc} de ${d.hall} coinciden</div>`:''}</div>
+      <div class="prio">${pill(d.prio,PCOL[d.prio])}</div>
       <div class="dias">${celdaDias(d.dias)}</div>
     </div>`;
   });
-  // Filtros de hallazgos (como en la referencia): decisión, tipo, familia, cláusula, confianza y casillas
+  // Filtros en una sola línea con el buscador, cada uno con su título (en pantallas estrechas bajan a la siguiente)
   const tiposH=[...new Set(RES.map(r=>r.tipo))].sort(), clausulas=[...new Set(RES.map(r=>r.clausula).filter(Boolean))].sort();
   const ESTADOS=['Pendiente','En revisión','Completado','Sin hallazgos'];
-  const ASIG=[['hmios','Míos'],['hnuevos','Nuevos'],['hcoms','Con comentarios']], asigSel=ASIG.filter(([id])=>S[id]).map(([,l])=>l);
+  const ASIG=[['hmios','Míos'],['hnuevos','Nuevos'],['hcoms','Con comentarios'],['hequipo','En equipo'],['hesc','Escalados a mí']], asigSel=ASIG.filter(([id])=>S[id]).map(([,l])=>l);
   const casilla=(id,l)=>`<label class="fchk"><input type="checkbox" id="${id}" ${S[id]?'checked':''}><span>${l}</span></label>`;
-  // Filtros en una sola línea con el buscador, cada uno con su título (en pantallas estrechas bajan a la siguiente)
+  const opt=(v,l,act)=>`<option value="${v}" ${act===v?'selected':''}>${l}</option>`;
+  const nVenc=docs.filter(venc).length;
   const campo=(t,html,cls='',para='')=>`<div class="fcampo ${cls}">${para?`<label class="ftit" for="${para}">${t}</label>`:`<span class="ftit">${t}</span>`}${html}</div>`;
   const filtrosH=`<div class="ffil">
-      ${campo('Buscar',`<input id="iq" type="search" placeholder="Código o título" title="Busca por código, título, familia o revisor" value="${esc(S.iq||'')}">`,'fbus','iq')}
+      ${campo('Buscar',`<input id="iq" type="search" placeholder="Código o título" title="Busca por código, título, familia, revisor o archivo" value="${esc(S.iq||'')}">`,'fbus','iq')}
       ${campo('Estado',`<select id="iest"><option value="">Todos</option>${ESTADOS.map(t=>`<option ${S.iest===t?'selected':''}>${t}</option>`).join('')}</select>`,'','iest')}
+      ${campo('Decisión',`<select id="hdecSel">${opt('','Todas',S.hdec)}${opt('pend','Pendiente',S.hdec)}${opt('approved','Aceptado',S.hdec)}${opt('rejected','Rechazado',S.hdec)}</select>`,'','hdecSel')}
       ${campo('Tipo de hallazgo',`<select id="htipo"><option value="">Todos</option>${tiposH.map(t=>`<option ${S.htipo===t?'selected':''}>${esc(t)}</option>`).join('')}</select>`,'','htipo')}
       ${campo('Familia',`<select id="itipo"><option value="">Todas</option>${familias.map(t=>`<option ${S.itipo===t?'selected':''}>${esc(t)}</option>`).join('')}</select>`,'','itipo')}
       ${campo('Cláusula',`<select id="hclau"><option value="">Todas</option>${clausulas.map(c=>`<option ${S.hclau===c?'selected':''}>${esc(c)}</option>`).join('')}</select>`,'','hclau')}
-      ${campo('Confianza mínima',`<div class="fconf"><input id="hconf" type="range" min="0" max="1" step="0.05" value="${S.hconf}" aria-label="Confianza mínima"><output id="hconfV">${S.hconf.toFixed(2)}</output></div>`)}
+      ${campo('Prioridad',`<select id="iprio">${opt('','Todas',S.iprio)}${['Alta','Media','Baja'].map(p=>opt(p,p,S.iprio)).join('')}</select>`,'','iprio')}
+      ${campo('Antigüedad',`<select id="iant">${opt('','Todas',S.iant)}${opt('hoy','Entraron hoy',S.iant)}${opt('semana','Esta semana',S.iant)}${opt('mas7','Más de 7 días',S.iant)}${opt('vencidos',`Vencidos (${nVenc})`,S.iant)}</select>`,'','iant')}
       ${campo('Asignado',`<div class="fasig"><button type="button" class="fasig-btn" data-act="asigMenu" aria-haspopup="true" aria-expanded="${!!S.asigOpen}" aria-controls="asigPop">
           <span>${asigSel.length?esc(asigSel.join(', ')):'Todos'}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
         ${S.asigOpen?`<div class="fasig-pop" id="asigPop" role="group" aria-label="Asignado">${ASIG.map(([id,l])=>casilla(id,l)).join('')}</div>`:''}</div>`)}
     </div>`;
-  const COLS_D=[['nombre','Documento'],['titulo','Título y hallazgos'],['est','Estado'],['dias','Días para responder']];
+  const COLS_D=[['nombre','Documento'],['titulo','Título y hallazgos'],['est','Estado'],['prio','Prioridad'],['dias','Días para responder']];
   const cab=`<div class="dcab" role="row">${COLS_D.map(([k,l])=>{const on=S.orden&&S.orden.col===k, dir=on?S.orden.dir:'';
       return `<button class="dcol ${on?'on':''} ${k==='est'||k==='dias'?'der':''}" data-act="ordenar" data-v="${k}" aria-sort="${on?(dir==='asc'?'ascending':'descending'):'none'}" title="Ordenar por ${l.toLowerCase()}">${l}<span class="flecha-ord" aria-hidden="true">${on?(dir==='asc'?'▲':'▼'):'↕'}</span></button>`;}).join('')}</div>`;
   const paginas=(()=>{const b=[]; for(let i=1;i<=nPag;i++){if(i===1||i===nPag||Math.abs(i-S.pag)<=1) b.push(i); else if(b[b.length-1]!=='…') b.push('…');} return b;})();
   const pie=`<div class="dpie">
-      <span class="small">${vis.length?`${desde+1}–${desde+pagina.length} de ${vis.length} documentos`:'0 documentos'}${vis.length!==docs.length?` (de ${docs.length})`:''}</span>
+      <span class="small">${vis.length?`${desde+1}–${desde+pagina.length} de ${vis.length} documentos`:'0 documentos'}${vis.length!==docs.length?` (de ${docs.length})`:''}${S.orden?'':' · ordenados por urgencia'}</span>
       <nav class="pager" aria-label="Paginación">
         <button class="ghost" data-act="pag" data-v="${S.pag-1}" ${S.pag<=1?'disabled':''} aria-label="Página anterior">‹</button>
         ${paginas.map(n=>n==='…'?'<span class="small">…</span>':`<button class="${n===S.pag?'on':'ghost'}" data-act="pag" data-v="${n}" ${n===S.pag?'aria-current="page"':''}>${n}</button>`).join('')}
         <button class="ghost" data-act="pag" data-v="${S.pag+1}" ${S.pag>=nPag?'disabled':''} aria-label="Página siguiente">›</button>
       </nav>
       <label class="small" style="display:flex;align-items:center;gap:6px">Por página<select id="porPag">${[10,20,50].map(n=>`<option ${n===S.porPag?'selected':''}>${n}</option>`).join('')}</select></label></div>`;
+  const hayFiltro=fh||S.itipo||S.iq||S.iest||S.iprio||S.iant||S.hequipo||S.hesc;
   return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><h2 style="margin:0">Auditorías</h2>
-      ${fh||S.itipo||S.iq||S.iest?'<button class="enlace" data-act="limpiarFiltros">Limpiar filtros</button>':''}
-      <label class="btn-principal" style="margin-left:auto">Cargar archivo<input id="archivo" type="file" accept=".pdf,.docx,.csv,.xlsx" style="display:none"></label></div>
+      ${hayFiltro?'<button class="enlace" data-act="limpiarFiltros">Limpiar filtros</button>':''}
+      ${puede('revisiones','cargar')?`<label class="btn-principal" style="margin-left:auto">Cargar archivo<input id="archivo" type="file" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.docx,.xlsx,.csv,.txt,.md" style="display:none"></label>`:''}</div>
     ${filtrosH}
     ${vis.length?cab:''}
     <div class="dlist">${filas.join('')||'<div class="card small">Ningún documento coincide con el filtro.</div>'}</div>
     ${pie}
-    <p class="note">Al cargar un archivo, esta pantalla solo lo registra. La auditoría la hace la solución: <b>python auditar.py</b> genera respuestas.csv sin intervención manual.</p>`;
+    <p class="note">Un documento cargado se puede abrir, comentar, compartir y versionar enseguida. Sus hallazgos llegan al auditarlo con la solución: <b>python auditar.py</b>.</p>`;
 }
 
 // Actividades y métricas reales de cada agente, mostradas al pulsarlo.
@@ -2360,8 +2759,8 @@ function vCfg(){
   </div>${t==='roles'?vRoles():vUsuarios()}`;
 }
 
-const VIEWS={inicio:vInicio,revision:vRevision,ia:vIA,historico:vHist,versiones:vVersiones,chat:vChat,reglas:vCfg,usuarios:vCfg,cuenta:vCuenta};
-const TITLES={inicio:'Nimbus Audit Studio',revision:'Revisión',ia:'Panel de control IA',historico:'Histórico',versiones:'Versiones',chat:'Chat',reglas:'Reglas',usuarios:'Usuarios',cuenta:'Mi cuenta'};
+const VIEWS={inicio:vInicio,revision:vRevision,ia:vIA,historico:vHist,chat:vChat,reglas:vCfg,usuarios:vCfg,cuenta:vCuenta};
+const TITLES={inicio:'Nimbus Audit Studio',revision:'Revisión',ia:'Panel de control IA',historico:'Histórico',chat:'Chat',reglas:'Reglas',usuarios:'Usuarios',cuenta:'Mi cuenta'};
 
 // Cada sección pide el permiso de consultar su módulo (sin permiso, el servidor tampoco envía sus datos)
 const VISTA_PERM={inicio:['revisiones','consultar'],revision:['revisiones','consultar'],historico:['revisiones','consultar'],
@@ -2402,7 +2801,8 @@ function render(){
         <button class="ok" data-act="guardarExtra">Guardar comentario</button>
       </div>
     </div>`:'';
-  document.getElementById('view').innerHTML=vista(S.view)+criterios+comentario+(S.view==='chat'?vDlgGrupo():'')+vPanelRol()+vAsistente();
+  const versionesP=S.verOpen&&S.view==='revision'&&DOCS[S.doc]?vPanelVersiones():'';
+  document.getElementById('view').innerHTML=vista(S.view)+criterios+versionesP+comentario+(S.view==='chat'?vDlgGrupo():'')+vPanelRol()+vAsistente();
   scr.forEach(([s,y])=>{const el=document.querySelector(s); if(el&&y) el.scrollTop=y;});
   const cl=document.getElementById('chatlist');                   // chat: baja al último mensaje si hay nuevos
   if(cl){
@@ -2484,7 +2884,21 @@ document.addEventListener('click',e=>{
   if(a==='edPag'){const e=S.ed; if(!e) return; e.pag=Math.min(DOCS[e.doc].paginas,Math.max(1,e.pag+Number(el.dataset.v))); cargarPaginaEditor(); return;}
   if(a==='edRestaurar'){const e=S.ed; if(!e) return; e.textos[e.pag]=e.orig[e.pag]; pintarEditor(); return;}
   if(a==='edGuardar'){guardarVersion(); return;}
-  if(a==='verCmp'){const d=el.dataset.doc,n=Number(el.dataset.n); if(S.cmp&&S.cmp.doc===d&&S.cmp.n===n){S.cmp=null; render();} else compararVersion(d,n); return;}
+  if(a==='verCmp'){compararVersion(el.dataset.doc,Number(el.dataset.n)); return;}
+  if(a==='cerrarCmp'){S.cmp=null; pintarCmp(); return;}
+  if(a==='abrirVersiones'){S.verOpen=!S.verOpen; render(); return;}
+  if(a==='cerrarVersiones'){S.verOpen=false; render(); return;}
+  if(a==='docRevisado'){
+    const v=el.dataset.v==='1'; S.docs_meta=S.docs_meta||{};
+    const m={...metaDoc(S.doc)}; if(v) m.revisado={user:S.user.nombre,fecha:new Date().toISOString()}; else delete m.revisado;
+    S.docs_meta[S.doc]=m; render(); api('/api/doc/revisado',{doc:S.doc,revisado:v}).then(sondear); return;
+  }
+  if(a==='cgPrio'&&S.carga){S.carga.titulo=(document.getElementById('cgTit')||{}).value??S.carga.titulo; S.carga.prioridad=el.dataset.v; pintarCarga(); return;}
+  if(a==='cgGuardar'){guardarCarga(); return;}
+  if(a==='cgCancelar'&&S.carga){const id=S.carga.id; S.carga=null; pintarCarga(); if(id) api('/api/cargado/borrar',{id}); return;}
+  if(a==='compartir'){abrirCompartir(el.dataset.doc); return;}
+  if(a==='cerrarComp'){S.comp=null; pintarComp(); return;}
+  if(a==='enviarComp'){enviarCompartir(); return;}
   if(a==='descVer'){descargarVersion(el.dataset.doc,Number(el.dataset.n)).catch(()=>aviso('No se pudo preparar el archivo')); return;}
   if(a==='irPestana'){if(el.dataset.doc!==S.doc){abrirRevision(el.dataset.doc); render();} return;}
   if(a==='cerrarPestana'){cerrarPestana(el.dataset.doc); render(); window.scrollTo(0,0); return;}
@@ -2604,6 +3018,11 @@ document.addEventListener('click',e=>{
     abrirRevision(r.documento); const i=R().findIndex(x=>x.ubicacion===r.ubicacion); if(i>=0) irA(i);
     render(); window.scrollTo(0,0); return;
   }
+  if(a==='irAviso'&&el.dataset.k.startsWith('compartir:')){
+    S.avisosOpen=false; const doc=el.dataset.k.slice(10);
+    if(DOCS[doc]){abrirRevision(doc);} else aviso('Ese documento ya no está disponible');
+    render(); window.scrollTo(0,0); return;
+  }
   if(a==='irAviso'){
     const [doc]=el.dataset.k.split('|'); S.avisosOpen=false;
     abrirRevision(doc); const i=R().findIndex(r=>key(r)===el.dataset.k); if(i>=0) irA(i);
@@ -2632,7 +3051,7 @@ document.addEventListener('click',e=>{
   else if(a==='abrir'){abrirRevision(el.dataset.doc); render(); window.scrollTo(0,0);}
   else if(a==='iest'){S.iest=el.dataset.v; render();}
   else if(a==='hdec'){S.hdec=el.dataset.v; render();}
-  else if(a==='limpiarFiltros'){Object.assign(S,{iq:'',itipo:'',iest:'',asigOpen:false,hdec:'',htipo:'',hclau:'',hconf:0,hmios:false,hnuevos:false,hcoms:false}); render();}
+  else if(a==='limpiarFiltros'){Object.assign(S,{iq:'',itipo:'',iest:'',asigOpen:false,hdec:'',htipo:'',hclau:'',hmios:false,hnuevos:false,hcoms:false,hequipo:false,hesc:false,iprio:'',iant:''}); render();}
   else if(a==='abrirH'){abrirRevision(el.dataset.doc); const i=R().findIndex(r=>r.ubicacion===el.dataset.u); if(i>=0) irA(i); render(); window.scrollTo(0,0);}
   else if(a==='volver'){S.view='inicio'; S.sel={}; S.comment=''; render(); window.scrollTo(0,0);}
   else if(a==='criterios'){S.criteriosOpen=true; render();}
@@ -2681,6 +3100,7 @@ document.addEventListener('click',e=>{
     menuUsr(false);
     if(SRV&&S.user.nombre) api('/api/sesion/cerrar',{sid:SID});     // deja de salir en «Sesiones abiertas» y «en línea»
     S.token=''; S.permisos=null; S.cargado=false;                    // el token ya se envió: deja de valer en el servidor
+    nuevaSesion();                                                   // al volver a entrar, es una sesión nueva
     clearInterval(S.sondeo); S.sondeo=null;                          // antes seguía sondeando con el usuario anterior
     S.view='inicio'; document.getElementById('app').classList.add('hidden'); document.getElementById('login').classList.remove('hidden'); toggleDrawer(false);
   }
@@ -2698,9 +3118,13 @@ document.addEventListener('input',e=>{
     S.ed.textos[S.ed.pag]=e.target.value;
     const n=Object.keys(cambiosEditor().final).length, c=document.getElementById('edCnt');
     if(c) c.textContent=`${n} ${n===1?'página cambiada':'páginas cambiadas'}`;
+    clearTimeout(_tMarcas); _tMarcas=setTimeout(pintarMarcas,120);
   }
   if(e.target.id==='edNota'&&S.ed){S.ed.nota=e.target.value;}
-  if(e.target.id==='hconf'){const o=document.getElementById('hconfV'); if(o) o.textContent=(+e.target.value).toFixed(2);}   // mientras se arrastra
+  if(e.target.id==='edNombre'&&S.ed){S.ed.nombre=e.target.value;}
+  if(e.target.id==='compNota'&&S.comp){S.comp.nota=e.target.value;}
+  if(e.target.id==='cgTit'&&S.carga){S.carga.titulo=e.target.value;}
+  if(e.target.id==='cgFamOtra'&&S.carga){S.carga.familiaOtra=e.target.value;}
   if(e.target.id==='fcom'){S.comment=e.target.value;}
   if(e.target.id==='ccom'){S.ccom=e.target.value;}
   if(e.target.id==='ctx'){S.ctx=e.target.value;}
@@ -2724,11 +3148,11 @@ document.addEventListener('change',e=>{
     api('/api/equipo/editar',{n,rol}).then(r=>{if(r.ok) aviso(`${n} ahora tiene el rol ${nombreRol(rol)}`); sondear().then(render);});
   }
   if(e.target.id==='porPag'){S.porPag=Number(e.target.value)||10; render();}
-  if(e.target.id==='verNuevo'&&e.target.value){const d=e.target.value; e.target.value=''; abrirEditor(d);}
   if(e.target.id==='cmpPag'){compararVersion(e.target.dataset.doc,Number(e.target.dataset.n),Number(e.target.value));}
   if(e.target.id==='hclau'){S.hclau=e.target.value; render();}
-  if(e.target.id==='hconf'){S.hconf=Number(e.target.value)||0; render();}
-  if(['hmios','hnuevos','hcoms'].includes(e.target.id)){S[e.target.id]=e.target.checked; render();}
+  if(['hmios','hnuevos','hcoms','hequipo','hesc'].includes(e.target.id)){S[e.target.id]=e.target.checked; render();}
+  if(['iprio','iant'].includes(e.target.id)){S[e.target.id]=e.target.value; render();}
+  if(e.target.id==='hdecSel'){S.hdec=e.target.value; render();}
   if(e.target.id==='iest'){S.iest=e.target.value; render();}
   if(e.target.id==='umbral'&&puede('configuracion','editar_umbral')){S.umbral=Math.min(100,Math.max(0,Number(e.target.value)||0)); render();}
   // Formularios de Configuración → Usuarios y de escalamiento: se guardan en S para no perderlos al redibujar
@@ -2749,14 +3173,20 @@ document.addEventListener('change',e=>{
     api('/api/chat/crear',{tipo:'privado',con:e.target.value}).then(r=>{if(r.ok){S.canal=r.id; S.chatAbajo=true; S.abierto.privados=true; sondear();}});
   }
   if(e.target.id==='archivo'){
-    const f=e.target.files&&e.target.files[0];
-    if(f){S.uploads.push({nombre:f.name,fecha:new Date().toISOString()}); render();}
+    const f=e.target.files&&e.target.files[0]; e.target.value='';
+    if(f) cargarArchivo(f);
   }
+  if(e.target.id==='docPrio'){cambiarPrioridad(S.doc,e.target.value);}
+  if(S.comp&&e.target.dataset&&e.target.dataset.comp){const n=e.target.dataset.comp; e.target.checked?S.comp.para.add(n):S.comp.para.delete(n); pintarComp();}
+  if(S.carga&&e.target.id==='cgFam'){S.carga.familia=e.target.value; S.carga.familiaAuto=false; pintarCarga();}
 });
 
 // En el chat, Intro envía y Mayúsculas+Intro hace salto de línea. Con la lista de @ abierta: ↑ ↓ eligen, Intro/Tab
 // mencionan y Esc la cierra.
 document.addEventListener('keydown',e=>{
+  if(S.cmp&&e.key==='Escape'){e.preventDefault(); S.cmp=null; pintarCmp(); return;}
+  if(S.comp&&e.key==='Escape'){e.preventDefault(); S.comp=null; pintarComp(); return;}
+  if(S.carga&&S.carga.paso==='confirmar'&&e.key==='Escape'){e.preventDefault(); document.querySelector('[data-act="cgCancelar"]')?.click(); return;}
   if(e.key==='Escape'&&S.rolPanel){S.rolPanel=null; S.rolForm=null; render(); return;}
   if(e.key==='Escape'&&S.asigOpen){S.asigOpen=false; render(); document.querySelector('.fasig-btn')?.focus(); return;}
   if(e.key==='Escape'&&!document.getElementById('menuUsr').classList.contains('hidden')){menuUsr(false); document.querySelector('.who').focus(); return;}

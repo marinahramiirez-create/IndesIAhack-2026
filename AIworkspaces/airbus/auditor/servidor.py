@@ -62,7 +62,12 @@ _estado = {"seq": 0, "dec": {}, "comentarios": [], "avisos": [], "mensajes": [],
            "chats": [{"id": "general", "tipo": "canal", "nombre": "general", "autor": "", "miembros": {}}], "n_grupos": 0,
            "adjuntos": {},       # id → {nombre, tipo, tam, chat, user, fecha, archivo}
            "ediciones": {},      # clave del hallazgo → [{user, fecha, tipo, clausula, justificacion}] (el original no se toca)
-           "versiones": {}}      # documento → [{n, user, fecha, nota, paginas: [nº de página cambiadas]}]; el texto va aparte
+           "versiones": {},      # documento → [{n, user, fecha, nota, nombre, base, paginas}]; el texto va aparte
+           "docs_meta": {},      # documento → {prioridad: {valor, user, fecha}, revisado: {user, fecha}}
+           "compartidos": [],    # [{doc, de, para: [..], nota, fecha}]
+           "cargados": {}}       # id → {archivo, tipo, vista, paginas, codigo, version, titulo, familia, prioridad, user, fecha}
+PRIORIDADES = ("Alta", "Media", "Baja")
+DOC_ID = re.compile(r"[\w.\-]{1,120}")       # códigos de documento válidos (sin barras: también nombran archivos)
 VERSIONES = RAIZ / "salidas" / "versiones"   # un JSON por versión; el PDF original del corpus nunca se modifica
 MAX_VERSION = 3_000_000                      # bytes del cuerpo al guardar una versión (el resto de peticiones: 20 KB)
 _presencia: dict[str, dict] = {}       # usuario → {"key", "t"}
@@ -191,6 +196,30 @@ def _borrar_chat(cid: str):
     _estado["avisos"] = [a for a in _estado["avisos"] if a["key"] != f"chat:{cid}"]
 
 
+def _docs_validos() -> set:
+    """Documentos del corpus (los de index.html) y documentos cargados ya confirmados (por su clave)."""
+    return set(_HALL) | {c["clave"] for c in _estado.get("cargados", {}).values() if c.get("confirmado") and c.get("clave")}
+
+
+def _clave_cargado(c: dict, cid: str) -> str:
+    """Identificador del documento cargado: su código o, si no tiene, el nombre del archivo. Si ya existe (por ejemplo,
+    una copia de un documento del corpus), se le añade «.c» y el final de su id: «REG-BKP-2026.c00f0»."""
+    base = re.sub(r"[^\w.\-]+", "_", c.get("codigo") or Path(c.get("archivo", "")).stem)[:100].strip("._") or "documento"
+    ocupadas = _docs_validos()
+    clave = base if base not in ocupadas else f"{base}.c{cid[-5:]}"
+    return clave if clave not in ocupadas else f"UP-{cid}"
+
+
+def _borrar_cargado(cid: str):
+    """Quita los archivos de un documento cargado (original, contenido e imágenes/texto de sus páginas)."""
+    import shutil
+    if not re.fullmatch(r"[0-9a-f]+", cid):
+        return
+    shutil.rmtree(WEB / "cargados" / cid, ignore_errors=True)
+    for f in (WEB / "paginas").glob(f"up_{cid}_*"):
+        f.unlink(missing_ok=True)
+
+
 class Manejador(SimpleHTTPRequestHandler):
     def __init__(self, *a, **k):
         super().__init__(*a, directory=str(WEB), **k)
@@ -273,6 +302,42 @@ class Manejador(SimpleHTTPRequestHandler):
             _guardar()
         return self._json({"ok": True, "id": aid, "nombre": nombre, "tipo": tipo, "tam": n})
 
+    def _recibir_documento(self):
+        """«Cargar archivo» en Auditorías: guarda el original y lo prepara para abrirlo en Revisión (src/cargados.py).
+        Queda pendiente de confirmar (familia y prioridad) con /api/cargado/guardar. Usuario: el del token."""
+        from urllib.parse import unquote
+        with _lock:
+            user = _usuario_de_token(self.headers.get("X-Sesion", ""))
+            permitido = bool(user) and P.puede(_estado, user, "revisiones", "cargar")
+        nombre = Path(unquote(self.headers.get("X-Nombre", "documento"))[:120]).name or "documento"
+        n = int(self.headers.get("Content-Length", 0) or 0)
+        if not permitido or n <= 0 or n > MAX_ADJUNTO:
+            self.close_connection = True          # no se lee el cuerpo: se cierra la conexión
+            if not user:
+                return self._json({"error": "sesión no válida: vuelve a entrar"}, 401)
+            if not permitido:
+                return self._json({"error": "Tu rol no permite: Cargar documentos."}, 403)
+            return self._json({"error": "el archivo está vacío o pasa de 25 MB"}, 400)
+        datos = self.rfile.read(n)
+        with _lock:
+            cid = f"{int(time.time() * 1000):x}{len(_estado.setdefault('cargados', {})):x}"
+        seguro = re.sub(r"[^\w.\- ]", "_", nombre)
+        carpeta = WEB / "cargados" / cid
+        carpeta.mkdir(parents=True, exist_ok=True)
+        (carpeta / seguro).write_bytes(datos)
+        try:                                        # fuera del candado: un PDF grande no bloquea el chat de nadie
+            from src import cargados
+            meta = cargados.procesar(carpeta / seguro, cid, WEB)
+            tipo = cargados.tipo_de(nombre)
+        except Exception as e:
+            _borrar_cargado(cid)
+            return self._json({"error": f"no se pudo preparar el documento: {type(e).__name__}: {e}"[:300]}, 400)
+        with _lock:
+            _estado["cargados"][cid] = {"archivo": nombre, "ruta": f"cargados/{cid}/{seguro}", "tipo": tipo, "tam": n,
+                                        "user": user, "fecha": _ahora(), "confirmado": False, **meta}
+            _guardar()
+        return self._json({"ok": True, "id": cid, **_estado["cargados"][cid]})
+
     def _asistente(self, d):
         """Reenvía la pregunta al servicio RAG local y devuelve {respuesta, fuentes} (o un error legible)."""
         cuerpo = json.dumps({"pregunta": str(d.get("pregunta", ""))[:2000], "datos_app": str(d.get("datos_app", ""))[:6000],
@@ -346,12 +411,17 @@ class Manejador(SimpleHTTPRequestHandler):
                         "modulos": P.MODULOS, "permisos": P.permisos_de(_estado, user),
                         "escalados": _estado["escalados"] if ve else {},
                         "escalados_hist": _estado["escalados_hist"][-300:] if ve else [],
-                        "editables": _editables(user), "config": _estado["config"]})
+                        "editables": _editables(user), "config": _estado["config"],
+                        "docs_meta": _estado.get("docs_meta", {}) if ve else {},
+                        "compartidos": [x for x in _estado.get("compartidos", []) if ve and (user == x["de"] or user in x["para"])],
+                        "cargados": [{"id": k, **v} for k, v in _estado.get("cargados", {}).items() if ve and v.get("confirmado")]})
 
     def do_POST(self):
         u = urlparse(self.path).path
         if u == "/api/subir":
             return self._subir()
+        if u == "/api/cargar":
+            return self._recibir_documento()
         d = self._cuerpo(MAX_VERSION if u == "/api/version/guardar" else 20000)
         if u == "/api/login":
             return self._login(d)
@@ -538,7 +608,7 @@ class Manejador(SimpleHTTPRequestHandler):
                 doc = str(d.get("doc", ""))[:120]
                 previo = (_estado["escalados"].get(doc) or {}).get("para")
                 extra["accion"] = P.escalar(_estado, user, doc, str(d.get("para", ""))[:40], str(d.get("nota", "")),
-                                            _ahora(), set(_HALL))
+                                            _ahora(), _docs_validos())
                 _avisar_escalado(doc, user, "escalado", _estado["escalados"][doc]["para"])
                 if previo:
                     _avisar_escalado(doc, user, "reasignado", previo)
@@ -563,7 +633,9 @@ class Manejador(SimpleHTTPRequestHandler):
                 VERSIONES.mkdir(parents=True, exist_ok=True)
                 (VERSIONES / f"{doc}_v{n}.json").write_text(json.dumps({"doc": doc, "n": n, "paginas": pags}, ensure_ascii=False),
                                                             encoding="utf-8")
+                base = d.get("base") if isinstance(d.get("base"), int) else 0
                 lista.append({"n": n, "user": user, "fecha": _ahora(), "nota": str(d.get("nota", "")).strip()[:300],
+                              "nombre": str(d.get("nombre", "")).strip()[:60], "base": base,
                               "paginas": sorted(int(k) for k in pags)})
                 extra = {"n": n}
                 avisar = P.marcar_corregido(_estado, user, doc, n, _ahora())   # se desbloquean aprobar y rechazar
@@ -571,8 +643,57 @@ class Manejador(SimpleHTTPRequestHandler):
                     _estado["avisos"].append({"para": avisar, "de": user, "key": f"{doc}|escalado", "fecha": _ahora(),
                                               "texto": f"{user} ha guardado los cambios de {doc} (v{n}): ya se puede decidir.",
                                               "leido": False})
+            elif u == "/api/doc/prioridad":                # prioridad de un documento (permiso «Cambiar la prioridad»)
+                P.exigir(_estado, user, "revisiones", "prioridad")
+                doc, valor = str(d.get("doc", "")), d.get("prioridad")
+                if doc not in _docs_validos() or valor not in PRIORIDADES:
+                    return self._json({"error": "documento o prioridad no válidos"}, 400)
+                _estado.setdefault("docs_meta", {}).setdefault(doc, {})["prioridad"] = {"valor": valor, "user": user, "fecha": _ahora()}
+            elif u == "/api/doc/revisado":                 # un documento sin hallazgos también se puede dar por revisado
+                P.exigir(_estado, user, "revisiones", "marcar_revisado")
+                doc = str(d.get("doc", ""))
+                if doc not in _docs_validos() or _HALL.get(doc):
+                    return self._json({"error": "documento no válido"}, 400)
+                meta = _estado.setdefault("docs_meta", {}).setdefault(doc, {})
+                if d.get("revisado"):
+                    meta["revisado"] = {"user": user, "fecha": _ahora()}
+                else:
+                    meta.pop("revisado", None)
+            elif u == "/api/compartir":                    # compartir un documento: aviso en la campanita de cada persona
+                P.exigir(_estado, user, "revisiones", "compartir")
+                doc = str(d.get("doc", ""))
+                equipo = {m["n"] for m in _estado["equipo"]}
+                para = sorted({str(p) for p in d.get("para", []) if str(p) in equipo and str(p) != user})
+                if doc not in _docs_validos() or not para:
+                    return self._json({"error": "elige al menos a una persona del equipo"}, 400)
+                nota = str(d.get("nota", "")).strip()[:MAX_TEXTO]
+                _estado.setdefault("compartidos", []).append({"doc": doc, "de": user, "para": para, "nota": nota, "fecha": _ahora()})
+                for p in para:
+                    _estado["avisos"].append({"para": p, "de": user, "key": f"compartir:{doc}", "fecha": _ahora(),
+                                              "texto": nota or f"Te ha compartido {doc}", "leido": False, "mencion": True})
+            elif u == "/api/cargado/guardar":              # confirma un documento cargado: familia y prioridad
+                P.exigir(_estado, user, "revisiones", "cargar")
+                cid = str(d.get("id", ""))
+                c = _estado.get("cargados", {}).get(cid)
+                if not c or c["user"] != user:
+                    return self._json({"error": "documento cargado no encontrado"}, 404)
+                familia = str(d.get("familia", "")).strip()[:60]
+                if not familia:
+                    return self._json({"error": "elige la familia del documento"}, 400)
+                c.update({"familia": familia, "prioridad": d.get("prioridad") if d.get("prioridad") in PRIORIDADES else "Media",
+                          "titulo": str(d.get("titulo", c.get("titulo", ""))).strip()[:160] or c.get("titulo", ""),
+                          "confirmado": True})
+                c.setdefault("clave", _clave_cargado(c, cid))
+            elif u == "/api/cargado/borrar":               # cancelar la carga (solo quien lo cargó, y solo si no se confirmó)
+                cid = str(d.get("id", ""))
+                c = _estado.get("cargados", {}).get(cid)
+                if not c or c["user"] != user or c.get("confirmado"):
+                    return self._json({"error": "no se puede cancelar esa carga"}, 400)
+                _estado["cargados"].pop(cid)
+                _borrar_cargado(cid)
             elif u == "/api/sesion/cerrar":                # «Cerrar sesión»: deja de listarse en «Sesiones abiertas»
-                _sesiones.get(user, {}).pop(str(d.get("sid", ""))[:40], None)
+                sid = str(d.get("sid", ""))[:40]
+                _sesiones.get(user, {}).pop(sid, None)
                 _presencia.pop(user, None)
                 _tokens.pop(self.headers.get("X-Sesion", ""), None)   # el token de esta pestaña deja de valer
                 return self._json({"ok": True})

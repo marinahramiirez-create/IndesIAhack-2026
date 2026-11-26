@@ -33,6 +33,10 @@ MODULOS = [
         ("escalar", "Escalar documentos", "Asignar un documento a un Dueño de Proceso, cambiar el destinatario o quitarlo"),
         ("editar_escalados", "Editar documentos escalados",
          "Crear versiones editadas de un documento. Solo el rol Dueño de Proceso y solo si el documento está escalado a esa persona"),
+        ("cargar", "Cargar documentos", "Subir documentos nuevos desde Auditorías para revisarlos (PDF, imagen, Word, Excel, CSV)"),
+        ("compartir", "Compartir documentos", "Avisar a personas del equipo con un enlace al documento"),
+        ("prioridad", "Cambiar la prioridad", "Cambiar la prioridad (Alta, Media, Baja) de un documento"),
+        ("marcar_revisado", "Marcar como revisado", "Dar por revisado un documento sin hallazgos"),
     ]),
     ("configuracion", "Configuración", [
         ("consultar", "Consultar configuración", "Ver reglas, criterio de aceptación, usuarios y roles"),
@@ -61,7 +65,11 @@ def _perm(**por_modulo) -> dict:
     return p
 
 
-_REV_COMUN = ["consultar", "aprobar", "rechazar", "comentar", "editar_hallazgos", "escalar"]
+_REV_COMUN = ["consultar", "aprobar", "rechazar", "comentar", "editar_hallazgos", "escalar",
+              "cargar", "compartir", "prioridad", "marcar_revisado"]
+# Acciones añadidas después de que los equipos guardaran sus roles. En un rol guardado sin ellas, su valor inicial es
+# «este rol ya puede revisar» (aprobar o rechazar); el resto de acciones nuevas sigue empezando desactivado.
+ACCIONES_DE_REVISION = ("cargar", "compartir", "prioridad", "marcar_revisado")
 ROLES_INICIALES = [
     {"id": ADMIN, "nombre": "Admin", "sistema": True,
      "descripcion": "Administra la estructura de roles y el equipo; decide sobre los hallazgos.",
@@ -127,6 +135,10 @@ def migrar(estado: dict) -> None:
         estado["roles"] = [dict(r, permisos={m: dict(a) for m, a in r["permisos"].items()}) for r in ROLES_INICIALES]
     ids = {r["id"] for r in estado["roles"]}
     for r in estado["roles"]:                      # acciones nuevas que no existían al guardar: desactivadas
+        rev = r.get("permisos", {}).get("revisiones") if isinstance(r.get("permisos"), dict) else None
+        if isinstance(rev, dict):                  # …salvo las de ACCIONES_DE_REVISION: las tiene quien ya revisa
+            for a in ACCIONES_DE_REVISION:
+                rev.setdefault(a, rev.get("aprobar") is True or rev.get("rechazar") is True)
         r["permisos"] = limpiar_permisos(r.get("permisos", {}), r["id"])
     for m in estado.get("equipo", []):
         if m.get("rol") not in ids:
