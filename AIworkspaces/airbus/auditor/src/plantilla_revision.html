@@ -1897,37 +1897,55 @@ const CORPUS=new Set(Object.keys(DOCS));                         // los del corp
 const PLAZO={Alta:2,Media:5,Baja:10}, PRANGO={Alta:0,Media:1,Baja:2};
 const PCOL={Alta:['#d70015','rgba(255,59,48,.12)'],Media:['#c76a00','rgba(255,159,10,.16)'],Baja:GRIS};
 function metaDoc(d){return (S.docs_meta||{})[d]||{};}
+// Índice por documento: hallazgos, decisiones, comentarios, ediciones y compartidos, recorriendo cada lista UNA vez.
+// Inicio lo prepara una vez por redibujo y cada fila solo consulta su entrada (antes, cada fila recorría todas las
+// listas, varias veces). Se conserva el orden original de cada lista: «Trabajado con …» sale en el mismo orden.
+// Con `solo`, prepara solo la entrada de ese documento (para Revisión).
+const VACIO_DOC={rs:[],dec:[],coms:[],eds:[],comp:[]};
+function indiceDocs(solo){
+  const ix=new Map(), doc=k=>{const s=String(k), i=s.indexOf('|'); return i<0?null:s.slice(0,i);};
+  const g=d=>{if(d===null||(solo!==undefined&&d!==solo)) return null; let x=ix.get(d); if(!x){x={rs:[],dec:[],coms:[],eds:[],comp:[]}; ix.set(d,x);} return x;};
+  RES.forEach(r=>{const x=g(r.documento); if(x) x.rs.push(r);});
+  Object.entries(S.dec||{}).forEach(([k,v])=>{const x=g(doc(k)); if(x) x.dec.push(v);});
+  (S.coms||[]).forEach(c=>{const x=g(doc(c.key)); if(x) x.coms.push(c);});
+  Object.entries(S.ediciones||{}).forEach(([k,l])=>{const x=g(doc(k)); if(x) (l||[]).forEach(e=>x.eds.push(e));});
+  (S.compartidos||[]).forEach(c=>{const x=g(c.doc); if(x) x.comp.push(c);});
+  return ix;
+}
+function datosDoc(d,x){return x||indiceDocs(d).get(d)||VACIO_DOC;}
 // Sugerencia: 5 o más «No cumple» → Alta; algún hallazgo → Media; sin hallazgos → Baja. Un cargado: la que se eligió.
-function prioridadSugerida(d){
+function prioridadSugerida(d,x){
   const c=(DOCS[d]||{}).cargado; if(c) return c.prioridad||'Media';
-  const rs=RES.filter(r=>r.documento===d), nc=rs.filter(r=>r.tipo==='No cumple').length;
+  const rs=datosDoc(d,x).rs, nc=rs.filter(r=>r.tipo==='No cumple').length;
   return nc>=5?'Alta':rs.length?'Media':'Baja';
 }
-function prioridadDe(d){const p=metaDoc(d).prioridad; return p?p.valor:prioridadSugerida(d);}
-function estadoDocDe(d){const rs=RES.filter(r=>r.documento===d); return rs.length?estadoDoc(rs):metaDoc(d).revisado?'Completado':'Sin hallazgos';}
+function prioridadDe(d,x){const p=metaDoc(d).prioridad; return p?p.valor:prioridadSugerida(d,x);}
+function estadoDocDe(d,x){const rs=datosDoc(d,x).rs; return rs.length?estadoDoc(rs):metaDoc(d).revisado?'Completado':'Sin hallazgos';}
 // Necesita revisión: tiene hallazgos sin decidir, o es un documento cargado (sin auditar) que nadie ha dado por revisado
-function necesitaRevision(d){const e=estadoDocDe(d); return e==='Pendiente'||e==='En revisión'||(!!(DOCS[d]||{}).cargado&&e!=='Completado');}
-function antiguedad(d){
+function necesitaRevision(d,x){const e=estadoDocDe(d,x); return e==='Pendiente'||e==='En revisión'||(!!(DOCS[d]||{}).cargado&&e!=='Completado');}
+function antiguedad(d,x){
+  x=datosDoc(d,x);
   const c=(DOCS[d]||{}).cargado, ent=c?c.fecha:D.fecha_auditoria;
-  const dias=ent?Math.max(0,(Date.now()-new Date(ent))/864e5):0, prio=prioridadDe(d), plazo=PLAZO[prio];
-  const nec=necesitaRevision(d), vencido=nec&&dias>plazo;
+  const dias=ent?Math.max(0,(Date.now()-new Date(ent))/864e5):0, prio=prioridadDe(d,x), plazo=PLAZO[prio];
+  const nec=necesitaRevision(d,x), vencido=nec&&dias>plazo;
   const n=Math.floor(dias), txt=!nec?'Al día':vencido?`Vencido hace ${Math.max(1,Math.floor(dias-plazo))} d`
     :`${n<1?'Entró hoy':`Lleva ${n} d`} · vence en ${Math.max(1,Math.ceil(plazo-dias))} d`;
   return {ent,dias,plazo,nec,vencido,txt};
 }
 // «En equipo»: compartido contigo o por ti, o trabajado por ti y al menos otra persona (decisiones, comentarios,
 // ediciones de hallazgos, versiones o carga del documento)
-function equipoDe(d){
-  const u=new Set(), add=x=>{if(x) u.add(x);}, pre=d+'|', yo=S.user.nombre;
-  Object.entries(S.dec||{}).forEach(([k,v])=>{if(k.startsWith(pre)) add(v.user);});
-  (S.coms||[]).forEach(c=>{if(String(c.key).startsWith(pre)) add(c.user);});
-  Object.entries(S.ediciones||{}).forEach(([k,l])=>{if(k.startsWith(pre)) (l||[]).forEach(e=>add(e.user));});
+function equipoDe(d,x){
+  x=datosDoc(d,x);
+  const u=new Set(), add=v=>{if(v) u.add(v);}, yo=S.user.nombre;
+  x.dec.forEach(v=>add(v.user));
+  x.coms.forEach(c=>add(c.user));
+  x.eds.forEach(e=>add(e.user));
   versionesDe(d).forEach(v=>add(v.user));
   if((DOCS[d]||{}).cargado) add(DOCS[d].cargado.user);
-  const comp=(S.compartidos||[]).filter(x=>x.doc===d);
-  comp.forEach(x=>{add(x.de); x.para.forEach(add);});
-  const otros=[...u].filter(x=>x!==yo);
-  const motivos=comp.map(x=>x.de===yo?`Compartido por ti con ${x.para.join(', ')}`:`Te lo compartió ${x.de}`);
+  const comp=x.comp;
+  comp.forEach(c=>{add(c.de); c.para.forEach(add);});
+  const otros=[...u].filter(v=>v!==yo);
+  const motivos=comp.map(c=>c.de===yo?`Compartido por ti con ${c.para.join(', ')}`:`Te lo compartió ${c.de}`);
   const en=comp.length>0||(u.has(yo)&&otros.length>0);
   if(en&&!comp.length) motivos.push(`Trabajado con ${otros.join(', ')}`);
   return {en,gente:[...u].sort(),motivos:[...new Set(motivos)]};
@@ -1962,17 +1980,18 @@ function familiasConocidas(){return [...new Set(Object.values(DOCS).map(x=>x.fam
 // Inicio: lista de documentos con la estructura de Marina (barra de estado, etiquetas, pestañas con contador),
 // más prioridad, antigüedad, documentos cargados y trabajo en equipo.
 function vInicio(){
+  const ix=indiceDocs();                                             // una sola pasada por cada lista
   const docs=Object.keys(DOCS).map(c=>{
-    const info=DOCS[c], rs=RES.filter(r=>r.documento===c);
+    const info=DOCS[c], x=ix.get(c)||VACIO_DOC, rs=x.rs;
     const hechos=rs.filter(r=>decOf(r));
     const tipos={}; rs.forEach(r=>{tipos[r.tipo]=(tipos[r.tipo]||0)+1;});
     const quien=[...new Set(hechos.map(r=>decOf(r).user).filter(Boolean))];
     return {nombre:c,titulo:info.titulo,version:info.version,tipo:info.familia,hall:rs.length,pend:rs.length-hechos.length,
-            hechos:hechos.length,tipos,quien,est:estadoDocDe(c),cargado:info.cargado,prio:prioridadDe(c),ant:antiguedad(c),
-            eq:equipoDe(c),nver:versionesDe(c).length};
+            hechos:hechos.length,tipos,quien,est:estadoDocDe(c,x),cargado:info.cargado,prio:prioridadDe(c,x),ant:antiguedad(c,x),
+            eq:equipoDe(c,x),nver:versionesDe(c).length,x};
   });
   const q=(S.iq||'').trim().toLowerCase(), fh=hayFiltroH();
-  docs.forEach(d=>{d.coinc=fh?RES.filter(r=>r.documento===d.nombre&&pasaFiltroH(r)).length:null;});
+  docs.forEach(d=>{d.coinc=fh?d.x.rs.filter(pasaFiltroH).length:null;});
   const pasaAnt=d=>!S.iant||(S.iant==='vencidos'?d.ant.vencido:S.iant==='hoy'?d.ant.dias<1:S.iant==='semana'?d.ant.dias<7:d.ant.dias>=7);
   const base=docs.filter(d=>(!q||(d.nombre+' '+d.titulo+' '+d.tipo+' '+d.quien.join(' ')+' '+(d.cargado?d.cargado.archivo+' '+d.cargado.user:'')).toLowerCase().includes(q))
     &&(!S.itipo||d.tipo===S.itipo)&&(!fh||d.coinc>0)&&(!S.iprio||d.prio===S.iprio)&&pasaAnt(d)&&(!S.hequipo||d.eq.en));
