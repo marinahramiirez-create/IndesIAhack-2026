@@ -113,6 +113,15 @@ def main():
     ap.add_argument("--no-abrir", action="store_true")
     a = ap.parse_args()
     ruta_csv = Path(a.csv)
+    if not ruta_csv.exists():
+        raise SystemExit(f"\nTodavía no hay resultados ({ruta_csv}).\n"
+                         "  → Ejecuta primero el auditor y espera a que termine:\n"
+                         "      .\\.venv\\Scripts\\python auditar.py\n"
+                         "  → Después vuelve a ejecutar: .\\.venv\\Scripts\\python generar_revision.py\n")
+    from src.rutas import ayuda_corpus, buscar_corpus
+    corpus = buscar_corpus()
+    if not corpus:
+        raise SystemExit(ayuda_corpus())
     destino = RAIZ / "salidas" / "revision"
     (destino / "paginas").mkdir(parents=True, exist_ok=True)
 
@@ -123,12 +132,15 @@ def main():
 
     print("Leyendo el corpus (usa la caché de transcripciones, sin coste de IA)…")
     docs = {}
-    for f in sorted(CORPUS.rglob("*.pdf")):
+    for f in sorted(corpus.rglob("*.pdf")):
         try:
             d = ingesta.leer(f, vision=True)
-        except Exception as e:
-            print("  aviso:", f.name, repr(e))
-            continue
+        except Exception:
+            try:                                    # sin claves o sin caché: se lee sin visión (el escaneado
+                d = ingesta.leer(f, vision=False)   # sale sin texto, pero su página e hallazgos se ven igual)
+            except Exception as e:
+                print("  aviso:", f.name, repr(e))
+                continue
         if d.codigo:
             docs[d.codigo] = (d, f)
 

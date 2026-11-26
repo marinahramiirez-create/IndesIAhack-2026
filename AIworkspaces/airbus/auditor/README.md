@@ -41,13 +41,13 @@ copy .env.example .env      # y rellenar las claves (PDF de Teams). El .env no s
 .\.venv\Scripts\python probar_clave.py
 ```
 
-**El corpus no está en git.** Copia `03_corpus_trabajo_NIMBUS` y `06_kit_desarrollo_equipos` en la raíz del repositorio. Si los tienes en otro sitio, pon la ruta en `CORPUS_NIMBUS` dentro de `.env`.
+**El corpus no está en git.** Descomprime `03_corpus_trabajo_NIMBUS.zip` y `06_kit_desarrollo_equipos.zip` en la raíz del repositorio (al lado de `AIworkspaces`). Da igual si queda una carpeta o dos con el mismo nombre: el auditor busca los PDF solo. Si los tienes en otro sitio, pon la ruta en `CORPUS_NIMBUS` dentro de `.env`.
 
 ## Uso
 
 ```powershell
-# 1. Auditar el corpus (≈4 min la primera vez; con caché ≈1 min)
-.\.venv\Scripts\python auditar.py "..\..\..\03_corpus_trabajo_NIMBUS\03_corpus_trabajo_NIMBUS" --salida salidas\respuestas.csv
+# 1. Auditar el corpus (≈4 min la primera vez; con caché ≈1 min). Encuentra los PDF solo.
+.\.venv\Scripts\python auditar.py
 
 # 2. Medir con el puntuador oficial (como la evaluación final)
 python "..\..\..\06_kit_desarrollo_equipos\06_kit_desarrollo_equipos\puntuar.py" "..\..\..\06_kit_desarrollo_equipos\06_kit_desarrollo_equipos\clave_desarrollo.csv" salidas\respuestas.csv --sin-nucleo
@@ -55,6 +55,8 @@ python "..\..\..\06_kit_desarrollo_equipos\06_kit_desarrollo_equipos\puntuar.py"
 # 3. Pantalla de revisión (diseño de Valentina): genera salidas\revision\index.html y lo abre
 .\.venv\Scripts\python generar_revision.py
 ```
+
+Ejecuta el paso 3 **cuando haya terminado** el paso 1: necesita su `salidas\respuestas.csv`.
 
 Opciones de `auditar.py`:
 - `--sin-llm`: solo reglas, sin coste;

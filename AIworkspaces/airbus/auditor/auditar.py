@@ -80,8 +80,9 @@ def auditar_doc(doc, docs, bloque_ref, usar_llm):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("carpeta")
-    ap.add_argument("--salida", default="respuestas.csv")
+    ap.add_argument("carpeta", nargs="?", default="",
+                    help="carpeta con los PDF (si se omite, se busca sola: ver src/rutas.py)")
+    ap.add_argument("--salida", default=str(Path("salidas") / "respuestas.csv"))
     ap.add_argument("--sin-llm", action="store_true", help="solo reglas deterministas")
     ap.add_argument("--hilos", type=int, default=6)
     ap.add_argument("--solo", default="", help="auditar solo los códigos indicados (coma), para pruebas")
@@ -92,9 +93,17 @@ def main():
     ftraza = salida.with_name(salida.stem + "_traza.jsonl")
 
     # 1. Ingesta
-    pdfs = sorted(Path(a.carpeta).rglob("*.pdf"))
+    from src.rutas import ayuda_corpus, buscar_corpus
+    carpeta = Path(a.carpeta) if a.carpeta else buscar_corpus()
+    pdfs = sorted(carpeta.rglob("*.pdf")) if carpeta and carpeta.is_dir() else []
+    if not pdfs and a.carpeta:                      # la ruta escrita no vale: se prueba a buscarla sola
+        carpeta = buscar_corpus()
+        pdfs = sorted(carpeta.rglob("*.pdf")) if carpeta else []
+        if pdfs:
+            print(f"Aviso: en «{a.carpeta}» no hay PDF; uso los de {carpeta}")
     if not pdfs:
-        sys.exit(f"No hay PDF en {a.carpeta}")
+        sys.exit(ayuda_corpus())
+    print(f"Corpus: {carpeta} ({len(pdfs)} PDF)")
     docs, errores = [], []
 
     def leer(f):
