@@ -321,7 +321,7 @@ const S={
   criteriosOpen:false, extraOpen:false, extraForm:{ref:'',txt:''},
   iq:'', iest:'', itipo:'', agente:null, umbral:80,
   dec:{}, extra:[], hl:[],
-  msgs:[{r:'a',t:'Hola. Busco en toda la aplicación: documentos, hallazgos, decisiones, agentes y métricas, reglas, equipo y chat. Si la respuesta está en una sección, te propongo ir a ella con los filtros puestos.'}],
+  msgs:[{r:'a',t:'Hola. Busco en toda la aplicación: documentos, hallazgos, decisiones, agentes y métricas, reglas, equipo y chat. Si la respuesta está en una sección, te propongo ir a ella con los filtros puestos. Con la revisión en equipo encendida, además leo los PDF del corpus y te respondo con la IA citando las fuentes.'}],
   asisOpen:false, soloHl:false, hlTxt:''
 };
 const LS='rv_real_'+D.id;
@@ -1354,16 +1354,53 @@ function answer(q){
   }
   const text=partes.length?partes.join('<br><br>')
     :'No encuentro nada con esos términos. Prueba con un tipo de hallazgo («no cumple»), una cláusula («IS.I.OR.230»), un código de documento, «documentos pendientes», «F1», «reglas» o el nombre de alguien del equipo.';
-  return {text,ctas:ctas.slice(0,4)};
+  return {text,ctas:ctas.slice(0,4),vacia:!partes.length};
+}
+
+// ---------- Asistente IA con modelo (RAG local: ChromaDB + Llama en Ollama, vía servidor.py → _rag/servidor_rag.py).
+// Primero se enseña al instante la búsqueda en la app (con sus botones «Ver…»); después llega la respuesta del modelo,
+// que lee los documentos del corpus y los datos ya calculados de la app (el modelo no calcula ni inventa).
+const plano=h=>{const d=document.createElement('div'); d.innerHTML=h; return d.textContent||'';};
+function datosApp(q,a){
+  const s=norm(q), ws=palabras(q), L=[];
+  L.push(`Documentos auditados: ${Object.keys(DOCS).length}. Hallazgos de la solución: ${RES.length}.`);
+  if(MET) L.push(`Métricas frente a la clave: F1 ${MET.f1}, precisión ${MET.precision}, recall ${MET.recall}, defectos encontrados ${MET.encontrados}.`);
+  if(!a.vacia) L.push('Resultado de la búsqueda en la app: '+plano(a.text));
+  const doc=Object.keys(DOCS).find(c=>s.includes(norm(c)));
+  const hits=doc?RES.filter(r=>r.documento===doc)
+    :RES.filter(r=>{const t=norm(r.documento+' '+r.ubicacion+' '+r.justificacion+' '+r.tipo+' '+r.clausula);return ws.some(w=>t.includes(w));});
+  if(doc) L.push(`Documento ${doc}: ${DOCS[doc].titulo} (v${DOCS[doc].version}, ${DOCS[doc].familia}).`);
+  hits.slice(0,15).forEach(r=>{const d=decOf(r);
+    L.push(`- Hallazgo ${r.documento} · ${r.ubicacion} · ${r.tipo} · ${r.clausula}${d?' · decisión: '+DECTXT[d.dec]:''} · ${String(r.justificacion||'').slice(0,220)}`);});
+  return L.join('\n').slice(0,4000);
+}
+function textoIA(t){return esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n/g,'<br>');}
+function bajarAsis(){const m=document.getElementById('msgs'); if(m) m.scrollTop=m.scrollHeight;}
+
+async function preguntarIA(q,a){
+  const historial=S.msgs.filter(m=>m.r==='u'||m.ia).slice(-7,-1).map(m=>({r:m.r,t:plano(m.t).slice(0,600)}));
+  const m={r:'a',ia:true,t:'<span class="small">🤖 Leyendo los documentos…</span>'};
+  S.msgs.push(m); render(); bajarAsis();
+  try{
+    const r=await fetch('/api/asistente',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({user:S.user.nombre||'anon',pregunta:q.trim(),datos_app:datosApp(q,a),historial})});
+    const d=await r.json();
+    if(!r.ok||d.error) throw new Error(d.error||r.status);
+    const fu=(d.fuentes||[]).map(f=>`<mark>${esc(f.split('/').pop())}</mark>`).join(' ');
+    m.t=`<b>🤖 Asistente IA</b><br>${textoIA(d.respuesta)}${fu?`<div class="small" style="margin-top:6px">Fuentes: ${fu}</div>`:''}`;
+  }catch(e){
+    m.t=`<span class="small">El asistente con IA no responde (${esc(String(e.message||e))}). Arriba tienes lo que encontré en la app.</span>`;
+  }
+  render(); bajarAsis();
 }
 
 function sendChat(q){
   if(!q||!q.trim()) return;
   S.msgs.push({r:'u',t:esc(q.trim())});
   const a=answer(q);
-  S.msgs.push({r:'a',t:a.text,ctas:a.ctas});
-  S.cq=''; render();
-  const m=document.getElementById('msgs'); if(m) m.scrollTop=m.scrollHeight;
+  if(!(SRV&&a.vacia)) S.msgs.push({r:'a',t:a.text,ctas:a.ctas});   // con IA, no enseñar «no encuentro nada»
+  S.cq=''; render(); bajarAsis();
+  if(SRV) preguntarIA(q,a);
 }
 
 // Lleva a la sección con los filtros que propuso el asistente.

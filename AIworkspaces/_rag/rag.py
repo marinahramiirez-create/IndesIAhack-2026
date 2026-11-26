@@ -60,7 +60,7 @@ def iter_files(folder: Path):
     for p in folder.rglob("*"):
         if not p.is_file():
             continue
-        if any(part in cfg.IGNORED_DIRS for part in p.relative_to(cfg.WORKSPACE).parts):
+        if any(part in cfg.IGNORED_DIRS for part in p.relative_to(folder).parts):
             continue
         if p.name in cfg.GENERATED_FILES:
             continue
@@ -76,6 +76,11 @@ def top_folders():
         d for d in cfg.WORKSPACE.iterdir()
         if d.is_dir() and d.name not in cfg.IGNORED_DIRS and not d.name.startswith(".")
     )
+
+
+def sources():
+    """Todo lo que se indexa: (nombre en el índice, ruta). Carpetas de AIworkspaces + EXTRA_FOLDERS."""
+    return [(d.name, d) for d in top_folders()] + list(cfg.EXTRA_FOLDERS.items())
 
 
 def chunk_text(text: str, size: int = cfg.CHUNK_SIZE, overlap: int = cfg.CHUNK_OVERLAP):
@@ -125,10 +130,10 @@ def ingest():
 
     seen = set()
     added = skipped = 0
-    for folder in top_folders():
-        print(f"> {folder.name}")
+    for name, folder in sources():
+        print(f"> {name}")
         for path in iter_files(folder):
-            rel = path.relative_to(cfg.WORKSPACE).as_posix()
+            rel = f"{name}/{path.relative_to(folder).as_posix()}"
             seen.add(rel)
             h = file_hash(path)
             if indexed.get(rel) == h:
@@ -144,7 +149,7 @@ def ingest():
                     ids=[f"{rel}::{i + j}" for j in range(len(batch))],
                     documents=[f"[Archivo: {rel}]\n{c}" for c in batch],
                     embeddings=embed(batch),
-                    metadatas=[{"folder": folder.name, "source": rel, "hash": h}] * len(batch),
+                    metadatas=[{"folder": name, "source": rel, "hash": h}] * len(batch),
                 )
             added += 1
             print(f"   + {rel} ({len(chunks)} fragmentos)")
@@ -158,14 +163,19 @@ def ingest():
           f"fragmentos totales: {col.count()}")
 
 
-def retrieve(query: str, k: int = cfg.TOP_K, folder: str | None = None):
+def retrieve(query: str, k: int = cfg.TOP_K, folder: str | list | None = None):
+    """folder: una carpeta, una lista de carpetas o None (todo el índice)."""
     col = get_collection()
     if col.count() == 0:
         sys.exit("ChromaDB está vacío. Ejecuta primero: python rag.py ingest")
+    if isinstance(folder, list):
+        where = {"folder": {"$in": folder}} if len(folder) > 1 else {"folder": folder[0]}
+    else:
+        where = {"folder": folder} if folder else None
     res = col.query(
         query_embeddings=embed([query]),
         n_results=min(k, col.count()),
-        where={"folder": folder} if folder else None,
+        where=where,
     )
     return res["documents"][0], res["metadatas"][0]
 

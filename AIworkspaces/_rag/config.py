@@ -36,6 +36,18 @@ IGNORED_DIRS = {
     ".obsidian", "_instalar", "_papelera",
 }
 
+# Carpetas de FUERA de AIworkspaces que también se indexan (nombre en el índice → ruta).
+# El corpus NIMBUS del reto Airbus está en la raíz del repo y en .gitignore: se indexa solo en local
+# (chroma_db tampoco se sube). Si el zip se descomprimió con una sola carpeta, vale igual.
+_corpus = WORKSPACE.parent / "03_corpus_trabajo_NIMBUS"
+if (_corpus / "03_corpus_trabajo_NIMBUS").is_dir():
+    _corpus = _corpus / "03_corpus_trabajo_NIMBUS"
+EXTRA_FOLDERS = {"corpus_nimbus": _corpus} if _corpus.is_dir() else {}
+
+# Asistente IA de la app de Airbus (servidor_rag.py): en qué carpetas del índice busca y en qué puerto escucha
+ASISTENTE_CARPETAS = ["airbus", "corpus_nimbus"]
+ASISTENTE_PUERTO = 8766
+
 # Archivos que genera este sistema (no se reindexan para no retroalimentarse)
 DOC_FILENAME = "DOCUMENTACION.md"
 GENERATED_FILES = {DOC_FILENAME, "DOCUMENTACION_GENERAL.md"}
