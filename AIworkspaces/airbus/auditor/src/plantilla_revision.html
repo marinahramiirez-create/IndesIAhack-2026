@@ -184,6 +184,25 @@ mark{background:#ffe27a;padding:0 2px;border-radius:3px}
 .drawer button.ghost:hover{background:rgba(255,255,255,.22)}
 @media (max-width:900px){.drow{grid-template-columns:1fr;gap:8px}.estado{justify-self:start;text-align:left}.mini{margin-left:0}}
 @media (max-width:1200px){.two{grid-template-columns:1fr}.right{position:static;max-height:none}.g2{grid-template-columns:1fr}}
+/* Asistente IA: botón flotante y panel lateral derecho; busca en toda la aplicación y propone a dónde ir */
+.fab{position:fixed;right:22px;bottom:22px;z-index:25;display:inline-flex;align-items:center;gap:8px;padding:12px 18px 12px 14px;border-radius:999px;background:#1a4c7c;color:#fff;font-weight:600;box-shadow:0 8px 24px rgba(26,76,124,.35);transition:transform .15s,box-shadow .15s}
+.fab:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(26,76,124,.42)}
+.asis{position:fixed;top:0;right:0;bottom:0;width:min(440px,100%);background:#fff;box-shadow:-8px 0 30px rgba(0,0,0,.15);z-index:30;display:flex;flex-direction:column}
+.asis.entra{animation:asis-in .22s ease-out}
+@keyframes asis-in{from{transform:translateX(40px);opacity:0}to{transform:none;opacity:1}}
+.asis-h{display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid var(--sep)}
+.asis-h .ico{width:34px;height:34px;border-radius:10px;background:#e5f1ff;color:#1a4c7c;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.asis .msgs{padding:14px 18px;gap:12px}
+.asis .chatin{padding:12px 18px 16px;border-top:1px solid var(--sep)}
+.sug{display:flex;flex-wrap:wrap;gap:6px;padding:0 18px 10px}
+.sug button{background:#f2f2f7;color:var(--text);font-size:13px;padding:6px 10px;border-radius:999px}
+.sug button:hover{background:#e5e5ea}
+.ctas{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.cta{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;background:#fff;color:#1a4c7c;border:1px solid #c9dcef;border-radius:10px;padding:9px 12px;font-size:13px;font-weight:600}
+.cta:hover{background:#e5f1ff}
+.cta .fl{font-size:12px;font-weight:400;color:var(--sec);display:block;margin-top:1px}
+.chipf{display:inline-flex;align-items:center;gap:8px;background:#e5f1ff;color:#1a4c7c;border-radius:999px;padding:5px 6px 5px 12px;font-size:13px;font-weight:600;margin-bottom:10px}
+.chipf button{background:#fff;color:#1a4c7c;padding:2px 8px;border-radius:999px;font-size:12px}
 </style>
 </head>
 <body>
@@ -254,7 +273,8 @@ const S={
   criteriosOpen:false, extraOpen:false, extraForm:{ref:'',txt:''},
   iq:'', iest:'', itipo:'', agente:null, umbral:80,
   dec:{}, extra:[], hl:[],
-  msgs:[{r:'a',t:'Busco en los hallazgos reales. Prueba con "cifrado", "MFA", "IS.I.OR.230", "no verificable" o un código como "SUP-SEC-ACME".'}]
+  msgs:[{r:'a',t:'Hola. Busco en toda la aplicación: documentos, hallazgos, decisiones, agentes y métricas, reglas, equipo y chat. Si la respuesta está en una sección, te propongo ir a ella con los filtros puestos.'}],
+  asisOpen:false, soloHl:false, hlTxt:''
 };
 const LS='rv_real_'+D.id;
 try{S.dec=JSON.parse(localStorage.getItem(LS+'_dec')||'{}');}catch(e){S.dec={};}
@@ -569,7 +589,7 @@ const EN={'Inicio':'Home','Revisión':'Review','Panel de control IA':'AI control
  'Resultado frente a la clave (puntuador oficial)':'Result against the answer key (official scorer)','Defectos encontrados por familia':'Defects found by family',
  'Pulsa un agente para ver sus actividades y métricas.':'Click an agent to see its activities and metrics.',
  'Hallazgos de la solución y tus decisiones. Filtra o pregunta al asistente para resaltar lo que encuentre.':'Solution findings and your decisions. Filter or ask the assistant to highlight what it finds.',
- 'Todos los tipos':'All types','Ubicación':'Location','Tipo':'Type','Cláusula':'Clause','Tu decisión':'Your decision','Asistente de hallazgos':'Findings assistant',
+ 'Todos los tipos':'All types','Ubicación':'Location','Tipo':'Type','Cláusula':'Clause','Tu decisión':'Your decision','Asistente de hallazgos':'Findings assistant','Asistente IA':'AI assistant','Busca en toda la aplicación':'Searches the whole app','Hallazgos de la solución y tus decisiones. Filtra aquí o pregunta al Asistente IA.':'Solution findings and your decisions. Filter here or ask the AI assistant.','Pregunta sobre documentos, hallazgos, métricas…':'Ask about documents, findings, metrics…','Quitar ×':'Remove ×','Documentos pendientes':'Pending documents','¿Cuál es el F1?':'What is the F1?','Reglas del verificador':'Verifier rules','¿Quién es administrador?':'Who is admin?',
  'Criterio de aceptación':'Acceptance criterion','Umbral de aceptación (%)':'Acceptance threshold (%)','Aceptación actual':'Current acceptance',
  'Hallazgos pendientes':'Pending findings','Documentos aprobados':'Approved documents','Documentos rechazados':'Rejected documents','Documentos en revisión':'Documents in review',
  'Referencia':'Reference','Descripción':'Description','Regla':'Rule','Qué comprueba':'What it checks','Roles':'Roles','Usuarios':'Users',
@@ -959,67 +979,182 @@ function vIA(){
     <div class="log">${LOG.length?LOG.map(l=>esc(l)).join('<br>'):'Sin registros todavía.'}</div></div>`;
 }
 
+// ---------- Asistente IA: busca en TODA la aplicación (datos ya calculados, sin llamadas a IA) y, si la respuesta
+// está en una sección, propone un botón para ir a ella con los filtros puestos.
+function norm(s){return String(s??'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');}
+const VACIAS=new Set('que cual cuales como donde cuando cuanto cuantos cuantas los las del con por para una uno unos unas sobre hay tiene tienen esta estan este esto son ver dame muestrame ensename busca buscar quiero necesito lista listado the and with for show find what which how many are of in on to me all todos todas'.split(' '));
+function palabras(s){return norm(s).split(/[^a-z0-9.\-]+/).filter(w=>w.length>2&&!VACIAS.has(w));}
+function listaH(hits){return hits.slice(0,6).map(h=>`<mark>${esc(h.documento)} · ${esc(h.ubicacion)}</mark>`).join(', ')+(hits.length>6?'…':'');}
+function plural(n,uno,varios){return `${n} ${n===1?uno:varios}`;}
+
 function answer(q){
-  const s=q.toLowerCase().trim();
-  let hits=RES;
-  const cl=s.match(/(?:is\.i\.or\.)?(2\d\d)\b/);
-  const cod=RES.find(r=>s.includes(r.documento.toLowerCase()));
-  if(/no verificable/.test(s)) hits=RES.filter(r=>r.tipo==='No verificable');
-  else if(/inconsist/.test(s)) hits=RES.filter(r=>r.tipo==='Inconsistencia');
-  else if(/no cumple/.test(s)) hits=RES.filter(r=>r.tipo==='No cumple');
-  else if(/cobertura/.test(s)) hits=RES.filter(r=>r.tipo==='Cobertura faltante');
-  else if(/trazabilidad/.test(s)) hits=RES.filter(r=>r.tipo==='Trazabilidad incorrecta');
-  else if(cod) hits=RES.filter(r=>r.documento===cod.documento);
-  else if(cl) hits=RES.filter(r=>r.clausula==='IS.I.OR.'+cl[1]);
-  else {
-    const words=s.split(/\s+/).filter(w=>w.length>2);
-    hits=RES.filter(r=>{const t=(r.documento+' '+r.ubicacion+' '+r.justificacion+' '+r.tipo+' '+r.leido).toLowerCase();return words.some(w=>t.includes(w));});
+  const s=norm(q).trim(), ws=palabras(q);
+  const partes=[], ctas=[], vistos=new Set();
+  const add=(label,detalle,dest)=>{const k=JSON.stringify(dest); if(vistos.has(k)) return; vistos.add(k); ctas.push({label,detalle,dest});};
+  const verH=(hits,txt,extra={})=>add(`Ver ${plural(hits.length,'hallazgo','hallazgos')} en Histórico`,`Histórico · ${txt}`,
+    {view:'historico',hl:hits.map(key),hlTxt:txt,...extra});
+  const hablaDocs=/document|expedient|archivo/.test(s), hablaHall=/hallazg|defect|finding/.test(s);
+
+  // 1. Hallazgos: tipo, cláusula, documento concreto, decisiones
+  const TIPOS_N=[['no verificable','No verificable'],['inconsist','Inconsistencia'],['no cumple','No cumple'],['incumpl','No cumple'],
+                 ['cobertura','Cobertura faltante'],['trazab','Trazabilidad incorrecta']];
+  const tipo=(TIPOS_N.find(([k])=>s.includes(k))||[])[1];
+  const cl=s.match(/(?:is\.?i\.?or\.?\s*)?\b(2[0-6]\d)\b/);
+  const doc=Object.keys(DOCS).find(c=>s.includes(norm(c)));
+  let base=doc?RES.filter(r=>r.documento===doc):RES;
+  if(tipo){
+    const hits=base.filter(r=>r.tipo===tipo);
+    partes.push(hits.length?`Hay ${plural(hits.length,'hallazgo','hallazgos')} de tipo <b>${esc(tipo)}</b>${doc?' en '+esc(doc):''}: ${listaH(hits)}.`:`No hay hallazgos de tipo <b>${esc(tipo)}</b>${doc?' en '+esc(doc):''}.`);
+    if(hits.length) add(`Ver «${tipo}» en Histórico`,`Histórico · Tipo: ${tipo}${doc?' · '+doc:''}`,{view:'historico',tipo,q:doc||''});
   }
-  S.hl=hits.map(key);
-  const text=hits.length
-    ? `Encontré ${hits.length} hallazgo${hits.length>1?'s':''}: ${hits.slice(0,10).map(h=>`<mark>${esc(h.documento)} · ${esc(h.ubicacion)}</mark>`).join(', ')}${hits.length>10?'…':''}. Están resaltados en el Histórico.`
-    : 'No encuentro hallazgos con esos términos.';
-  return {text,hits:S.hl};
+  if(cl){
+    const c='IS.I.OR.'+cl[1], hits=base.filter(r=>r.clausula===c);
+    partes.push(hits.length?`La cláusula <b>${c}</b> aparece en ${plural(hits.length,'hallazgo','hallazgos')}: ${listaH(hits)}.`:`Ningún hallazgo cita la cláusula <b>${c}</b>.`);
+    if(hits.length) verH(hits,'Cláusula '+c);
+  }
+  const dec=/aprobad|approved/.test(s)?'approved':/rechazad|rejected/.test(s)?'rejected':null;
+  if(dec){
+    const hits=base.filter(r=>decOf(r)&&decOf(r).dec===dec), txt=DECTXT[dec];
+    partes.push(hits.length?`Has marcado como <b>${txt.toLowerCase()}</b> ${plural(hits.length,'hallazgo','hallazgos')}: ${listaH(hits)}.`:`Todavía no hay hallazgos ${txt.toLowerCase()}s.`);
+    if(hits.length) verH(hits,'Decisión: '+txt);
+  }
+  if(/pendient|sin decid|sin revis|por revis/.test(s)&&(hablaHall||doc)&&!hablaDocs){
+    const hits=base.filter(r=>!decOf(r));
+    partes.push(`Quedan ${plural(hits.length,'hallazgo','hallazgos')} sin decisión${doc?' en '+esc(doc):''}.`);
+    if(hits.length) verH(hits,'Sin decisión'+(doc?' · '+doc:''));
+  }
+  if(doc){
+    const info=DOCS[doc], rs=RES.filter(r=>r.documento===doc);
+    partes.push(`<b>${esc(doc)}</b> · ${esc(info.titulo)} (v${esc(info.version)}, ${esc(info.familia)}): ${plural(rs.length,'hallazgo','hallazgos')}, estado <b>${esc(estadoDoc(rs))}</b>.`);
+    if(rs.length) add(`Revisar ${doc} junto al PDF`,'Revisión · '+plural(rs.length,'hallazgo','hallazgos'),{view:'revision',doc});
+  }
+
+  // 2. Documentos (Inicio): estado y familia
+  const EST_N=[['sin hallazgo','Sin hallazgos'],['en revision','En revisión'],['complet','Completado'],['terminad','Completado'],['pendient','Pendiente']];
+  const iest=(EST_N.find(([k])=>s.includes(k))||[])[1];
+  const familias=[...new Set(Object.values(DOCS).map(d=>d.familia))];
+  const fam=familias.find(f=>s.includes(norm(f)))||familias.find(f=>palabras(f).some(w=>w.length>5&&ws.includes(w)));
+  if((hablaDocs||fam||(iest&&!hablaHall&&!doc))&&(iest||fam)){
+    const docsF=Object.keys(DOCS).filter(c=>{const rs=RES.filter(r=>r.documento===c);return (!iest||estadoDoc(rs)===iest)&&(!fam||DOCS[c].familia===fam);});
+    const cual=[iest&&`estado «${iest}»`,fam&&`familia «${fam}»`].filter(Boolean).join(' y ');
+    partes.push(`Hay ${plural(docsF.length,'documento','documentos')} con ${esc(cual)}${docsF.length?': '+docsF.slice(0,6).map(c=>`<mark>${esc(c)}</mark>`).join(', ')+(docsF.length>6?'…':''):''}.`);
+    add('Ver documentos en Inicio',`Inicio · ${[iest&&'Estado: '+iest,fam&&'Familia: '+fam].filter(Boolean).join(' · ')}`,{view:'inicio',iest:iest||'',itipo:fam||''});
+  }
+
+  // 3. Panel de control IA: métricas y agentes
+  let ag=ETAPAS.findIndex(e=>s.includes(norm(e.n)));            // nombre completo del agente, o «agente» + una palabra suya
+  if(ag<0&&/agente/.test(s)) ag=ETAPAS.findIndex(e=>palabras(e.n).some(w=>w.length>4&&w!=='agente'&&ws.includes(w)));
+  if(MET&&/\bf1\b|precis|recall|exhaust|metric|puntu|resultado|clave|rendimiento|acierto/.test(s)){
+    partes.push(`Resultado frente a la clave: F1 <b>${esc(MET.f1)}</b>, precisión ${esc(MET.precision)}, recall ${esc(MET.recall)}, defectos encontrados ${esc(MET.encontrados)}.`);
+    add('Ver métricas en el Panel de control IA','Panel de control IA · Resultado frente a la clave',{view:'ia'});
+  }
+  if(ag>=0||/agente|flujo|pipeline|descart|registro de ejec|log\b/.test(s)){
+    const e=ETAPAS[ag>=0?ag:0];
+    partes.push(ag>=0?`<b>Agente ${ag+1} · ${esc(e.n)}</b>: ${esc(e.d)}`:`La solución tiene ${ETAPAS.length} agentes: ${ETAPAS.map((x,i)=>`${i+1}. ${esc(x.n)}`).join(' · ')}.`);
+    add(ag>=0?`Ver el agente ${ag+1} en el Panel de control IA`:'Ver el flujo de agentes',`Panel de control IA${ag>=0?' · Agente '+(ag+1)+' abierto':''}`,{view:'ia',agente:ag>=0?ag:null});
+  }
+
+  // 4. Configuración: reglas, criterio de aceptación, equipo
+  if(/regla|umbral|criterio|aceptac|\bv[1-5]\b|jerarq|std-sec|lista-doc|normativ|verificador/.test(s)){
+    partes.push(`Las reglas del verificador (V1 a V5), la jerarquía normativa y el umbral de aceptación (ahora ${S.umbral} %) están en Configuración.`);
+    add('Ir a Configuración · Reglas','Configuración · Reglas y criterio de aceptación',{view:'reglas'});
+  }
+  const persona=S.equipo.find(m=>ws.includes(norm(m.n)));
+  if(persona){
+    const hits=RES.filter(r=>decOf(r)&&decOf(r).user===persona.n);
+    partes.push(`<b>${esc(persona.n)}</b> es ${esc(persona.rol||'Revisor')} (${esc(persona.c)}) y ha decidido ${plural(hits.length,'hallazgo','hallazgos')}.`);
+    if(hits.length) verH(hits,'Decididos por '+persona.n);
+    add(`Ver a ${persona.n} en Usuarios y roles`,'Configuración · Usuarios y roles',{view:'usuarios'});
+  } else if(/equipo|usuario|rol\b|roles|miembro|admin|aprobador|revisor|quien/.test(s)){
+    partes.push(`El equipo tiene ${plural(S.equipo.length,'persona','personas')}: ${S.equipo.map(m=>`${esc(m.n)} (${esc(m.rol||'Revisor')})`).join(', ')}.`);
+    add('Ir a Usuarios y roles','Configuración · Usuarios y roles',{view:'usuarios'});
+  }
+
+  // 5. Chat del equipo
+  if(/chat|mensaje|canal|conversa/.test(s)){
+    partes.push(SRV?`Hay ${plural((S.mensajes||[]).length,'mensaje','mensajes')} en ${plural((S.chats||[]).length,'chat','chats')}.`:'El chat del equipo necesita la revisión en equipo (python servidor.py).');
+    add('Ir al Chat','Chat · #'+(S.canal||'general'),{view:'chat',canal:S.canal||'general'});
+  }
+
+  // 6. Sin intención clara: búsqueda por texto en hallazgos, documentos y mensajes
+  if(!partes.length&&ws.length){
+    const hits=RES.filter(r=>{const t=norm(r.documento+' '+r.ubicacion+' '+r.justificacion+' '+r.tipo+' '+(r.leido||''));return ws.some(w=>t.includes(w));});
+    if(hits.length){partes.push(`Encontré ${plural(hits.length,'hallazgo que menciona','hallazgos que mencionan')} «${esc(q.trim())}»: ${listaH(hits)}.`); verH(hits,'Texto: '+q.trim());}
+    const docsT=Object.keys(DOCS).filter(c=>ws.some(w=>norm(c+' '+DOCS[c].titulo).includes(w)));
+    if(docsT.length){partes.push(`${plural(docsT.length,'documento coincide','documentos coinciden')}: ${docsT.slice(0,6).map(c=>`<mark>${esc(c)}</mark>`).join(', ')}${docsT.length>6?'…':''}.`);
+      add('Ver documentos en Inicio','Inicio · Búsqueda: '+ws[0],{view:'inicio',iq:ws[0]});}
+    const msgs=(S.mensajes||[]).filter(m=>ws.some(w=>norm(m.texto).includes(w)));
+    if(msgs.length){partes.push(`También aparece en ${plural(msgs.length,'mensaje','mensajes')} del chat.`); add('Ver en el Chat','Chat · #'+msgs[msgs.length-1].canal,{view:'chat',canal:msgs[msgs.length-1].canal});}
+  }
+  const text=partes.length?partes.join('<br><br>')
+    :'No encuentro nada con esos términos. Prueba con un tipo de hallazgo («no cumple»), una cláusula («IS.I.OR.230»), un código de documento, «documentos pendientes», «F1», «reglas» o el nombre de alguien del equipo.';
+  return {text,ctas:ctas.slice(0,4)};
 }
 
 function sendChat(q){
   if(!q||!q.trim()) return;
   S.msgs.push({r:'u',t:esc(q.trim())});
   const a=answer(q);
-  S.msgs.push({r:'a',t:a.text});
-  render();
+  S.msgs.push({r:'a',t:a.text,ctas:a.ctas});
+  S.cq=''; render();
   const m=document.getElementById('msgs'); if(m) m.scrollTop=m.scrollHeight;
+}
+
+// Lleva a la sección con los filtros que propuso el asistente.
+function irDestino(d){
+  S.asisOpen=false;
+  if(d.view==='historico'){S.tipo=d.tipo||''; S.q=d.q||''; S.hl=d.hl||[]; S.soloHl=!!S.hl.length; S.hlTxt=d.hlTxt||'';}
+  if(d.view==='inicio'){S.iq=d.iq||''; S.iest=d.iest||''; S.itipo=d.itipo||'';}
+  if(d.view==='ia') S.agente=d.agente??null;
+  if(d.view==='chat'&&d.canal){S.canal=d.canal; S.chatAbajo=true;}
+  if(d.view==='revision'){abrirRevision(d.doc); if(d.u){const i=R().findIndex(r=>r.ubicacion===d.u); if(i>=0) irA(i);}}
+  else S.view=d.view;
+  render(); window.scrollTo(0,0);
+}
+
+const SUGERENCIAS=['Documentos pendientes','No cumple','IS.I.OR.230','¿Cuál es el F1?','Reglas del verificador','¿Quién es administrador?'];
+function vAsistente(){
+  const fab=`<button class="fab ${S.asisOpen?'hidden':''}" data-act="asis" aria-label="Abrir el asistente IA" aria-expanded="${S.asisOpen}">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.9 5.6L19.5 9.5l-5.6 1.9L12 17l-1.9-5.6L4.5 9.5l5.6-1.9z"/><path d="M19 15l.9 2.1 2.1.9-2.1.9L19 21l-.9-2.1-2.1-.9 2.1-.9z"/></svg>Asistente IA</button>`;
+  if(!S.asisOpen) return fab;
+  setTimeout(()=>{S.asisAnim=false;},0);                    // la animación de entrada solo al abrir, no en cada redibujo
+  const msgs=S.msgs.map((m,i)=>`<div class="m ${m.r}">${m.t}${(m.ctas||[]).length?`<div class="ctas">${m.ctas.map((c,j)=>
+    `<button class="cta" data-act="cta" data-m="${i}" data-c="${j}"><span>${esc(c.label)}<span class="fl">${esc(c.detalle)}</span></span><span aria-hidden="true">→</span></button>`).join('')}</div>`:''}</div>`).join('');
+  return fab+`<div class="scrim" data-act="asis"></div>
+    <aside class="asis ${S.asisAnim?'entra':''}" role="dialog" aria-label="Asistente IA">
+      <div class="asis-h"><span class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.9 5.6L19.5 9.5l-5.6 1.9L12 17l-1.9-5.6L4.5 9.5l5.6-1.9z"/></svg></span>
+        <div style="flex:1"><b>Asistente IA</b><div class="small">Busca en toda la aplicación</div></div>
+        <button class="ghost" data-act="asis" aria-label="Cerrar el asistente">Cerrar</button></div>
+      <div class="msgs" id="msgs">${msgs}</div>
+      ${S.msgs.length<=1?`<div class="sug">${SUGERENCIAS.map(t=>`<button data-act="sug" data-v="${esc(t)}">${esc(t)}</button>`).join('')}</div>`:''}
+      <form id="chatForm" class="chatin">
+        <input id="cq" value="${esc(S.cq)}" placeholder="Pregunta sobre documentos, hallazgos, métricas…" aria-label="Pregunta para el asistente" autocomplete="off">
+        <button type="submit">Enviar</button>
+      </form>
+    </aside>`;
 }
 
 function vHist(){
   let rows=RES.filter(r=>(!S.tipo||r.tipo===S.tipo)&&(!S.q||(r.documento+' '+r.ubicacion+' '+r.justificacion).toLowerCase().includes(S.q.toLowerCase())));
-  if(S.hl.length){const h=new Set(S.hl); rows=rows.filter(r=>h.has(key(r))).concat(rows.filter(r=>!h.has(key(r))));}
+  const h=new Set(S.hl);
+  if(S.soloHl&&S.hl.length) rows=rows.filter(r=>h.has(key(r)));
   const MAX=300, mas=rows.length>MAX?`<tr><td colspan="4" class="small">… y ${rows.length-MAX} más. Filtra para acotar.</td></tr>`:'';
+  const chip=S.soloHl&&S.hl.length?`<div class="chipf">Filtro del asistente: ${esc(S.hlTxt)}<button data-act="limpiarHl" aria-label="Quitar el filtro del asistente">Quitar ×</button></div>`:'';
   return `<h2>Histórico</h2>
-  <p class="sub">Hallazgos de la solución y tus decisiones. Filtra o pregunta al asistente para resaltar lo que encuentre.</p>
-  <div class="grid" style="grid-template-columns:1.5fr 1fr;align-items:start">
-    <div class="card">
+  <p class="sub">Hallazgos de la solución y tus decisiones. Filtra aquí o pregunta al Asistente IA.</p>
+  <div class="card">
+      ${chip}
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
         <input id="flt" placeholder="Buscar documento, ubicación o texto" value="${esc(S.q)}" aria-label="Buscar hallazgos" style="flex:1;min-width:180px">
         <select id="ftipo" aria-label="Filtrar por tipo"><option value="">Todos los tipos</option>${TIPOS.map(t=>`<option ${S.tipo===t?'selected':''}>${t}</option>`).join('')}</select>
       </div>
       <div class="small" style="margin-bottom:6px">${rows.length} de ${RES.length} hallazgos</div>
       <div class="hscroll"><table><thead><tr><th>Ubicación</th><th>Tipo</th><th>Cláusula</th><th>Tu decisión</th></tr></thead>
-      <tbody>${rows.slice(0,MAX).map(r=>{const d=decOf(r);return `<tr class="${S.hl.includes(key(r))?'hl':''} clic" data-act="abrirH" data-doc="${esc(r.documento)}" data-u="${esc(r.ubicacion)}"><td><span class="small">${esc(r.documento)}</span><br><b>${esc(r.ubicacion)}</b><div class="small">${esc(r.justificacion)}</div></td><td>${esc(r.tipo)}</td><td>${esc(r.clausula)}</td><td>${d?st('neutral',DECTXT[d.dec]):'<span class="small">Pendiente</span>'}</td></tr>`;}).join('') || '<tr><td colspan="4" class="small">Sin resultados</td></tr>'}${mas}</tbody></table></div>
+      <tbody>${rows.slice(0,MAX).map(r=>{const d=decOf(r);return `<tr class="${h.has(key(r))?'hl':''} clic" data-act="abrirH" data-doc="${esc(r.documento)}" data-u="${esc(r.ubicacion)}"><td><span class="small">${esc(r.documento)}</span><br><b>${esc(r.ubicacion)}</b><div class="small">${esc(r.justificacion)}</div></td><td>${esc(r.tipo)}</td><td>${esc(r.clausula)}</td><td>${d?st('neutral',DECTXT[d.dec]):'<span class="small">Pendiente</span>'}</td></tr>`;}).join('') || '<tr><td colspan="4" class="small">Sin resultados</td></tr>'}${mas}</tbody></table></div>
       <div class="fbtns" style="margin-top:16px">
         <button class="ghost" data-act="exres">Exportar respuestas.csv</button>
         <button class="ok" data-act="exfb">Exportar feedback.csv</button>
       </div>
-    </div>
-    <div class="card chat">
-      <h3>Asistente de hallazgos</h3>
-      <div class="small" style="margin-bottom:8px">Busca por tipo, cláusula, documento o texto. Solo responde con hallazgos ya calculados.</div>
-      <div class="msgs" id="msgs">${S.msgs.map(m=>`<div class="m ${m.r}">${m.t}</div>`).join('')}</div>
-      <form id="chatForm" class="chatin">
-        <input id="cq" value="${esc(S.cq)}" placeholder="Escribe tu pregunta" aria-label="Pregunta para el asistente" autocomplete="off">
-        <button type="submit">Enviar</button>
-      </form>
-    </div>
   </div>`;
 }
 
@@ -1112,7 +1247,7 @@ function render(){
         <button class="ok" data-act="guardarExtra">Guardar comentario</button>
       </div>
     </div>`:'';
-  document.getElementById('view').innerHTML=VIEWS[S.view]()+criterios+comentario+(S.view==='chat'?vDlgGrupo():'');
+  document.getElementById('view').innerHTML=VIEWS[S.view]()+criterios+comentario+(S.view==='chat'?vDlgGrupo():'')+vAsistente();
   scr.forEach(([s,y])=>{const el=document.querySelector(s); if(el&&y) el.scrollTop=y;});
   const cl=document.getElementById('chatlist');                   // chat: baja al último mensaje si hay nuevos
   if(cl){
@@ -1222,6 +1357,10 @@ document.addEventListener('click',e=>{
     abrirRevision(doc); const i=R().findIndex(r=>key(r)===el.dataset.k); if(i>=0) irA(i);
     render(); window.scrollTo(0,0); return;
   }
+  if(a==='asis'){S.asisOpen=!S.asisOpen; S.asisAnim=S.asisOpen; render(); if(S.asisOpen){const m=document.getElementById('msgs'); if(m) m.scrollTop=m.scrollHeight; const i=document.getElementById('cq'); if(i) i.focus();} return;}
+  if(a==='sug'){sendChat(el.dataset.v); return;}
+  if(a==='cta'){const c=(S.msgs[Number(el.dataset.m)]||{}).ctas; if(c&&c[Number(el.dataset.c)]) irDestino(c[Number(el.dataset.c)].dest); return;}
+  if(a==='limpiarHl'){S.hl=[]; S.soloHl=false; S.hlTxt=''; render(); return;}
   if(a==='drawer') toggleDrawer();
   else if(a==='nav'){S.view=el.dataset.v; toggleDrawer(false); render(); window.scrollTo(0,0);}
   else if(a==='abrir'){abrirRevision(el.dataset.doc); render(); window.scrollTo(0,0);}
@@ -1290,6 +1429,7 @@ document.addEventListener('change',e=>{
 
 // En el chat, Intro envía y Mayúsculas+Intro hace salto de línea
 document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&S.asisOpen){S.asisOpen=false; render(); return;}
   if(e.target.id==='ctx'&&e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault(); enviarMensaje();}
 });
 
@@ -1306,7 +1446,8 @@ document.addEventListener('submit',e=>{
     render();
     if(SRV&&!S.sondeo){S.sondeo=setInterval(sondear,2500); sondear();}   // novedades del equipo cada 2,5 s
   } else if(e.target.id==='chatForm'){
-    sendChat(document.getElementById('cq').value); S.cq='';
+    sendChat(document.getElementById('cq').value);
+    const c=document.getElementById('cq'); if(c) c.focus();
   } else if(e.target.id==='comForm'){
     enviarComentario();
   } else if(e.target.id==='chatEq'){
