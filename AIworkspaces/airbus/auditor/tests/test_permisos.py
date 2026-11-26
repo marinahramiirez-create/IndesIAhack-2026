@@ -379,6 +379,26 @@ class TestServidor(unittest.TestCase):
         self.assertEqual(self.guardar_version("Lucía", "DOC-B")[0], 403)   # otro documento suyo no escalado
         self.assertEqual(len(servidor._estado["versiones"]["DOC-A"]), 1)
 
+    def test_devuelto_bloquea_aprobar_y_rechazar_hasta_corregir(self):
+        self.preparar_duenos()
+        self.post("Nelson", "/api/decision", {"keys": ["DOC-A|R2"], "dec": "rejected"})
+        self.post("Nelson", "/api/escalar", {"doc": "DOC-A", "para": "Lucía", "nota": "corrige R1"})
+        for dec in ("approved", "rejected"):                                  # ni el Admin decide mientras espera
+            code, j = self.post("Sergio", "/api/decision", {"keys": ["DOC-A|R1"], "dec": dec})
+            self.assertEqual(code, 403)
+            self.assertIn("Lucía", j["error"])
+        self.assertEqual(self.post("Sergio", "/api/deshacer", {"key": "DOC-A|R2"})[0], 403)
+        self.assertEqual(self.post("Nelson", "/api/decision", {"keys": ["DOC-B|R1"], "dec": "approved"})[0], 200)  # otro doc, sí
+        self.assertEqual(self.guardar_version("Lucía")[0], 200)
+        self.assertEqual(servidor._estado["escalados"]["DOC-A"]["corregido"]["version"], 1)
+        self.assertTrue(any(a["para"] == "Nelson" and "guardado los cambios" in a["texto"] for a in servidor._estado["avisos"]))
+        self.assertEqual(self.post("Nelson", "/api/decision", {"keys": ["DOC-A|R1"], "dec": "approved"})[0], 200)
+        # devolverlo a otra persona vuelve a bloquear hasta su corrección
+        self.post("Nelson", "/api/escalar", {"doc": "DOC-A", "para": "Pablo"})
+        self.assertEqual(self.post("Nelson", "/api/decision", {"keys": ["DOC-A|R1"], "dec": "rejected"})[0], 403)
+        self.post("Nelson", "/api/escalar/quitar", {"doc": "DOC-A"})          # quitar el escalamiento desbloquea
+        self.assertEqual(self.post("Nelson", "/api/decision", {"keys": ["DOC-A|R1"], "dec": "rejected"})[0], 200)
+
     def test_editar_sin_rol_dueno_aunque_este_escalado(self):
         self.preparar_duenos()
         self.post("Nelson", "/api/escalar", {"doc": "DOC-A", "para": "Lucía"})
@@ -398,12 +418,14 @@ class TestServidor(unittest.TestCase):
         self.assertEqual(self.guardar_version("Lucía")[0], 403)
         self.assertEqual(self.guardar_version("Pablo")[0], 200)
         avisos = [a for a in servidor._estado["avisos"] if a["key"] == "DOC-A|escalado"]
-        self.assertEqual({a["para"] for a in avisos}, {"Lucía", "Pablo"})    # los dos se enteran
+        self.assertEqual({a["para"] for a in avisos}, {"Lucía", "Pablo", "Nelson"})   # los dos se enteran, y quien
+        #                                                                        escaló sabe que Pablo ya corrigió
 
     def test_documento_escalado_que_se_completa(self):
         self.preparar_duenos()
         self.post("Nelson", "/api/escalar", {"doc": "DOC-A", "para": "Lucía"})
-        self.post("Nelson", "/api/decision", {"keys": ["DOC-A|R1", "DOC-A|R2"], "dec": "approved"})
+        self.assertEqual(self.guardar_version("Lucía")[0], 200)            # corrige y desbloquea las decisiones
+        self.assertEqual(self.post("Nelson", "/api/decision", {"keys": ["DOC-A|R1", "DOC-A|R2"], "dec": "approved"})[0], 200)
         code, j = self.guardar_version("Lucía")
         self.assertEqual(code, 403)
         self.assertIn("Completado", j["error"])

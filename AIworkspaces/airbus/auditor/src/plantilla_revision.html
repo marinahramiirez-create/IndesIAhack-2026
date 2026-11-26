@@ -109,6 +109,20 @@ tr.hl td{background:#fff6cc}
 .hrow.on{background:#e5f1ff}
 .hrow .nm{flex:1;text-align:left;background:none;color:var(--text);padding:0;font-weight:600;font-size:14px}
 .pnav{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+/* Detalle de una revisión: título que se recorta si no cabe y «Criterios» siempre fijo a la derecha */
+.pnav-rev{flex-wrap:nowrap}
+.pnav-tit{flex:1;min-width:0;display:flex;align-items:baseline;gap:10px}
+.pnav-tit h2{white-space:nowrap}
+.pnav-tit .small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.pnav-rev>button{flex:none}
+.pnav-fijo{margin-left:6px}
+.pr-u{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--sep)}
+.pr-u select{width:150px;height:32px;padding:4px 8px;font-size:13px}
+tr.clic{cursor:pointer}tr.clic:hover td{background:#f6f8fb}
+.esc-card{margin-bottom:14px;padding:12px 16px;border-left:4px solid #00205b}
+.esc-form{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:10px}
+.esc-esp{margin-top:8px;padding:8px 10px;border-radius:8px;background:rgba(255,159,10,.12);color:#8a4b00;font-size:13px;font-weight:400}
+.esc-ok{margin-top:8px;padding:8px 10px;border-radius:8px;background:rgba(52,199,89,.12);color:#1d6b31;font-size:13px;font-weight:400}
 .iconbtn{background:#e5e5ea;color:var(--text);padding:8px 10px;display:inline-flex;align-items:center}
 .pdfwrap{background:#e9e9ee;border-radius:10px;padding:18px}
 .sumrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--sep);font-size:14px}
@@ -290,6 +304,9 @@ button.adj-img:focus-visible{outline:2px solid var(--tint);outline-offset:2px}
 .fcanal .canal{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mini-btn{background:none;color:var(--sec);padding:4px 7px;border-radius:8px;font-size:13px;opacity:.55}
 .fcanal:hover .mini-btn,.mini-btn:focus-visible{opacity:1}
+.ico-l{vertical-align:-3px;flex:none}
+.ico-arch{position:relative;display:inline-flex;flex-direction:column;align-items:center;color:#00205b;line-height:1}
+.ico-arch span{font-size:8px;font-weight:700;letter-spacing:.02em;margin-top:-6px;background:#fff;padding:0 1px}
 .mini-btn:hover{background:#f0f0f5;color:var(--text)}
 .tperm{width:100%}.tperm td,.tperm th{vertical-align:top}
 .rolpill{font-size:11px;font-weight:600;padding:1px 6px;border-radius:5px;background:#e5e5ea;color:#3a3a3c;margin-left:4px}
@@ -574,7 +591,7 @@ S.roles=[{id:'admin',nombre:'Admin',descripcion:'Administra la estructura de rol
   {id:'revisor',nombre:'Revisor',descripcion:'Aprueba o rechaza hallazgos y comenta.'},
   {id:'dueno_proceso',nombre:'Dueño de Proceso',descripcion:'Corrige los documentos que se le escalan.'}];
 Object.assign(S,{modulos:[],permisos:null,escalados:{},escHist:[],editables:{},token:'',cargado:false,
-  rolForm:null,rolSel:null,usrEdit:null,usrVals:{},usrNuevo:false,escOpen:false,escVals:{}});
+  rolForm:null,rolPanel:null,usrTab:'roles',usrEdit:null,usrVals:{},usrNuevo:false,escOpen:false,escVals:{}});
 S.equipo=[{n:'Sergio',c:'sergio@airbus.es',rol:'admin'},{n:'Marina',c:'marina@airbus.es',rol:'aprobador'},
   {n:'Nelson',c:'nelson@airbus.es',rol:'revisor'},{n:'Valentina',c:'valentina@airbus.es',rol:'revisor'},
   {n:'Daniela',c:'daniela@airbus.es',rol:'revisor'}];
@@ -671,7 +688,7 @@ function vDebate(r){
   return `<div class="debate"><b style="font-size:14px">Debate</b>
     ${lista||'<div class="small" style="margin:6px 0">Sin comentarios todavía.</div>'}
     ${puede('revisiones','comentar')?`<form id="comForm" class="chatin" style="margin-top:6px"><input id="ccom" value="${esc(S.ccom)}" placeholder="Comenta; usa @nombre para avisar" autocomplete="off" aria-label="Comentario para el equipo"><button type="submit">Enviar</button></form>`
-      :`<p class="small" style="margin:6px 0 0">🔒 ${esc(sinPermiso('revisiones','comentar'))}</p>`}
+      :`<p class="small" style="margin:6px 0 0">${esc(sinPermiso('revisiones','comentar'))}</p>`}
     ${enLinea.length?`<div class="small" style="margin-top:6px">En línea: ${enLinea.map(u=>esc(u)).join(', ')}</div>`:''}</div>`;
 }
 // ---------- Chat del equipo: canales, @menciones (avisan en la campanita) y #número para enlazar un hallazgo.
@@ -696,11 +713,11 @@ function vChat(){
   const ultMio=msgs.map(m=>m.user).lastIndexOf(S.user.nombre);
   const lista=msgs.map((m,i)=>{
     const mio=m.user===S.user.nombre&&m.id, quedan=mio?minEditables(m):0;
-    // ✎ siempre visible mientras se pueda editar (antes dependía del ratón y «aparecía y se ocultaba» al enviar).
+    // siempre visible mientras se pueda editar (antes dependía del ratón y «aparecía y se ocultaba» al enviar).
     // El mensaje recién enviado aún no tiene id: se reserva el hueco para que la línea no salte al confirmarse.
     const lapiz=S.editMsg===m.id?'':quedan>0
-      ?`<button class="mini-btn msg-ed" data-act="editarMsg" data-id="${m.id}" title="Editar mensaje (quedan ${quedan} min)" aria-label="Editar mensaje, quedan ${quedan} minutos">✎</button>`
-      :m.user===S.user.nombre&&!m.id?'<span class="mini-btn msg-ed" style="visibility:hidden" aria-hidden="true">✎</span>':'';
+      ?`<button class="mini-btn msg-ed" data-act="editarMsg" data-id="${m.id}" title="Editar mensaje (quedan ${quedan} min)" aria-label="Editar mensaje, quedan ${quedan} minutos">${I('lapiz',14)}</button>`
+      :m.user===S.user.nombre&&!m.id?'<span class="mini-btn msg-ed" style="visibility:hidden" aria-hidden="true">'+I('lapiz',14)+'</span>':'';
     const cuerpo=S.editMsg===m.id
       ?`<div class="chatin" style="margin-top:4px;align-items:flex-end"><textarea id="eMsg" rows="2" style="flex:1" aria-label="Editar mensaje">${esc(S.editTxt??m.texto)}</textarea>
          <button class="ghost" data-act="cancelarMsg" style="font-size:13px">Cancelar</button><button data-act="guardarMsg" data-id="${m.id}" style="font-size:13px">Guardar</button></div>`
@@ -715,18 +732,18 @@ function vChat(){
   const nl=id=>{const n=noLeidos(id); return n?`<span class="cnt" aria-label="${n} sin leer">${n}</span>`:'';};
   const fila=(c,icono)=>`<div class="fcanal">
       <button class="canal ${c.id===canal?'on':''}" data-act="canal" data-v="${esc(c.id)}" title="${esc(nombreChat(c))}">${icono}${esc(nombreChat(c))}${nl(c.id)}</button>
-      ${c.tipo==='canal'&&gestiona(c)&&c.id!=='general'?`<button class="mini-btn" data-act="renombrarChat" data-v="${esc(c.id)}" title="Renombrar" aria-label="Renombrar ${esc(nombreChat(c))}">✎</button>`:''}
-      ${c.tipo==='grupo'&&gestiona(c)?`<button class="mini-btn" data-act="gestionarGrupo" data-v="${esc(c.id)}" title="Gestionar grupo" aria-label="Gestionar ${esc(c.nombre)}">✎</button>`:''}
+      ${c.tipo==='canal'&&gestiona(c)&&c.id!=='general'?`<button class="mini-btn" data-act="renombrarChat" data-v="${esc(c.id)}" title="Renombrar" aria-label="Renombrar ${esc(nombreChat(c))}">${I('lapiz',14)}</button>`:''}
+      ${c.tipo==='grupo'&&gestiona(c)?`<button class="mini-btn" data-act="gestionarGrupo" data-v="${esc(c.id)}" title="Gestionar grupo" aria-label="Gestionar ${esc(c.nombre)}">${I('lapiz',14)}</button>`:''}
       ${(gestiona(c)||c.tipo==='privado')&&c.id!=='general'?`<button class="mini-btn" data-act="borrarChat" data-v="${esc(c.id)}" title="Eliminar" aria-label="Eliminar ${esc(nombreChat(c))}">✕</button>`:''}</div>`;
   const de=t=>S.chats.filter(c=>c.tipo===t);
   const canales=de('canal').map(c=>fila(c,'')).join('');
-  // Integrantes de un grupo, con el mismo formato que tenía el recuadro «Equipo» (papel en el grupo, conexión, 💬 y @)
+  // Integrantes de un grupo, con el mismo formato que tenía el recuadro «Equipo» (papel en el grupo, conexión, chat privado y @)
   const integrante=(m,c)=>{
     const on=enLinea(m.n), yo=m.n===S.user.nombre, papel=c.miembros[m.n]==='admin'?'Admin del grupo':'Miembro';
     return `<div class="miembro">${av(m.n,30)}<div style="flex:1;min-width:0">
         <div style="display:flex;align-items:center;gap:6px"><b style="font-size:14px">${esc(m.n)}</b>${yo?'<span class="small">(tú)</span>':''}<span class="dot ${on?'on':''}" title="${on?'En línea':'Desconectado'}"></span></div>
         <div class="small" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><span class="rolpill" style="margin:0 4px 0 0">${papel}</span>${esc(m.c)}</div></div>
-      ${yo?'':`<div class="acc"><button class="ghost" data-act="privado" data-v="${esc(m.n)}" title="Chat privado con ${esc(m.n)}" aria-label="Chat privado con ${esc(m.n)}">💬</button>
+      ${yo?'':`<div class="acc"><button class="ghost" data-act="privado" data-v="${esc(m.n)}" title="Chat privado con ${esc(m.n)}" aria-label="Chat privado con ${esc(m.n)}">${I('chat')}</button>
       <button class="ghost" data-act="mencionar" data-v="${esc(m.n)}" data-chat="${esc(c.id)}" title="Mencionar a ${esc(m.n)}" aria-label="Mencionar a ${esc(m.n)}">@</button></div>`}</div>`;
   };
   // Cada grupo: su nombre y un desplegable con sus integrantes (abierto por defecto el grupo que estás viendo)
@@ -737,7 +754,7 @@ function vChat(){
     return `<div style="border-bottom:1px solid var(--sep);padding:4px 0">
       <div style="display:flex;align-items:center;gap:2px">
         <button class="mini-btn" data-act="plegarGrupo" data-v="${esc(c.id)}" aria-expanded="${abierto}" aria-label="${abierto?'Ocultar':'Ver'} integrantes de ${esc(c.nombre)}" style="opacity:1;padding:4px 6px"><span class="flecha" style="display:inline-block;transition:transform .15s;${abierto?'':'transform:rotate(-90deg)'}">▼</span></button>
-        <div style="flex:1;min-width:0">${fila(c,'👥 ')}</div>
+        <div style="flex:1;min-width:0">${fila(c,I('grupo',14)+' ')}</div>
       </div>
       <div ${abierto?'':'hidden'} style="padding:0 0 4px 8px">
         <div class="small" style="margin:2px 0 2px 4px">${gente.length} integrantes · ${nOn} en línea</div>
@@ -754,11 +771,11 @@ function vChat(){
   let cab, sub;
   if(actual.tipo==='grupo'){
     const ms=Object.entries(actual.miembros);
-    cab=`👥 ${esc(actual.nombre)}`;
+    cab=`${I('grupo')} ${esc(actual.nombre)}`;
     sub=`${ms.length} personas: ${ms.map(([n,r])=>esc(n)+(r==='admin'?' (admin)':'')).join(', ')}`;
   }else if(actual.tipo==='privado'){
     cab=`${av(nombreChat(actual),26)} ${esc(nombreChat(actual))}`;
-    sub='🔒 Conversación privada: solo la veis vosotros dos.';
+    sub='Conversación privada: solo la veis vosotros dos.';
   }else{
     cab='#'+esc(actual.nombre);
     sub='Canal público del equipo. Escribe #número para enlazar un hallazgo y @nombre para avisar a alguien.';
@@ -784,10 +801,10 @@ function vChat(){
         <div class="chatlist" id="chatlist">${lista||'<p class="small" style="margin-top:12px">Todavía no hay mensajes en este chat.</p>'}</div>
         ${vPendientes()}
         <form id="chatEq" class="chatin" style="margin-top:8px;align-items:flex-end">
-          <label class="clip" title="Adjuntar archivos (imágenes, vídeo, audio, PDF, Word, Excel…)" aria-label="Adjuntar archivos">📎<input id="adjInput" type="file" multiple style="display:none"></label>
+          <label class="clip" title="Adjuntar archivos (imágenes, vídeo, audio, PDF, Word, Excel…)" aria-label="Adjuntar archivos">${I('clip',18)}<input id="adjInput" type="file" multiple style="display:none"></label>
           <textarea id="ctx" rows="2" placeholder="Mensaje para ${esc(nombreChat(actual))}" aria-label="Mensaje" style="flex:1;resize:vertical">${esc(S.ctx||'')}</textarea>
           <button type="submit">Enviar</button></form>
-        <div class="small" style="margin-top:4px">@ para mencionar · 📎 o arrastra archivos aquí para adjuntarlos (máx. 25 MB)</div>
+        <div class="small" style="margin-top:4px">@ para mencionar · usa el clip o arrastra archivos aquí para adjuntarlos (máx. 25 MB)</div>
       </div>
     </div>`;
 }
@@ -808,37 +825,56 @@ function matrizPermisos(r,editable){
           ?`<label class="fchk" style="justify-content:flex-end"><input type="checkbox" data-perm="${m}.${a}" ${on?'checked':''} aria-label="${esc(na)}"><span>${on?'Habilitado':'Deshabilitado'}</span></label>`
           :(on?st('ok','✓ Habilitado'):st('neutral','— Deshabilitado'))}</td></tr>`;}).join('')+
     (m==='configuracion'?`<tr><td><b style="font-weight:600">Administrar roles</b><div class="small">Crear, editar y eliminar roles. Exclusivo del rol Admin: no se concede desde ningún otro rol.</div></td>
-      <td style="text-align:right">${fijo?st('ok','✓ Solo Admin'):st('neutral','🔒 Solo Admin')}</td></tr>`:'')).join('');
+      <td style="text-align:right">${fijo?st('ok','✓ Solo Admin'):st('neutral','Solo Admin')}</td></tr>`:'')).join('');
   return `<table class="tperm"><tbody>${filas}</tbody></table>`;
 }
 function vRoles(){
   const admin=SRV&&esAdmin(), usan=id=>S.equipo.filter(m=>m.rol===id).length;
-  if(SRV&&!(S.roles||[]).length) return `<div class="card"><h3>Roles</h3><p class="small">Todavía no hay roles.</p></div>`;
-  const f=S.rolForm;
-  if(f&&admin){
-    const r={...f};
-    return `<div class="card"><h3>${f.id?'Editar rol':'Nuevo rol'}</h3>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <label class="small" style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:180px">Nombre
-          <input id="rfN" value="${esc(f.nombre||'')}" maxlength="40" autocomplete="off" ${f.id==='dueno_proceso'?'disabled title="El nombre de este rol lo usa la regla de edición de documentos"':''}></label>
-        <label class="small" style="display:flex;flex-direction:column;gap:4px;flex:3;min-width:240px">Descripción
-          <input id="rfD" value="${esc(f.descripcion||'')}" maxlength="300" autocomplete="off"></label></div>
-      <h4 style="margin:16px 0 6px">Permisos por módulo</h4>${matrizPermisos(r,true)}
-      <div class="fbtns"><button class="ghost" data-act="rolCancelar">Cancelar</button><button class="ok" data-act="rolGuardar">${f.id?'Guardar cambios':'Crear rol'}</button></div></div>`;
-  }
-  const sel=(S.roles||[]).find(r=>r.id===S.rolSel);
+  if(SRV&&!(S.roles||[]).length) return `<div class="card"><p class="small">Todavía no hay roles.</p></div>`;
   const filas=(S.roles||[]).map(r=>{const [si,n]=cuentaPerm(r), u=usan(r.id);
-    return `<tr class="${S.rolSel===r.id?'hl':''}"><td><b>${esc(r.nombre)}</b>${r.sistema?' <span class="rolpill">Sistema</span>':''}<div class="small">${esc(r.descripcion||'')}</div></td>
-      <td class="small">${SRV?`${si} de ${n} permisos`:'—'}</td><td class="small">${u} ${u===1?'usuario':'usuarios'}</td>
-      <td style="text-align:right;white-space:nowrap"><button class="ghost" data-act="rolVer" data-v="${esc(r.id)}" aria-expanded="${S.rolSel===r.id}" style="font-size:13px;padding:6px 12px">${S.rolSel===r.id?'Ocultar':'Ver permisos'}</button>
-        ${admin&&r.id!=='admin'?`<button class="ghost" data-act="rolEditar" data-v="${esc(r.id)}" style="font-size:13px;padding:6px 12px">Editar</button>`:''}
-        ${admin&&!r.sistema?`<button class="ghost" data-act="rolBorrar" data-v="${esc(r.id)}" style="font-size:13px;padding:6px 12px">Eliminar</button>`:''}</td></tr>`;}).join('');
-  return `<div class="card"><div style="display:flex;align-items:center;gap:10px"><h3 style="margin:0;flex:1">Roles</h3>
-      ${admin?'<button class="ok" data-act="rolNuevo">+ Nuevo rol</button>':''}</div>
-    <p class="small" style="margin:6px 0 8px">${admin?'Como Admin puedes crear, editar y eliminar roles. Admin y Dueño de Proceso son roles del sistema: no se eliminan.'
-      :SRV?'🔒 Solo el rol Admin puede crear, editar o eliminar roles. Tú puedes consultarlos.':'Para gestionar roles, abrid la revisión en equipo: <b>python servidor.py</b>.'}</p>
-    <table><thead><tr><th>Rol</th><th>Permisos</th><th>Usuarios</th><th></th></tr></thead><tbody>${filas}</tbody></table>
-    ${sel&&SRV?`<h4 style="margin:16px 0 6px">Permisos de ${esc(sel.nombre)}</h4>${sel.permisos?matrizPermisos(sel,false):'<p class="small">Sin permiso para ver el detalle.</p>'}`:''}</div>`;
+    return `<tr class="clic ${S.rolPanel===r.id?'hl':''}" data-act="rolAbrir" data-v="${esc(r.id)}" tabindex="0" role="button" aria-label="Configurar el rol ${esc(r.nombre)}">
+      <td><b>${esc(r.nombre)}</b>${r.sistema?' <span class="rolpill">Sistema</span>':''}<div class="small">${esc(r.descripcion||'')}</div></td>
+      <td class="small">${SRV?`${si} de ${n} permisos`:''}</td><td class="small">${u} ${u===1?'usuario':'usuarios'}</td>
+      <td style="text-align:right;color:var(--sec)"><svg class="ico-l" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></td></tr>`;}).join('');
+  return `<div class="card"><div style="display:flex;align-items:center;gap:10px"><p class="small" style="margin:0;flex:1">${admin?'Pulsa un rol para configurar sus permisos y sus usuarios. Admin y Dueño de Proceso son roles del sistema: no se eliminan.'
+      :SRV?'Pulsa un rol para ver sus permisos y sus usuarios. Solo el rol Admin puede crear, editar o eliminar roles.':'Para gestionar roles, abrid la revisión en equipo: <b>python servidor.py</b>.'}</p>
+      ${admin?'<button class="ok" data-act="rolNuevo">Nuevo rol</button>':''}</div>
+    <table style="margin-top:10px"><thead><tr><th>Rol</th><th>Permisos</th><th>Usuarios</th><th></th></tr></thead><tbody>${filas}</tbody></table></div>`;
+}
+// Panel lateral de un rol: datos, matriz de permisos y usuarios asociados. Solo Admin edita el rol; los usuarios
+// los mueve quien tenga «Gestionar usuarios» (el servidor comprueba las dos cosas).
+function vPanelRol(){
+  if(S.view!=='usuarios'||!S.rolPanel) return '';
+  const nuevo=S.rolPanel==='__nuevo__', base=nuevo?null:(S.roles||[]).find(r=>r.id===S.rolPanel);
+  if(!nuevo&&!base) return '';
+  const admin=SRV&&esAdmin(), gest=SRV&&puede('configuracion','gestionar_usuarios');
+  const editable=admin&&(nuevo||base.id!=='admin'), f=S.rolForm||base;
+  const miembros=nuevo?[]:S.equipo.filter(m=>m.rol===base.id), otros=nuevo?[]:S.equipo.filter(m=>m.rol!==base.id);
+  const tocable=m=>gest&&((m.rol!=='admin'&&base.id!=='admin')||admin);
+  const otrosRoles=nuevo?[]:(S.roles||[]).filter(r=>r.id!==base.id&&(admin||r.id!=='admin'));
+  const filasU=miembros.map(m=>`<div class="pr-u">${av(m.n,28)}<div style="flex:1;min-width:0"><b>${esc(m.n)}</b><div class="small">${esc(m.c)}</div></div>
+      ${tocable(m)&&m.n!==S.user.nombre?`<select data-moverrol="${esc(m.n)}" aria-label="Cambiar el rol de ${esc(m.n)}"><option value="">Cambiar a…</option>${otrosRoles.map(r=>`<option value="${esc(r.id)}">${esc(r.nombre)}</option>`).join('')}</select>`:''}</div>`).join('');
+  const anadir=!nuevo&&gest&&(base.id!=='admin'||admin)&&otros.some(tocable)?`<label class="small" style="display:flex;flex-direction:column;gap:4px;margin-top:10px">Añadir a este rol
+      <select data-anadirrol="${esc(base.id)}"><option value="">Elige un usuario…</option>${otros.filter(m=>tocable(m)&&m.n!==S.user.nombre).map(m=>`<option value="${esc(m.n)}">${esc(m.n)} (ahora ${esc(nombreRol(m.rol))})</option>`).join('')}</select></label>`:'';
+  return `<div class="scrim" data-act="rolCerrar"></div>
+    <aside class="sidemodal" role="dialog" aria-modal="true" aria-label="${nuevo?'Nuevo rol':'Rol '+esc(base.nombre)}">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <h2 style="margin:0;flex:1">${nuevo?'Nuevo rol':esc(base.nombre)}${!nuevo&&base.sistema?' <span class="rolpill">Sistema</span>':''}</h2>
+        <button class="drawer-x" data-act="rolCerrar" aria-label="Cerrar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5 5 19"/></svg></button></div>
+      ${editable?`<div style="display:flex;flex-direction:column;gap:10px">
+          <label class="small" style="display:flex;flex-direction:column;gap:4px">Nombre<input id="rfN" value="${esc(f.nombre||'')}" maxlength="40" autocomplete="off" ${f.id==='dueno_proceso'?'disabled title="El nombre de este rol lo usa la regla de edición de documentos"':''}></label>
+          <label class="small" style="display:flex;flex-direction:column;gap:4px">Descripción<input id="rfD" value="${esc(f.descripcion||'')}" maxlength="300" autocomplete="off"></label></div>`
+        :`<p class="sub">${esc(base.descripcion||'')}</p>${SRV&&!admin?'<p class="note" style="margin-top:0">Solo el rol Admin puede modificar roles. Tú puedes consultarlo.</p>':''}${!nuevo&&base.id==='admin'&&admin?'<p class="note" style="margin-top:0">El rol Admin no se modifica: tiene siempre todos los permisos de administración.</p>':''}`}
+      <h3 style="margin:20px 0 6px">Permisos</h3>
+      ${f.permisos?matrizPermisos(f,editable):'<p class="small">Sin permiso para ver el detalle.</p>'}
+      ${nuevo?'<p class="small" style="margin-top:16px">Guarda el rol para poder asignarle usuarios.</p>':`<h3 style="margin:22px 0 6px">Usuarios con este rol <span class="small">(${miembros.length})</span></h3>
+      ${filasU||'<p class="small">Nadie tiene este rol todavía.</p>'}${anadir}
+      ${!gest&&SRV?'<p class="note">Tu rol no permite cambiar a qué rol pertenece cada usuario.</p>':''}`}
+      <div class="fbtns" style="margin-top:22px">
+        ${editable&&!nuevo&&!base.sistema?'<button class="ghost" data-act="rolBorrar" data-v="'+esc(base.id)+'" style="margin-right:auto">Eliminar rol</button>':''}
+        <button class="ghost" data-act="rolCerrar">${editable?'Cancelar':'Cerrar'}</button>
+        ${editable?`<button class="ok" data-act="rolGuardar">${nuevo?'Crear rol':'Guardar cambios'}</button>`:''}</div>
+    </aside>`;
 }
 function vUsuarios(){
   const gest=SRV&&puede('configuracion','gestionar_usuarios'), admin=SRV&&esAdmin();
@@ -855,7 +891,7 @@ function vUsuarios(){
         <button class="ok" data-act="usrGuardar" data-v="${esc(m.n)}" style="font-size:13px;padding:6px 12px">Guardar</button></td></tr>`;
     const esc_=Object.entries(S.escalados||{}).filter(([,e])=>e.para===m.n).length;
     return `<tr><td><div style="display:flex;align-items:center;gap:10px">${av(m.n,30)}<div><b>${esc(m.n)}</b>${yo?' <span class="small">(tú)</span>':''}<div class="small">${esc(m.c)}</div></div></div></td>
-      <td><span class="rolpill" style="margin:0">${esc(nombreRol(m.rol))}</span>${esc_?`<div class="small">⇪ ${esc_} doc. escalado${esc_>1?'s':''}</div>`:''}</td>
+      <td><span class="rolpill" style="margin:0">${esc(nombreRol(m.rol))}</span>${esc_?`<div class="small">${esc_} doc. devuelto${esc_>1?'s':''}</div>`:''}</td>
       <td>${on?st('ok','En línea'):st('neutral','Desconectado')}</td>
       <td style="text-align:right;white-space:nowrap">${tocable?`<button class="ghost" data-act="usrEditar" data-v="${esc(m.n)}" style="font-size:13px;padding:6px 12px">Editar</button>`:''}
         ${tocable&&!yo?`<button class="ghost" data-act="bajaEq" data-v="${esc(m.n)}" style="font-size:13px;padding:6px 12px">Eliminar</button>`:''}</td></tr>`;
@@ -869,18 +905,18 @@ function vUsuarios(){
         <label class="small" style="display:flex;flex-direction:column;gap:4px">Rol (obligatorio)<select id="aR" required><option value="">Elige un rol…</option>${opciones((S.usrVals||{}).aR||'')}</select></label>
         <button type="button" class="ghost" data-act="usrNuevo">Cancelar</button><button type="submit">Crear usuario</button></form>
       <p class="note">La persona entra con ese correo. Sus permisos son los de su rol: si cambias el rol, cambian al momento.</p>`}</div>`:'')
-    :`<p class="note">${SRV?'🔒 Tu rol no permite gestionar usuarios: solo puedes consultarlos.':'Para gestionar el equipo, abrid la revisión en equipo: <b>python servidor.py</b>.'}</p>`;
+    :`<p class="note">${SRV?'Tu rol no permite gestionar usuarios: solo puedes consultarlos.':'Para gestionar el equipo, abrid la revisión en equipo: <b>python servidor.py</b>.'}</p>`;
   return `<div class="card" style="margin-top:16px"><div style="display:flex;align-items:center;gap:10px"><h3 style="margin:0;flex:1">Usuarios</h3>
       ${gest&&!S.usrNuevo?'<button class="ok" data-act="usrNuevo">+ Nuevo usuario</button>':''}</div>
     <p class="small" style="margin:6px 0 8px">Personas, rol y estado de conexión. Eliminar a alguien quita también los documentos que tenía escalados.</p>
     ${S.equipo.length?`<table><thead><tr><th>Persona</th><th>Rol</th><th>Estado</th><th></th></tr></thead><tbody>${filas}</tbody></table>`:'<p class="small">Todavía no hay usuarios.</p>'}</div>
     ${alta}`;
 }
-function vEquipo(){return vRoles()+vUsuarios();}
+
 // Edición de mensajes: solo durante EDITAR_MIN minutos desde que se envió (el servidor aplica el mismo límite)
 const EDITAR_MIN=30;
 function minEditables(m){return Math.max(0,Math.ceil(EDITAR_MIN-(Date.now()-new Date(m.fecha))/60000));}
-// Cada 30 s: si algún ✎ ha caducado o cambia su «quedan N min», se redibuja el chat (salvo mientras editas)
+// Cada 30 s: si algún ha caducado o cambia su «quedan N min», se redibuja el chat (salvo mientras editas)
 setInterval(()=>{
   if(S.view!=='chat'||S.editMsg) return;
   const firma=(S.mensajes||[]).filter(m=>m.canal===S.canal&&m.user===S.user.nombre&&m.id).map(minEditables).join(',');
@@ -923,9 +959,17 @@ async function enviarMensaje(){
 }
 // ---------- Adjuntos del chat: imágenes, vídeos, audios, PDF, Word, Excel… (máx. 25 MB; solo los ve quien está en el chat)
 function tam(b){return b<1024?b+' B':b<1048576?(b/1024).toFixed(0)+' KB':(b/1048576).toFixed(1)+' MB';}
+// Iconos de línea (estilo Feather) en lugar de emojis: heredan el color del texto
+const ICONOS={lapiz:'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+  chat:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  clip:'<path d="M21.4 11.1 12.2 20.3a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/>',
+  archivo:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>',
+  grupo:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18.5 14.5A6.5 6.5 0 0 1 21.5 20"/>'};
+function I(n,t=16){return `<svg class="ico-l" width="${t}" height="${t}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONOS[n]}</svg>`;}
 function iconoArchivo(n){
   const e=(n.split('.').pop()||'').toLowerCase();
-  return {pdf:'📕',doc:'📘',docx:'📘',odt:'📘',xls:'📗',xlsx:'📗',csv:'📗',ods:'📗',ppt:'📙',pptx:'📙',zip:'🗜️',rar:'🗜️','7z':'🗜️',txt:'📄',md:'📄',json:'🧾'}[e]||'📎';
+  const ext=(e||'').slice(0,4).toUpperCase();
+  return `<span class="ico-arch">${I('archivo',22)}${ext?`<span>${esc(ext)}</span>`:''}</span>`;
 }
 // El token va en la URL porque <img>, <video> y <audio> no envían cabeceras
 function urlAdj(a,descargar){return `/api/adjunto?id=${encodeURIComponent(a.id)}&s=${encodeURIComponent(S.token||'')}${descargar?'&descargar=1':''}`;}
@@ -1065,10 +1109,10 @@ function pintarBarra(){
 function infoAviso(k){
   if(k.startsWith('chat:')){
     const ch=S.chats.find(c=>c.id===k.slice(5)), titulo=ch?nombreChat(ch):k.slice(5);
-    return {titulo,icono:!ch?'<span class="ico">💬</span>':ch.tipo==='privado'?av(titulo,40):`<span class="ico">${ch.tipo==='grupo'?'👥':'#'}</span>`};
+    return {titulo,icono:!ch?`<span class="ico">${I('chat',20)}</span>`:ch.tipo==='privado'?av(titulo,40):`<span class="ico">${ch.tipo==='grupo'?I('grupo',20):'#'}</span>`};
   }
-  if(k.startsWith('compartir:')) return {titulo:k.slice(10),icono:'<span class="ico">📤</span>'};
-  const [doc,u]=k.split('|'); return {titulo:`${doc} · ${u}`,icono:'<span class="ico">📄</span>'};
+  if(k.startsWith('compartir:')) return {titulo:k.slice(10),icono:`<span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg></span>`};
+  const [doc,u]=k.split('|'); return {titulo:`${doc} · ${u}`,icono:`<span class="ico">${I('archivo',20)}</span>`};
 }
 // Aviso emergente: cuando llega una notificación nueva sale arriba a la derecha y se oculta sola a los 10 s
 // (el ratón encima lo pausa). La notificación sigue en la campanita. Uno por chat; como mucho 3 a la vez.
@@ -1174,10 +1218,10 @@ const EN={'Inicio':'Home','Auditorías':'Audits','Ver documentos en Auditorías'
  'Auditorias y revision':'Audits and review','Verificacion':'Verification','Interfaces':'Interfaces','Politicas y estandares':'Policies and standards','Nucleo':'Core',
  'Equipo':'Team','Nuevo canal':'New channel','Chats':'Chats','Nuevo chat':'New chat','Gestionar equipo':'Manage team',
  'Canales':'Channels','Grupos':'Groups','Privados':'Direct messages','+ Nuevo grupo':'+ New group','Nuevo canal público':'New public channel',
- 'Aún no estás en ningún grupo.':'You are not in any group yet.','Pulsa 💬 junto a alguien del equipo para hablarle en privado.':'Click 💬 next to a teammate to message them privately.',
+ 'Aún no estás en ningún grupo.':'You are not in any group yet.','Pulsa el icono de chat junto a alguien del equipo para hablarle en privado.':'Click the chat icon next to a teammate to message them privately.',
  'Gestionar':'Manage','Salir':'Leave','Nuevo grupo':'New group','Gestionar grupo':'Manage group','Nombre del grupo':'Group name','Personas':'People',
  'Miembro':'Member','Administrador del grupo':'Group admin','Crear grupo':'Create group','Guardar cambios':'Save changes',
- '🔒 Conversación privada: solo la veis vosotros dos.':'🔒 Private conversation: only you two can see it.',
+ 'Conversación privada: solo la veis vosotros dos.':'Private conversation: only you two can see it.',
  'Canal público del equipo. Escribe #número para enlazar un hallazgo y @nombre para avisar a alguien.':'Public team channel. Type #number to link a finding and @name to notify someone.',
  'Todavía no hay mensajes en este chat.':'No messages in this chat yet.','te ha escrito en privado':'sent you a private message',
  'En esta conversación':'In this conversation','Añadir o quitar miembros':'Add or remove members',
@@ -1186,11 +1230,11 @@ const EN={'Inicio':'Home','Auditorías':'Audits','Ver documentos en Auditorías'
  'Exportar ▾':'Export ▾','Exportar ▴':'Export ▴','Respuestas del auditor':'Auditor answers','Revisión del equipo':'Team review',
  'La salida oficial, tal cual sale de la solución (la que se entrega).':'The official output, exactly as the solution produces it (the one submitted).',
  'Con decisiones, comentarios, ediciones y lo que la IA no vio.':'With decisions, comments, edits and what the AI missed.',
- '✎ Editar':'✎ Edit','Editar hallazgo':'Edit finding','Justificación':'Justification','Guardar edición':'Save edit','Guardar':'Save',
+ 'Editar':'Edit','Editar hallazgo':'Edit finding','Justificación':'Justification','Guardar edición':'Save edit','Guardar':'Save',
  'Se guarda como una versión nueva: el original del auditor no se pierde y el CSV oficial no cambia.':'Saved as a new version: the auditor original is kept and the official CSV does not change.',
  'Ver original':'Show original','Ocultar original':'Hide original','Volver al original':'Restore original','Original del auditor':'Auditor original','Historial':'History',
  'Mencionar a…':'Mention…','Abrir':'Open','Descargar':'Download','subiendo…':'uploading…',
- '@ para mencionar · 📎 o arrastra archivos aquí para adjuntarlos (máx. 25 MB)':'@ to mention · 📎 or drag files here to attach them (max 25 MB)',
+ '@ para mencionar · usa el clip o arrastra archivos aquí para adjuntarlos (máx. 25 MB)':'@ to mention · use the clip or drag files here to attach them (max 25 MB)',
  'Notificaciones':'Notifications','Borrar todas':'Clear all','Ver':'Show','No tienes notificaciones.':'No notifications.','leídos':'read',
  'Cualquier prioridad':'Any priority','Prioridad alta':'High priority','Prioridad media':'Medium priority','Prioridad baja':'Low priority',
  'Prioridad Alta':'High priority','Prioridad Media':'Medium priority','Prioridad Baja':'Low priority','Prioridad':'Priority','Alta':'High','Media':'Medium','Baja':'Low',
@@ -1239,14 +1283,14 @@ const EN={'Inicio':'Home','Auditorías':'Audits','Ver documentos en Auditorías'
  'Vaciar chat':'Clear chat','Chat vaciado':'Chat cleared','mensaje nuevo':'new message','Cargando…':'Loading…',
  'Este tipo de archivo no tiene vista previa. Descárgalo para abrirlo.':'This file type has no preview. Download it to open it.',
  'Original':'Original','Comparar':'Compare','rojo':'red','amarillo':'yellow','= quitado del original ·':'= removed from the original ·',
- '= añadido o cambiado en la versión':'= added or changed in the version','✎ Editar':'✎ Edit','Editar a partir de esta':'Edit from this one','✎ Nueva versión':'✎ New version','PDF auditado':'Audited PDF',
+ '= añadido o cambiado en la versión':'= added or changed in the version','Editar':'Edit','Editar a partir de esta':'Edit from this one','Nueva versión':'New version','PDF auditado':'Audited PDF',
  'Abrir en Revisión':'Open in Review','Todavía no hay versiones editadas.':'No edited versions yet.','Editar un documento:':'Edit a document:',
  'Elige un documento…':'Choose a document…','Guardar como versión nueva':'Save as new version','Volver al texto original':'Restore original text',
  'Modificada':'Modified','Página modificada:':'Modified page:','Nota de la versión (qué cambiaste y por qué)':'Version note (what you changed and why)',
  'Esta página no tiene texto extraído (por ejemplo, un escaneado sin transcripción). Puedes escribirlo tú.':'This page has no extracted text (e.g. a scan without transcription). You can type it yourself.',
  'No hay cambios respecto a la versión de partida':'No changes from the starting version','· intacto, nunca se modifica':'· untouched, never modified',
  'Aquí se guarda el original de cada PDF auditado, que nunca se modifica, y debajo las versiones editadas por el equipo: quién, cuándo, por qué y qué páginas cambió.':'The original of each audited PDF is kept here and never modified; below are the versions edited by the team: who, when, why and which pages changed.',
- 'Aún no hay versiones. Abre un documento en Revisión y pulsa «✎ Editar documento», o elige uno arriba.':'No versions yet. Open a document in Review and press «✎ Edit document», or choose one above.',
+ 'Aún no hay versiones. Abre un documento en Revisión y pulsa «Editar», o elige uno arriba.':'No versions yet. Open a document in Review and press «Edit document», or choose one above.',
  'Mostrar menos':'Show less','Enviado':'Sent','Enviando…':'Sending…','Visto por todos':'Seen by everyone',
  '+ Nuevo canal público':'+ New public channel','+ Nuevo privado ▾':'+ New direct message ▾','+ Nuevo privado ▴':'+ New direct message ▴',
  'Para hablar en privado con alguien que no está aquí, ábrelo desde':'To message someone who is not here, open it from',
@@ -1256,7 +1300,7 @@ const EN={'Inicio':'Home','Auditorías':'Audits','Ver documentos en Auditorías'
  'Menú':'Menu','Administrador':'Administrator','Aprobador':'Approver','Revisor':'Reviewer','Dueño de Proceso':'Process Owner',
  'Nuevo rol':'New role','+ Nuevo rol':'+ New role','+ Nuevo usuario':'+ New user','Nuevo usuario':'New user','Ver permisos':'View permissions','Ocultar':'Hide',
  'Editar':'Edit','Crear rol':'Create role','Crear usuario':'Create user','Permisos por módulo':'Permissions by module',
- 'Habilitado':'Enabled','Deshabilitado':'Disabled','✓ Habilitado':'✓ Enabled','— Deshabilitado':'— Disabled','Sistema':'System','⇪ Escalar':'⇪ Escalate',
+ 'Habilitado':'Enabled','Deshabilitado':'Disabled','✓ Habilitado':'✓ Enabled','— Deshabilitado':'— Disabled','Sistema':'System','Escalar':'Escalate',
  'Cambiar escalamiento':'Change escalation','Quitar escalamiento':'Remove escalation','Escalar':'Escalate','Cambiar destinatario':'Change assignee',
  'Configuración · Usuarios':'Settings · Users','Cargando permisos…':'Loading permissions…','Historial del escalamiento':'Escalation history',
  'Gestiona el equipo y los chats; decide sobre los hallazgos.':'Manages the team and chats; decides on findings.',
@@ -1277,13 +1321,13 @@ const EN_RE=[[/^(\d+) de (\d+) revisados$/,'$1 of $2 reviewed'],[/^Página (\d+)
  [/^Vencidos \((\d+)\)$/,'Overdue ($1)'],[/^Cargado por (.+)$/,'Uploaded by $1'],[/^Compartido por ti con (.+)$/,'Shared by you with $1'],
  [/^Te lo compartió (.+)$/,'Shared with you by $1'],[/^Trabajado con (.+)$/,'Worked on with $1'],[/^(\d+) versi(?:ón|ones)$/,'$1 versions'],
  [/^Versiones · (\d+)$/,'Versions · $1'],[/^Compartir con (\d+)$/,'Share with $1'],[/^Compartido con (.+)$/,'Shared with $1'],
- [/^Compartir (.+)$/,'Share $1'],[/^Guardar como (.+)$/,'Save as $1'],[/^✎ Nueva versión a partir de (.+)$/,'✎ New version from $1'],
+ [/^Compartir (.+)$/,'Share $1'],[/^Guardar como (.+)$/,'Save as $1'],[/^Nueva versión a partir de (.+)$/,'New version from $1'],
  [/^Desde (.+) · activa ahora$/,'Since $1 · active now'],[/^Desde (.+) · última señal hace (\d+) min$/,'Since $1 · last seen $2 min ago'],
  [/^Desde (.+) · última señal hace (\d+) h$/,'Since $1 · last seen $2 h ago'],[/^Desde (.+) · última señal (.+)$/,'Since $1 · last seen $2'],
  [/^(\d+) de (\d+) coinciden$/,'$1 of $2 match'],[/^(\d+) páginas? cambiadas?$/,'$1 pages changed'],[/^Texto de la página (\d+)$/,'Text of page $1'],
  [/^Editar ([A-Z0-9][\w.\-]+)$/,'Edit $1'],[/^A partir de: versión (\d+) · (.+)$/,'Starting from: version $1 · the original PDF is not modified: a new version is saved.'],
  [/^A partir de: original del auditor · (.+)$/,'Starting from: auditor original · the original PDF is not modified: a new version is saved.'],
- [/^Guardada la versión (\d+) de (.+)$/,'Saved version $1 of $2'],[/^✎ Editar · v(\d+)$/,'✎ Edit · v$1'],[/^(\d+) páginas$/,'$1 pages'],
+ [/^Guardada la versión (\d+) de (.+)$/,'Saved version $1 of $2'],[/^Editar · v(\d+)$/,'Edit · v$1'],[/^(\d+) páginas$/,'$1 pages'],
  [/^Páginas? (.+)$/,'Pages $1'],
  [/^Visto por (.+) y (\d+) más$/,'Seen by $1 and $2 more'],[/^Visto por (.+)$/,'Seen by $1'],[/^Visto hace (\d+) min$/,'Seen $1 min ago'],
  [/^Visto hace (\d+) h$/,'Seen $1 h ago'],[/^Visto ahora$/,'Seen just now'],[/^Visto (.+)$/,'Seen $1'],[/^En línea: (.+)$/,'Online: $1'],
@@ -1555,8 +1599,8 @@ function vPanelVersiones(){
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px">
         <h2 style="margin:0">Versiones</h2><button class="ghost" data-act="cerrarVersiones">Cerrar</button></div>
       <p class="sub" style="margin-top:0">${esc(d)} · ${esc(info.titulo)}. El original nunca se modifica; cada edición se guarda como una versión nueva.</p>
-      ${ed?`<button class="ok" data-act="editarDoc" data-doc="${esc(d)}" style="width:100%;margin-bottom:10px">✎ Nueva versión${vs.length?` a partir de ${esc(etiquetaVersion(d,vs[0].n))}`:''}</button>`
-        :mot?`<p class="note" title="${esc(mot)}">🔒 ${esc(mot)}</p>`
+      ${ed?`<button class="ok" data-act="editarDoc" data-doc="${esc(d)}" style="width:100%;margin-bottom:10px">${I('lapiz')} Nueva versión${vs.length?` a partir de ${esc(etiquetaVersion(d,vs[0].n))}`:''}</button>`
+        :mot?`<p class="note" title="${esc(mot)}">${esc(mot)}</p>`
         :`<p class="note">${SRV?'Por ahora solo se pueden editar los PDF.':'Las versiones necesitan la revisión en equipo: python servidor.py'}</p>`}
       ${vs.map(fila).join('')}
       <div class="ver-fila ver-orig"><span class="rolpill" style="margin:0;background:#e8f7ed;color:#248a3d">${esc(etiquetaVersion(d,0))}</span>
@@ -1623,10 +1667,10 @@ function vSinHallazgos(){
     <h2 style="margin-top:0">Sin hallazgos</h2>
     <p class="sub">${c?'Documento cargado manualmente: aún no se ha auditado. Sus hallazgos llegarán al auditarlo con <b>python auditar.py</b>.':'El auditor no encontró defectos en este documento.'}</p>
     ${c?`<div class="small">Cargado por <b>${esc(c.user)}</b> · ${fmtFecha(c.fecha)} · familia ${esc(c.familia||'—')}</div>`:''}
-    <div class="sh-rev">${rev?`<div>✔ Revisado por <b>${esc(rev.user)}</b> · ${fmtFecha(rev.fecha)}</div>${SRV&&puede('revisiones','marcar_revisado')?'<button class="enlace" data-act="docRevisado" data-v="0">Deshacer</button>':''}`
+    <div class="sh-rev">${rev?`<div>Revisado por <b>${esc(rev.user)}</b> · ${fmtFecha(rev.fecha)}</div>${SRV&&puede('revisiones','marcar_revisado')?'<button class="enlace" data-act="docRevisado" data-v="0">Deshacer</button>':''}`
       :!SRV?'<p class="note">Para marcarlo como revisado, abrid la revisión en equipo: <b>python servidor.py</b>.</p>'
       :puede('revisiones','marcar_revisado')?'<button class="ok" data-act="docRevisado" data-v="1" style="width:100%">Marcar como revisado</button>'
-      :`<p class="note">🔒 ${esc(sinPermiso('revisiones','marcar_revisado'))}</p>`}</div>
+      :`<p class="note">${esc(sinPermiso('revisiones','marcar_revisado'))}</p>`}</div>
     <div class="motivo-scroll">${vPresencia(docPseudo())}${vDebate(docPseudo())}</div>
   </div>`;
 }
@@ -1796,6 +1840,7 @@ function objetivosActuales(){
 function aplicar(dec){
   const acc=dec==='approved'?'aprobar':'rechazar';
   if(!puede('revisiones',acc)){aviso(sinPermiso('revisiones',acc)); return;}      // el servidor también lo rechaza
+  const bloq=bloqueoDecision(S.doc); if(bloq){aviso(bloq); return;}
   const comentario=(S.comment||'').trim();
   const fecha=new Date().toISOString();
   const objs=objetivosActuales();
@@ -1908,7 +1953,7 @@ async function exportar(cual,fmt){
 }
 function menuExportar(){
   const pR=puede('historico','descargar_respuestas'), pV=puede('historico','descargar_revision');
-  if(!pR&&!pV) return `<p class="note" style="margin-top:16px">🔒 Tu rol (${esc(nombreRol(miRol()))}) no permite descargar el histórico.</p>`;
+  if(!pR&&!pV) return `<p class="note" style="margin-top:16px">Tu rol (${esc(nombreRol(miRol()))}) no permite descargar el histórico.</p>`;
   const fmts=[['csv','CSV'],['xlsx','Excel'],['json','JSON'],['doc','Word'],['pdf','PDF']];
   const grupo=(cual,t,nota)=>`<div class="exp-g"><b>${t}</b><div class="small">${nota}</div>
     <div class="exp-b">${fmts.map(([f,n])=>`<button class="ghost" data-act="exportar" data-c="${cual}" data-f="${f}">${n}</button>`).join('')}</div></div>`;
@@ -1975,7 +2020,7 @@ function vMotivo(r){
       <p class="note">Se guarda como una versión nueva: el original del auditor no se pierde y el CSV oficial no cambia.</p></div>`;
   }
   const tipo=e?e.tipo:r.tipo, clausula=e?e.clausula:r.clausula, just=e?e.justificacion:r.justificacion;
-  const marca=e?`<div class="editado">✎ Editado por <b>${esc(e.user)}</b> · ${hace(e.fecha)}${hist.length>1?` · ${hist.length} ediciones`:''}
+  const marca=e?`<div class="editado">Editado por <b>${esc(e.user)}</b> · ${hace(e.fecha)}${hist.length>1?` · ${hist.length} ediciones`:''}
       · <button class="enlace" data-act="verOriginal" data-k="${esc(k)}">${S.verOrig===k?'Ocultar original':'Ver original'}</button></div>`:'';
   const original=e&&S.verOrig===k?`<div class="orig"><b>Original del auditor</b>
       <div>${esc(r.tipo)} · ${esc(r.clausula)}</div><div>${esc(r.justificacion)}</div>
@@ -1983,7 +2028,7 @@ function vMotivo(r){
       ${puede('revisiones','editar_hallazgos')?`<button class="enlace" data-act="deshacerEdicion" data-k="${esc(k)}">Volver al original</button>`:''}</div>`:'';
   return `<div class="card" style="padding:14px 16px;background:#fafafc;box-shadow:none;border:1px solid var(--sep)">
     <div style="display:flex;gap:8px;align-items:flex-start"><div class="small" style="flex:1"><b title="Número para enlazarlo en el chat">#${NUM.get(k)}</b> · ${esc(r.ubicacion)} · página ${r.pagina} · ${esc(r.origen)} · confianza ${Math.round(r.conf*100)}%</div>
-      ${puede('revisiones','editar_hallazgos')?`<button class="ghost" data-act="editarHallazgo" data-k="${esc(k)}" style="font-size:12px;padding:4px 10px">✎ Editar</button>`:''}</div>
+      ${puede('revisiones','editar_hallazgos')?`<button class="ghost" data-act="editarHallazgo" data-k="${esc(k)}" style="font-size:12px;padding:4px 10px">Editar</button>`:''}</div>
     ${marca}
     <div style="margin-top:6px">${st(sev(tipo),esc(tipo))}</div>
     <div class="small" style="margin-top:4px">Cláusula ${esc(clausula)}</div>
@@ -2009,7 +2054,8 @@ function vDecision(){
       <p class="note">Las respuestas del auditor salen tal cual de la solución. La revisión del equipo recoge vuestras decisiones y ediciones; no altera el CSV oficial.</p>
     </div>`;
   }
-  const puedes=objetivosActuales().length>0, pAp=puede('revisiones','aprobar'), pRe=puede('revisiones','rechazar');
+  const bloq=bloqueoDecision(S.doc);
+  const puedes=objetivosActuales().length>0&&!bloq, pAp=puede('revisiones','aprobar'), pRe=puede('revisiones','rechazar');
   const todos=pend.every(x=>S.sel[key(x)]);
   const filas=rs.map((x,i)=>{
     const k=key(x), d=decOf(x);
@@ -2033,25 +2079,29 @@ function vDecision(){
       <button class="ok" data-act="aprobar" ${puedes&&pAp?'':'disabled'} ${pAp?'':`title="${esc(sinPermiso('revisiones','aprobar'))}"`}>Aprobar</button>
       <button class="warn" data-act="rechazar" ${puedes&&pRe?'':'disabled'} ${pRe?'':`title="${esc(sinPermiso('revisiones','rechazar'))}"`}>Rechazar</button>
     </div>
-    ${pAp&&pRe?'':`<p class="note" style="flex:none;margin:6px 0 0">🔒 ${!pAp&&!pRe?`Tu rol (${esc(nombreRol(miRol()))}) puede consultar, pero no aprobar ni rechazar validaciones de IA.`:esc(sinPermiso('revisiones',pAp?'rechazar':'aprobar'))}</p>`}
+    ${bloq?`<p class="note" style="flex:none;margin:6px 0 0">${esc(bloq)}</p>`:''}
+    ${pAp&&pRe?'':`<p class="note" style="flex:none;margin:6px 0 0">${!pAp&&!pRe?`Tu rol (${esc(nombreRol(miRol()))}) puede consultar, pero no aprobar ni rechazar validaciones de IA.`:esc(sinPermiso('revisiones',pAp?'rechazar':'aprobar'))}</p>`}
   </div>`;
 }
 
 function vRevision(){
   const info=DOCS[S.doc], d=S.doc, nv=versionesDe(d).length, prio=prioridadDe(d), pm=metaDoc(d).prioridad;
   const icono=p=>`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
-  return `${vPestanas()}<div class="pnav rev-barra">
-      <button class="ghost" data-act="volver">← Listado</button>
-      <h2 style="margin:0">${esc(d)}</h2><span class="small rev-sub" title="${esc(info.titulo)}">${info.version?'v'+esc(info.version)+' · ':''}${esc(info.titulo)}</span>
+  return `${vPestanas()}<div class="pnav pnav-rev rev-barra" style="margin-bottom:14px">
+      <button class="ghost iconbtn" data-act="volver" aria-label="Volver al listado" title="Volver al listado">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
+      <div class="pnav-tit"><h2 style="margin:0">${esc(d)}</h2><span class="small" title="${esc(info.titulo)}">${info.version?'v'+esc(info.version)+' · ':''}${esc(info.titulo)}</span></div>
       <label class="rev-prio" title="${!puede('revisiones','prioridad')?esc(sinPermiso('revisiones','prioridad')):pm?`Cambiada por ${esc(pm.user)} · ${fmtFecha(pm.fecha)}`:'Sugerida según los hallazgos'}"><span class="small">Prioridad</span>
         <select id="docPrio" aria-label="Prioridad del documento" ${SRV&&puede('revisiones','prioridad')?'':'disabled'}>${['Alta','Media','Baja'].map(p=>`<option ${p===prio?'selected':''}>${p}</option>`).join('')}</select></label>
-      <button class="ghost iconbtn" data-act="toggleExtra" aria-label="Comentario sin hallazgo de la IA" ${puede('revisiones','comentar')?'title="Comentario sin hallazgo de la IA"':`disabled title="${esc(sinPermiso('revisiones','comentar'))}"`}>${icono('<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>')}</button>
-      ${SRV&&puede('revisiones','escalar')?`<button class="ghost" data-act="escAbrir" aria-expanded="${!!S.escOpen}">${(S.escalados||{})[S.doc]?'Cambiar escalamiento':'⇪ Escalar'}</button>`:''}
+      <button class="ghost iconbtn" data-act="toggleExtra" aria-label="Comentario sin hallazgo de la IA" ${puede('revisiones','comentar')?'title="Comentario sin hallazgo de la IA"':`disabled title="${esc(sinPermiso('revisiones','comentar'))}"`}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </button>
+      ${SRV&&puede('revisiones','escalar')?`<button class="ghost" data-act="escAbrir" aria-expanded="${!!S.escOpen}">${(S.escalados||{})[S.doc]?'Cambiar escalamiento':'Escalar'}</button>`:''}
       ${SRV&&puede('revisiones','compartir')?`<button class="ghost" data-act="compartir" data-doc="${esc(d)}" title="Compartir con personas del equipo">${icono('<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>')} Compartir</button>`:''}
       <button class="ghost" data-act="abrirVersiones" aria-expanded="${!!S.verOpen}" title="El original y las versiones editadas de este documento">${icono('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>')} Versiones${nv?` · ${nv}`:''}</button>
       ${SRV&&editable(d)?(()=>{const mot=motivoEditar(d);
-        return `<button class="ghost" data-act="editarDoc" data-doc="${esc(d)}" ${mot?`disabled aria-disabled="true" title="${esc(mot)}"`:'title="Crea una versión editada; el original no se modifica"'}>${mot?'🔒 ':''}✎ Editar</button>`;})():''}
-      <button class="ghost" data-act="criterios">Criterios</button>
+        return `<button class="ghost" data-act="editarDoc" data-doc="${esc(d)}" ${mot?`disabled aria-disabled="true" title="${esc(mot)}"`:'title="Crea una versión editada; el original no se modifica"'}>${icono('<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>')} Editar</button>`;})():''}
+      <button class="ghost pnav-fijo" data-act="criterios">Criterios</button>
     </div>
     ${vEscalado(S.doc)}
     <div class="two">
@@ -2063,34 +2113,43 @@ function vRevision(){
 // ---------- Escalamiento: un documento se asigna a UNA persona con rol Dueño de Proceso, que es la única que puede
 // editarlo (y solo mientras su revisión no esté Completada). El servidor comprueba todo al escalar y al guardar.
 function duenos(){return S.equipo.filter(m=>m.rol==='dueno_proceso');}
+function bloqueoDecision(doc){                       // mismo criterio que el servidor (P.bloqueo_decision)
+  const e=(S.escalados||{})[doc];
+  return e&&!e.corregido?`El documento está devuelto a ${e.para} para que lo corrija: aprobar y rechazar se activan cuando guarde los cambios.`:null;
+}
 function vEscalado(doc){
   if(!SRV) return '';
   const e=(S.escalados||{})[doc], yo=S.user.nombre, mot=motivoEditar(doc), puedeEsc=puede('revisiones','escalar');
-  const hist=(S.escHist||[]).filter(h=>h.doc===doc).slice(-4).reverse();
-  const ACC={escalar:'escaló a',cambiar:'cambió el destinatario a',quitar:'quitó el escalamiento de'};
+  const hist=(S.escHist||[]).filter(h=>h.doc===doc).slice(-5).reverse();
+  const ACC={escalar:'devolvió el documento a',cambiar:'cambió el destinatario a',quitar:'quitó el escalamiento de',corregir:'guardó los cambios:'};
   let estado='';
   if(e){
     const dest=S.equipo.find(m=>m.n===e.para), sigueDueno=dest&&dest.rol==='dueno_proceso';
+    const corr=e.corregido?`<div class="esc-ok">${esc(e.para)} guardó los cambios (v${e.corregido.version}) el ${fmtFecha(e.corregido.fecha)}. Ya se puede aprobar o rechazar.</div>`
+      :`<div class="esc-esp">Esperando a que ${esc(e.para)} corrija el documento. Aprobar y Rechazar se activan cuando guarde los cambios.</div>`;
     estado=`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <span>⇪ Escalado a <b>${esc(e.para)}</b> <span class="small">por ${esc(e.por)} · ${fmtFecha(e.fecha)}${e.nota?' · «'+esc(e.nota)+'»':''}</span></span>
+        <span><b>Devuelto a ${esc(e.para)}</b> <span class="small">por ${esc(e.por)} · ${fmtFecha(e.fecha)}</span></span>
         ${puedeEsc||e.para===yo?`<button class="enlace" data-act="escQuitar" style="margin-left:auto">${e.para===yo&&!puedeEsc?'He terminado: quitar escalamiento':'Quitar escalamiento'}</button>`:''}</div>
-      ${!sigueDueno?`<div class="small" style="color:#c76a00;margin-top:4px">⚠ ${esc(e.para)} ya no tiene el rol Dueño de Proceso: no puede editarlo hasta que se escale a otra persona.</div>`:''}
-      <div class="small" style="margin-top:4px">${e.para===yo?(mot?'🔒 '+esc(mot):'✅ Puedes editar este documento: pulsa «✎ Editar».'):`🔒 Solo ${esc(e.para)} puede editar este documento.`}</div>`;
+      ${e.nota?`<div class="small" style="margin-top:4px"><b>Qué tiene que corregir:</b> ${esc(e.nota)}</div>`:''}
+      ${corr}
+      ${!sigueDueno?`<div class="small" style="color:#c76a00;margin-top:4px">${esc(e.para)} ya no tiene el rol Dueño de Proceso: no puede editarlo hasta que se devuelva a otra persona.</div>`:''}
+      <div class="small" style="margin-top:4px">${e.para===yo?(mot?esc(mot):'Puedes editar este documento con el botón «Editar».'):`Solo ${esc(e.para)} puede editar este documento.`}</div>`;
   }
   let form='';
   if(S.escOpen&&puedeEsc){
     const ds=duenos(), v=S.escVals||{};
-    form=ds.length?`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:10px">
-        <label class="small" style="display:flex;flex-direction:column;gap:4px">Escalar a (Dueño de Proceso)
-          <select id="escPara">${ds.map(m=>`<option value="${esc(m.n)}" ${(v.para||(e&&e.para))===m.n?'selected':''} ${e&&e.para===m.n?'disabled':''}>${esc(m.n)}${e&&e.para===m.n?' (actual)':''}</option>`).join('')}</select></label>
-        <label class="small" style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:200px">Qué hay que corregir (opcional)
-          <input id="escNota" value="${esc(v.nota||'')}" maxlength="300" autocomplete="off"></label>
-        <button class="ghost" data-act="escAbrir">Cancelar</button><button class="ok" data-act="escGuardar">${e?'Cambiar destinatario':'Escalar'}</button></div>`
-      :`<p class="small" style="margin:10px 0 0">No hay nadie con el rol Dueño de Proceso. Un usuario que gestione usuarios puede asignarlo en Configuración → Usuarios.</p>`;
+    form=`<div class="esc-form">
+        <label class="small" style="display:flex;flex-direction:column;gap:4px">Devolver a (Dueño de Proceso)
+          <select id="escPara" ${ds.length?'':'disabled'}><option value="">${ds.length?'Elige a una persona…':'No hay nadie con ese rol'}</option>${ds.map(m=>`<option value="${esc(m.n)}" ${(v.para||'')===m.n?'selected':''} ${e&&e.para===m.n?'disabled':''}>${esc(m.n)} · ${esc(m.c)}${e&&e.para===m.n?' (actual)':''}</option>`).join('')}</select></label>
+        <label class="small" style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:240px">Qué tiene que corregir
+          <input id="escNota" value="${esc(v.nota||'')}" maxlength="300" autocomplete="off" placeholder="Por ejemplo: el plazo de SEC-REQ-009 no cumple IS.I.OR.210"></label>
+        <button class="ghost" data-act="escAbrir">Cancelar</button><button class="ok" data-act="escGuardar" ${ds.length?'':'disabled'}>${e?'Cambiar destinatario':'Devolver'}</button>
+        ${ds.length?'':`<p class="small" style="flex-basis:100%;margin:2px 0 0">Para devolver un documento, alguien del equipo tiene que tener el rol Dueño de Proceso.${puede('configuracion','gestionar_usuarios')?' <button class="enlace" data-act="nav" data-v="usuarios">Asignarlo en Configuración → Usuarios</button>':' Pídeselo a un administrador.'}</p>`}
+        <p class="small" style="flex-basis:100%;margin:2px 0 0">Mientras tanto, Aprobar y Rechazar quedan desactivados hasta que esa persona guarde sus cambios.</p></div>`;
   }
   if(!e&&!form) return '';
-  return `<div class="card" style="margin-bottom:14px;padding:12px 16px;border-left:4px solid var(--tint)">${estado||'<div class="small">Este documento no está escalado.</div>'}${form}
-    ${hist.length?`<details style="margin-top:6px"><summary class="small">Historial del escalamiento</summary>${hist.map(h=>`<div class="small">· ${esc(h.por)} ${ACC[h.accion]||h.accion} ${esc(h.para)} · ${fmtFecha(h.fecha)}${h.nota?' · '+esc(h.nota):''}</div>`).join('')}</details>`:''}</div>`;
+  return `<div class="card esc-card">${estado||'<div class="small"><b>Escalar el documento</b> · devuélvelo a su Dueño de Proceso para que lo corrija.</div>'}${form}
+    ${hist.length?`<details style="margin-top:6px"><summary class="small">Historial</summary>${hist.map(h=>`<div class="small">· ${esc(h.por)} ${ACC[h.accion]||h.accion} ${h.accion==='corregir'?esc(h.nota||''):esc(h.para)} · ${fmtFecha(h.fecha)}${h.nota&&h.accion!=='corregir'?' · '+esc(h.nota):''}</div>`).join('')}</details>`:''}</div>`;
 }
 
 // Contenido del modal lateral de criterios: jerarquía, y por cada hallazgo qué se leyó, contra qué se contrastó y por qué.
@@ -2278,7 +2337,7 @@ function vInicio(){
       <div><div class="cod">${esc(d.nombre)}</div><div class="small">${esc(d.tipo)}${d.version?' · v'+esc(d.version):''}</div></div>
       <div><div class="tit">${esc(d.titulo)}</div>${etiquetas||vacio}${d.quien.length?`<div class="small" style="margin-top:2px">Revisado por ${esc(d.quien.join(', '))}</div>`:''}${carga}
         ${extra?`<div class="eqfila">${extra}</div>`:''}</div>
-      <div class="estado">${pill('● '+esc(d.est),ec)}${(S.escalados||{})[d.nombre]?`<div class="small" style="margin-top:4px;color:var(--tint);font-weight:600">⇪ Escalado a ${esc(S.escalados[d.nombre].para)}${S.escalados[d.nombre].para===S.user.nombre?' (tú)':''}</div>`:''}${avance}${fh?`<div class="small" style="margin-top:4px;color:var(--tint);font-weight:600">${d.coinc} de ${d.hall} coinciden</div>`:''}</div>
+      <div class="estado">${pill('● '+esc(d.est),ec)}${(S.escalados||{})[d.nombre]?`<div class="small" style="margin-top:4px;color:var(--tint);font-weight:600">Devuelto a ${esc(S.escalados[d.nombre].para)}${S.escalados[d.nombre].para===S.user.nombre?' (tú)':''}</div>`:''}${avance}${fh?`<div class="small" style="margin-top:4px;color:var(--tint);font-weight:600">${d.coinc} de ${d.hall} coinciden</div>`:''}</div>
       <div class="prio">${pill(d.prio,PCOL[d.prio])}</div>
       <div class="dias">${celdaDias(d.dias)}</div>
     </div>`;
@@ -2510,7 +2569,7 @@ function bajarAsis(){const m=document.getElementById('msgs'); if(m) m.scrollTop=
 
 async function preguntarIA(q,a){
   const historial=S.msgs.filter(m=>m.r==='u'||m.ia).slice(-7,-1).map(m=>({r:m.r,t:plano(m.t).slice(0,600)}));
-  const m={r:'a',ia:true,t:'<span class="small">🤖 Leyendo los documentos…</span>'};
+  const m={r:'a',ia:true,t:'<span class="small">Leyendo los documentos…</span>'};
   S.msgs.push(m); render(); bajarAsis();
   try{
     const r=await fetch('/api/asistente',{method:'POST',headers:{'Content-Type':'application/json','X-Sesion':S.token||''},
@@ -2518,7 +2577,7 @@ async function preguntarIA(q,a){
     const d=await r.json();
     if(!r.ok||d.error) throw new Error(d.error||r.status);
     const fu=(d.fuentes||[]).map(f=>`<mark>${esc(f.split('/').pop())}</mark>`).join(' ');
-    m.t=`<b>🤖 Asistente IA</b><br>${textoIA(d.respuesta)}${fu?`<div class="small" style="margin-top:6px">Fuentes: ${fu}</div>`:''}`;
+    m.t=`<b>Asistente IA</b><br>${textoIA(d.respuesta)}${fu?`<div class="small" style="margin-top:6px">Fuentes: ${fu}</div>`:''}`;
   }catch(e){
     m.t=`<span class="small">El asistente con IA no responde (${esc(String(e.message||e))}). Arriba tienes lo que encontré en la app.</span>`;
   }
@@ -2641,7 +2700,7 @@ function plazoCard(){
       ${ok?`<button class="ok" data-act="guardarPlazo" ${cambio?'':'disabled'}>Guardar</button>`:''}
     </div>
     <div class="sumrow"><span>Fecha límite</span><b>${vence}</b></div>
-    ${ok?'':`<p class="note">🔒 ${esc(sinPermiso('configuracion','editar_plazo'))}</p>`}</div>`;
+    ${ok?'':`<p class="note">${esc(sinPermiso('configuracion','editar_plazo'))}</p>`}</div>`;
 }
 function criterioCard(){
   const dec=RES.filter(x=>decOf(x));
@@ -2690,17 +2749,18 @@ function vCfg(){
       <tr><td>V5</td><td>La confianza declarada supera el umbral</td></tr>
       </tbody></table>
       <p class="note">Las reglas se cargan desde la solución. Cambiarlas requiere aprobación de Calidad; esta pantalla no las modifica.</p></div>`;
-  } else {
-    body=vEquipo();
+    return `<h2 style="margin-bottom:14px">Reglas</h2>${body}`;
   }
-  return `<div class="tabs" role="tablist">
-    <button role="tab" class="${tab==='reglas'?'on':''}" data-act="nav" data-v="reglas">Reglas</button>
-    <button role="tab" class="${tab==='usuarios'?'on':''}" data-act="nav" data-v="usuarios">Usuarios</button>
-  </div>${body}`;
+  // Usuarios: dos pestañas, Roles y Usuarios
+  const t=S.usrTab||'roles';
+  return `<h2 style="margin-bottom:14px">Usuarios</h2><div class="tabs" role="tablist" aria-label="Roles y usuarios">
+    <button role="tab" aria-selected="${t==='roles'}" class="${t==='roles'?'on':''}" data-act="usrTab" data-v="roles">Roles</button>
+    <button role="tab" aria-selected="${t==='usuarios'}" class="${t==='usuarios'?'on':''}" data-act="usrTab" data-v="usuarios">Usuarios</button>
+  </div>${t==='roles'?vRoles():vUsuarios()}`;
 }
 
 const VIEWS={inicio:vInicio,revision:vRevision,ia:vIA,historico:vHist,chat:vChat,reglas:vCfg,usuarios:vCfg,cuenta:vCuenta};
-const TITLES={inicio:'Nimbus Audit Studio',revision:'Revisión',ia:'Panel de control IA',historico:'Histórico',chat:'Chat',reglas:'Configuración · Reglas',usuarios:'Configuración · Usuarios',cuenta:'Mi cuenta'};
+const TITLES={inicio:'Nimbus Audit Studio',revision:'Revisión',ia:'Panel de control IA',historico:'Histórico',chat:'Chat',reglas:'Reglas',usuarios:'Usuarios',cuenta:'Mi cuenta'};
 
 // Cada sección pide el permiso de consultar su módulo (sin permiso, el servidor tampoco envía sus datos)
 const VISTA_PERM={inicio:['revisiones','consultar'],revision:['revisiones','consultar'],historico:['revisiones','consultar'],
@@ -2708,7 +2768,7 @@ const VISTA_PERM={inicio:['revisiones','consultar'],revision:['revisiones','cons
 function vista(v){
   const p=VISTA_PERM[v];
   if(SRV&&!S.cargado&&p) return `<div class="card small" aria-busy="true">Cargando permisos…</div>`;
-  if(p&&!puede(p[0],p[1])) return `<h2>${esc(TITLES[v])}</h2><div class="card"><p class="sub" style="margin:0">🔒 ${esc(sinPermiso(p[0],p[1]))} Pide a un administrador que revise tu rol.</p></div>`;
+  if(p&&!puede(p[0],p[1])) return `<h2>${esc(TITLES[v])}</h2><div class="card"><p class="sub" style="margin:0">${esc(sinPermiso(p[0],p[1]))} Pide a un administrador que revise tu rol.</p></div>`;
   return VIEWS[v]();
 }
 function render(){
@@ -2717,7 +2777,8 @@ function render(){
   const scr=['.lista-scroll','.motivo-scroll','.hscroll','#msgs','.sidemodal'].map(s=>{const el=document.querySelector(s);return [s,el?el.scrollTop:0];});
   document.getElementById('uN').textContent=S.user.nombre;
   document.getElementById('uC').textContent=S.user.cargo;
-  document.getElementById('ttl').textContent=TITLES[S.view];
+  // La barra superior siempre muestra el nombre de la app; el de la sección va como título dentro de la página
+  document.title=`${TITLES[S.view]} · Nimbus Audit Studio | Airbus`;
   document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.v===S.view));
   const criterios=S.criteriosOpen?`<div class="scrim" data-act="cerrarCriterios"></div>
     <aside class="sidemodal" role="dialog" aria-label="Criterios de validación">
@@ -2741,7 +2802,7 @@ function render(){
       </div>
     </div>`:'';
   const versionesP=S.verOpen&&S.view==='revision'&&DOCS[S.doc]?vPanelVersiones():'';
-  document.getElementById('view').innerHTML=vista(S.view)+criterios+versionesP+comentario+(S.view==='chat'?vDlgGrupo():'')+vAsistente();
+  document.getElementById('view').innerHTML=vista(S.view)+criterios+versionesP+comentario+(S.view==='chat'?vDlgGrupo():'')+vPanelRol()+vAsistente();
   scr.forEach(([s,y])=>{const el=document.querySelector(s); if(el&&y) el.scrollTop=y;});
   const cl=document.getElementById('chatlist');                   // chat: baja al último mensaje si hay nuevos
   if(cl){
@@ -2897,16 +2958,16 @@ document.addEventListener('click',e=>{
     api('/api/chat/crear',{tipo:'privado',con:el.dataset.v}).then(r=>{if(r.ok){S.canal=r.id; S.chatAbajo=true; S.abierto.privados=true; sondear();}});
     return;
   }
-  if(a==='rolNuevo'){S.rolForm={id:null,nombre:'',descripcion:'',permisos:permVacios()}; render(); return;}
-  if(a==='rolEditar'){const r=S.roles.find(x=>x.id===el.dataset.v); if(r){S.rolForm=JSON.parse(JSON.stringify(r)); render();} return;}
-  if(a==='rolVer'){S.rolSel=S.rolSel===el.dataset.v?null:el.dataset.v; render(); return;}
-  if(a==='rolCancelar'){S.rolForm=null; render(); return;}
+  if(a==='usrTab'){S.usrTab=el.dataset.v; render(); return;}
+  if(a==='rolNuevo'){S.rolPanel='__nuevo__'; S.rolForm={id:null,nombre:'',descripcion:'',permisos:permVacios()}; render(); return;}
+  if(a==='rolAbrir'){const r=S.roles.find(x=>x.id===el.dataset.v); if(r){S.rolPanel=r.id; S.rolForm=esAdmin()&&r.permisos?JSON.parse(JSON.stringify(r)):null; render();} return;}
+  if(a==='rolCerrar'){S.rolPanel=null; S.rolForm=null; render(); return;}
   if(a==='rolGuardar'){
     const f=S.rolForm; if(!f) return;
     if(!(f.nombre||'').trim()){aviso('El rol necesita un nombre'); return;}
     const datos={nombre:f.nombre,descripcion:f.descripcion,permisos:f.permisos};
     api(f.id?'/api/rol/editar':'/api/rol/crear',f.id?{id:f.id,...datos}:datos).then(r=>{
-      if(r.ok){aviso(f.id?'Rol actualizado':`Rol «${f.nombre}» creado`); S.rolForm=null; S.rolSel=f.id||r.id; sondear().then(render);}});
+      if(r.ok){aviso(f.id?'Rol actualizado':`Rol «${f.nombre}» creado`); S.rolPanel=f.id||r.id; S.rolForm=null; sondear().then(()=>{const x=S.roles.find(y=>y.id===S.rolPanel); S.rolForm=x&&x.permisos?JSON.parse(JSON.stringify(x)):null; render();});}});
     return;
   }
   if(a==='rolBorrar'){
@@ -2914,7 +2975,7 @@ document.addEventListener('click',e=>{
     const u=S.equipo.filter(m=>m.rol===r.id);
     if(u.length){aviso(`No se puede eliminar «${r.nombre}»: lo tienen ${u.map(m=>m.n).join(', ')}. Cámbiales antes el rol.`); return;}
     if(!confirm(`¿Eliminar el rol «${r.nombre}»? No se puede deshacer.`)) return;
-    api('/api/rol/borrar',{id:r.id}).then(x=>{if(x.ok){aviso('Rol eliminado'); if(S.rolSel===r.id) S.rolSel=null; sondear().then(render);}});
+    api('/api/rol/borrar',{id:r.id}).then(x=>{if(x.ok){aviso('Rol eliminado'); S.rolPanel=null; S.rolForm=null; sondear().then(render);}});
     return;
   }
   if(a==='usrNuevo'){S.usrNuevo=!S.usrNuevo; S.usrVals={}; render(); return;}
@@ -3081,6 +3142,11 @@ document.addEventListener('change',e=>{
   if(e.target.id==='itipo'){S.itipo=e.target.value; render();}
   if(e.target.id==='htipo'){S.htipo=e.target.value; render();}
   if(e.target.id==='plazoDias'||e.target.id==='plazoIni'){S.plazoVals={...S.plazoVals,[e.target.id==='plazoDias'?'plazo_dias':'inicio']:e.target.value}; render();}
+  if(e.target.dataset&&(e.target.dataset.moverrol!==undefined||e.target.dataset.anadirrol!==undefined)&&e.target.value){
+    const mover=e.target.dataset.moverrol!==undefined, n=mover?e.target.dataset.moverrol:e.target.value, rol=mover?e.target.value:e.target.dataset.anadirrol;
+    if(!confirm(`¿Cambiar a ${n} al rol ${nombreRol(rol)}? Sus permisos cambian al momento.`)){e.target.value=''; return;}
+    api('/api/equipo/editar',{n,rol}).then(r=>{if(r.ok) aviso(`${n} ahora tiene el rol ${nombreRol(rol)}`); sondear().then(render);});
+  }
   if(e.target.id==='porPag'){S.porPag=Number(e.target.value)||10; render();}
   if(e.target.id==='cmpPag'){compararVersion(e.target.dataset.doc,Number(e.target.dataset.n),Number(e.target.value));}
   if(e.target.id==='hclau'){S.hclau=e.target.value; render();}
@@ -3121,6 +3187,7 @@ document.addEventListener('keydown',e=>{
   if(S.cmp&&e.key==='Escape'){e.preventDefault(); S.cmp=null; pintarCmp(); return;}
   if(S.comp&&e.key==='Escape'){e.preventDefault(); S.comp=null; pintarComp(); return;}
   if(S.carga&&S.carga.paso==='confirmar'&&e.key==='Escape'){e.preventDefault(); document.querySelector('[data-act="cgCancelar"]')?.click(); return;}
+  if(e.key==='Escape'&&S.rolPanel){S.rolPanel=null; S.rolForm=null; render(); return;}
   if(e.key==='Escape'&&S.asigOpen){S.asigOpen=false; render(); document.querySelector('.fasig-btn')?.focus(); return;}
   if(e.key==='Escape'&&!document.getElementById('menuUsr').classList.contains('hidden')){menuUsr(false); document.querySelector('.who').focus(); return;}
   if(e.key==='Escape'&&document.getElementById('drawer').classList.contains('open')){toggleDrawer(false); document.querySelector('.burger').focus(); return;}
