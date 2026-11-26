@@ -38,6 +38,22 @@ def escribir(hallazgos, ruta: Path):
         for h in sorted(hallazgos, key=lambda x: (x.documento, x.ubicacion)):
             w.writerow(h.fila())
     tmp.replace(ruta)
+    escribir_entrega(ruta)
+
+
+def escribir_entrega(ruta: Path) -> Path:
+    """Versión para subir a la plataforma: solo las 5 columnas oficiales y sin saltos de línea dentro de las celdas
+    (algunos portales leen el CSV línea a línea y rechazan las celdas multilínea). Mismo contenido: sale de la solución."""
+    destino = ruta.with_name(ruta.stem + "_entrega.csv")
+    filas = list(csv.DictReader(open(ruta, encoding="utf-8")))
+    tmp = destino.with_suffix(".tmp")
+    with open(tmp, "w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=COLUMNAS, lineterminator="\n")
+        w.writeheader()
+        for r in filas:
+            w.writerow({c: " ".join(str(r.get(c, "")).split()) for c in COLUMNAS})
+    tmp.replace(destino)
+    return destino
 
 
 SISTEMA_UBIC = re.compile(r"\b[A-Z][A-Z0-9]{2}\b")
