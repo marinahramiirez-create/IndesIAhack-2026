@@ -365,6 +365,25 @@ def escalar(estado: dict, user: str, doc: str, para: str, nota: str, fecha: str,
     return accion
 
 
+def bloqueo_decision(estado: dict, doc: str) -> str | None:
+    """Escalado y sin corregir: nadie aprueba ni rechaza hasta que el destinatario guarde sus cambios."""
+    e = estado["escalados"].get(doc)
+    if e and not e.get("corregido"):
+        return (f"El documento está devuelto a {e['para']} para que lo corrija: aprobar y rechazar se activan "
+                "cuando guarde los cambios.")
+    return None
+
+
+def marcar_corregido(estado: dict, user: str, doc: str, version: int, fecha: str) -> str | None:
+    """El destinatario ha guardado una versión: se desbloquean las decisiones. Devuelve a quién avisar."""
+    e = estado["escalados"].get(doc)
+    if not e or e["para"] != user:
+        return None
+    e["corregido"] = {"fecha": fecha, "version": version}
+    _registrar(estado, doc, "corregir", user, user, fecha, f"v{version}")
+    return e["por"]
+
+
 def quitar_escalado(estado: dict, user: str, doc: str, fecha: str) -> None:
     """Lo quita quien puede escalar o el propio destinatario (al terminar su corrección)."""
     e = estado["escalados"].get(doc)

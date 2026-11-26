@@ -133,6 +133,8 @@ sacan el usuario de ese token (nunca del cuerpo de la petición) y comprueban el
 - **Escalamiento y edición de documentos**: en Revisión, «⇪ Escalar» asigna el documento a UNA persona con rol
   **Dueño de Proceso**. Solo esa persona puede pulsar «✎ Editar» (crear versiones), y solo mientras el documento no
   esté Completado. Si se escala a otra persona, el anterior deja de poder editarlo; ambos reciben un aviso.
+  Mientras el documento está devuelto y sin corregir, **nadie puede aprobar ni rechazar** sus hallazgos (también lo
+  bloquea el servidor). Cuando el Dueño de Proceso guarda su versión, se desbloquean y quien lo escaló recibe un aviso.
 
 Pruebas (42, sin instalar nada; levantan el servidor en un puerto libre con datos temporales):
 

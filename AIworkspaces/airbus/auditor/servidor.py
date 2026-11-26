@@ -380,6 +380,9 @@ class Manejador(SimpleHTTPRequestHandler):
                 keys = [str(k)[:200] for k in d.get("keys", [])[:500]]
                 if not keys or (validas and not set(keys) <= validas):
                     return self._json({"error": "hallazgo no válido"}, 400)
+                for doc in {k.split("|")[0] for k in keys}:      # devuelto y sin corregir: no se decide
+                    if P.bloqueo_decision(_estado, doc):
+                        return self._json({"error": P.bloqueo_decision(_estado, doc)}, 403)
                 for key in keys:                        # cambiar una decisión ya tomada exige también el permiso de la anterior
                     previa = _estado["dec"].get(key)
                     if previa and previa["dec"] != dec:
@@ -391,6 +394,8 @@ class Manejador(SimpleHTTPRequestHandler):
                 if not previa:
                     return self._json({"error": "ese hallazgo no tiene decisión"}, 400)
                 P.exigir(_estado, user, "revisiones", "aprobar" if previa["dec"] == "approved" else "rechazar")
+                if P.bloqueo_decision(_estado, str(d.get("key", "")).split("|")[0]):
+                    return self._json({"error": P.bloqueo_decision(_estado, str(d.get("key", "")).split("|")[0])}, 403)
                 _estado["dec"].pop(str(d.get("key", "")), None)
             elif u == "/api/comentario":
                 P.exigir(_estado, user, "revisiones", "comentar")
@@ -561,6 +566,11 @@ class Manejador(SimpleHTTPRequestHandler):
                 lista.append({"n": n, "user": user, "fecha": _ahora(), "nota": str(d.get("nota", "")).strip()[:300],
                               "paginas": sorted(int(k) for k in pags)})
                 extra = {"n": n}
+                avisar = P.marcar_corregido(_estado, user, doc, n, _ahora())   # se desbloquean aprobar y rechazar
+                if avisar and avisar != user:
+                    _estado["avisos"].append({"para": avisar, "de": user, "key": f"{doc}|escalado", "fecha": _ahora(),
+                                              "texto": f"{user} ha guardado los cambios de {doc} (v{n}): ya se puede decidir.",
+                                              "leido": False})
             elif u == "/api/sesion/cerrar":                # «Cerrar sesión»: deja de listarse en «Sesiones abiertas»
                 _sesiones.get(user, {}).pop(str(d.get("sid", ""))[:40], None)
                 _presencia.pop(user, None)

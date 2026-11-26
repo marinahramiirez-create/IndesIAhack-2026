@@ -109,6 +109,17 @@ tr.hl td{background:#fff6cc}
 .hrow.on{background:#e5f1ff}
 .hrow .nm{flex:1;text-align:left;background:none;color:var(--text);padding:0;font-weight:600;font-size:14px}
 .pnav{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+/* Detalle de una revisión: título que se recorta si no cabe y «Criterios» siempre fijo a la derecha */
+.pnav-rev{flex-wrap:nowrap}
+.pnav-tit{flex:1;min-width:0;display:flex;align-items:baseline;gap:10px}
+.pnav-tit h2{white-space:nowrap}
+.pnav-tit .small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.pnav-rev>button{flex:none}
+.pnav-fijo{margin-left:6px}
+.esc-card{margin-bottom:14px;padding:12px 16px;border-left:4px solid #00205b}
+.esc-form{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:10px}
+.esc-esp{margin-top:8px;padding:8px 10px;border-radius:8px;background:rgba(255,159,10,.12);color:#8a4b00;font-size:13px;font-weight:400}
+.esc-ok{margin-top:8px;padding:8px 10px;border-radius:8px;background:rgba(52,199,89,.12);color:#1d6b31;font-size:13px;font-weight:400}
 .iconbtn{background:#e5e5ea;color:var(--text);padding:8px 10px;display:inline-flex;align-items:center}
 .pdfwrap{background:#e9e9ee;border-radius:10px;padding:18px}
 .sumrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--sep);font-size:14px}
@@ -797,7 +808,7 @@ function vUsuarios(){
         <button class="ok" data-act="usrGuardar" data-v="${esc(m.n)}" style="font-size:13px;padding:6px 12px">Guardar</button></td></tr>`;
     const esc_=Object.entries(S.escalados||{}).filter(([,e])=>e.para===m.n).length;
     return `<tr><td><div style="display:flex;align-items:center;gap:10px">${av(m.n,30)}<div><b>${esc(m.n)}</b>${yo?' <span class="small">(tú)</span>':''}<div class="small">${esc(m.c)}</div></div></div></td>
-      <td><span class="rolpill" style="margin:0">${esc(nombreRol(m.rol))}</span>${esc_?`<div class="small">⇪ ${esc_} doc. escalado${esc_>1?'s':''}</div>`:''}</td>
+      <td><span class="rolpill" style="margin:0">${esc(nombreRol(m.rol))}</span>${esc_?`<div class="small">${esc_} doc. devuelto${esc_>1?'s':''}</div>`:''}</td>
       <td>${on?st('ok','En línea'):st('neutral','Desconectado')}</td>
       <td style="text-align:right;white-space:nowrap">${tocable?`<button class="ghost" data-act="usrEditar" data-v="${esc(m.n)}" style="font-size:13px;padding:6px 12px">Editar</button>`:''}
         ${tocable&&!yo?`<button class="ghost" data-act="bajaEq" data-v="${esc(m.n)}" style="font-size:13px;padding:6px 12px">Eliminar</button>`:''}</td></tr>`;
@@ -1505,6 +1516,7 @@ function objetivosActuales(){
 function aplicar(dec){
   const acc=dec==='approved'?'aprobar':'rechazar';
   if(!puede('revisiones',acc)){aviso(sinPermiso('revisiones',acc)); return;}      // el servidor también lo rechaza
+  const bloq=bloqueoDecision(S.doc); if(bloq){aviso(bloq); return;}
   const comentario=(S.comment||'').trim();
   const fecha=new Date().toISOString();
   const objs=objetivosActuales();
@@ -1718,7 +1730,8 @@ function vDecision(){
       <p class="note">Las respuestas del auditor salen tal cual de la solución. La revisión del equipo recoge vuestras decisiones y ediciones; no altera el CSV oficial.</p>
     </div>`;
   }
-  const puedes=objetivosActuales().length>0, pAp=puede('revisiones','aprobar'), pRe=puede('revisiones','rechazar');
+  const bloq=bloqueoDecision(S.doc);
+  const puedes=objetivosActuales().length>0&&!bloq, pAp=puede('revisiones','aprobar'), pRe=puede('revisiones','rechazar');
   const todos=pend.every(x=>S.sel[key(x)]);
   const filas=rs.map((x,i)=>{
     const k=key(x), d=decOf(x);
@@ -1742,23 +1755,24 @@ function vDecision(){
       <button class="ok" data-act="aprobar" ${puedes&&pAp?'':'disabled'} ${pAp?'':`title="${esc(sinPermiso('revisiones','aprobar'))}"`}>Aprobar</button>
       <button class="warn" data-act="rechazar" ${puedes&&pRe?'':'disabled'} ${pRe?'':`title="${esc(sinPermiso('revisiones','rechazar'))}"`}>Rechazar</button>
     </div>
-    ${pAp&&pRe?'':`<p class="note" style="flex:none;margin:6px 0 0">🔒 ${!pAp&&!pRe?`Tu rol (${esc(nombreRol(miRol()))}) puede consultar, pero no aprobar ni rechazar validaciones de IA.`:esc(sinPermiso('revisiones',pAp?'rechazar':'aprobar'))}</p>`}
+    ${bloq?`<p class="note" style="flex:none;margin:6px 0 0">${esc(bloq)}</p>`:''}
+    ${pAp&&pRe?'':`<p class="note" style="flex:none;margin:6px 0 0">${!pAp&&!pRe?`Tu rol (${esc(nombreRol(miRol()))}) puede consultar, pero no aprobar ni rechazar validaciones de IA.`:esc(sinPermiso('revisiones',pAp?'rechazar':'aprobar'))}</p>`}
   </div>`;
 }
 
 function vRevision(){
   const info=DOCS[S.doc];
-  return `${vPestanas()}<div class="pnav" style="margin-bottom:14px">
-      <button class="ghost" data-act="volver">← Listado</button>
-      <h2 style="margin:0">${esc(S.doc)}</h2><span class="small">v${esc(info.version)} · ${esc(info.titulo)}</span>
-      <div class="sp"></div>
+  return `${vPestanas()}<div class="pnav pnav-rev" style="margin-bottom:14px">
+      <button class="ghost iconbtn" data-act="volver" aria-label="Volver al listado" title="Volver al listado">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
+      <div class="pnav-tit"><h2 style="margin:0">${esc(S.doc)}</h2><span class="small" title="${esc(info.titulo)}">v${esc(info.version)} · ${esc(info.titulo)}</span></div>
       <button class="ghost iconbtn" data-act="toggleExtra" aria-label="Comentario sin hallazgo de la IA" ${puede('revisiones','comentar')?'title="Comentario sin hallazgo de la IA"':`disabled title="${esc(sinPermiso('revisiones','comentar'))}"`}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
       </button>
-      ${SRV&&puede('revisiones','escalar')?`<button class="ghost" data-act="escAbrir" aria-expanded="${!!S.escOpen}">${(S.escalados||{})[S.doc]?'Cambiar escalamiento':'⇪ Escalar'}</button>`:''}
+      ${SRV&&puede('revisiones','escalar')?`<button class="ghost" data-act="escAbrir" aria-expanded="${!!S.escOpen}">${(S.escalados||{})[S.doc]?'Cambiar escalamiento':'Escalar'}</button>`:''}
       ${SRV?(()=>{const mot=motivoEditar(S.doc), nv=versionesDe(S.doc).length;
-        return `<button class="ghost" data-act="editarDoc" data-doc="${esc(S.doc)}" ${mot?`disabled aria-disabled="true" title="${esc(mot)}"`:`title="Crea una versión editada; el PDF original no se modifica${nv?` (${nv} ya guardadas en Versiones)`:''}"`}>${mot?'🔒 ':''}✎ Editar${nv?` · v${nv}`:''}</button>`;})():''}
-      <button class="ghost" data-act="criterios">Criterios</button>
+        return `<button class="ghost" data-act="editarDoc" data-doc="${esc(S.doc)}" ${mot?`disabled aria-disabled="true" title="${esc(mot)}"`:`title="Crea una versión editada; el PDF original no se modifica${nv?` (${nv} ya guardadas en Versiones)`:''}"`}>Editar${nv?` · v${nv}`:''}</button>`;})():''}
+      <button class="ghost pnav-fijo" data-act="criterios">Criterios</button>
     </div>
     ${vEscalado(S.doc)}
     <div class="two">
@@ -1770,34 +1784,43 @@ function vRevision(){
 // ---------- Escalamiento: un documento se asigna a UNA persona con rol Dueño de Proceso, que es la única que puede
 // editarlo (y solo mientras su revisión no esté Completada). El servidor comprueba todo al escalar y al guardar.
 function duenos(){return S.equipo.filter(m=>m.rol==='dueno_proceso');}
+function bloqueoDecision(doc){                       // mismo criterio que el servidor (P.bloqueo_decision)
+  const e=(S.escalados||{})[doc];
+  return e&&!e.corregido?`El documento está devuelto a ${e.para} para que lo corrija: aprobar y rechazar se activan cuando guarde los cambios.`:null;
+}
 function vEscalado(doc){
   if(!SRV) return '';
   const e=(S.escalados||{})[doc], yo=S.user.nombre, mot=motivoEditar(doc), puedeEsc=puede('revisiones','escalar');
-  const hist=(S.escHist||[]).filter(h=>h.doc===doc).slice(-4).reverse();
-  const ACC={escalar:'escaló a',cambiar:'cambió el destinatario a',quitar:'quitó el escalamiento de'};
+  const hist=(S.escHist||[]).filter(h=>h.doc===doc).slice(-5).reverse();
+  const ACC={escalar:'devolvió el documento a',cambiar:'cambió el destinatario a',quitar:'quitó el escalamiento de',corregir:'guardó los cambios:'};
   let estado='';
   if(e){
     const dest=S.equipo.find(m=>m.n===e.para), sigueDueno=dest&&dest.rol==='dueno_proceso';
+    const corr=e.corregido?`<div class="esc-ok">${esc(e.para)} guardó los cambios (v${e.corregido.version}) el ${fmtFecha(e.corregido.fecha)}. Ya se puede aprobar o rechazar.</div>`
+      :`<div class="esc-esp">Esperando a que ${esc(e.para)} corrija el documento. Aprobar y Rechazar se activan cuando guarde los cambios.</div>`;
     estado=`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <span>⇪ Escalado a <b>${esc(e.para)}</b> <span class="small">por ${esc(e.por)} · ${fmtFecha(e.fecha)}${e.nota?' · «'+esc(e.nota)+'»':''}</span></span>
+        <span><b>Devuelto a ${esc(e.para)}</b> <span class="small">por ${esc(e.por)} · ${fmtFecha(e.fecha)}</span></span>
         ${puedeEsc||e.para===yo?`<button class="enlace" data-act="escQuitar" style="margin-left:auto">${e.para===yo&&!puedeEsc?'He terminado: quitar escalamiento':'Quitar escalamiento'}</button>`:''}</div>
-      ${!sigueDueno?`<div class="small" style="color:#c76a00;margin-top:4px">⚠ ${esc(e.para)} ya no tiene el rol Dueño de Proceso: no puede editarlo hasta que se escale a otra persona.</div>`:''}
-      <div class="small" style="margin-top:4px">${e.para===yo?(mot?'🔒 '+esc(mot):'✅ Puedes editar este documento: pulsa «✎ Editar».'):`🔒 Solo ${esc(e.para)} puede editar este documento.`}</div>`;
+      ${e.nota?`<div class="small" style="margin-top:4px"><b>Qué tiene que corregir:</b> ${esc(e.nota)}</div>`:''}
+      ${corr}
+      ${!sigueDueno?`<div class="small" style="color:#c76a00;margin-top:4px">${esc(e.para)} ya no tiene el rol Dueño de Proceso: no puede editarlo hasta que se devuelva a otra persona.</div>`:''}
+      <div class="small" style="margin-top:4px">${e.para===yo?(mot?esc(mot):'Puedes editar este documento con el botón «Editar».'):`Solo ${esc(e.para)} puede editar este documento.`}</div>`;
   }
   let form='';
   if(S.escOpen&&puedeEsc){
     const ds=duenos(), v=S.escVals||{};
-    form=ds.length?`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:10px">
-        <label class="small" style="display:flex;flex-direction:column;gap:4px">Escalar a (Dueño de Proceso)
-          <select id="escPara">${ds.map(m=>`<option value="${esc(m.n)}" ${(v.para||(e&&e.para))===m.n?'selected':''} ${e&&e.para===m.n?'disabled':''}>${esc(m.n)}${e&&e.para===m.n?' (actual)':''}</option>`).join('')}</select></label>
-        <label class="small" style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:200px">Qué hay que corregir (opcional)
-          <input id="escNota" value="${esc(v.nota||'')}" maxlength="300" autocomplete="off"></label>
-        <button class="ghost" data-act="escAbrir">Cancelar</button><button class="ok" data-act="escGuardar">${e?'Cambiar destinatario':'Escalar'}</button></div>`
-      :`<p class="small" style="margin:10px 0 0">No hay nadie con el rol Dueño de Proceso. Un usuario que gestione usuarios puede asignarlo en Configuración → Usuarios.</p>`;
+    form=`<div class="esc-form">
+        <label class="small" style="display:flex;flex-direction:column;gap:4px">Devolver a (Dueño de Proceso)
+          <select id="escPara" ${ds.length?'':'disabled'}><option value="">${ds.length?'Elige a una persona…':'No hay nadie con ese rol'}</option>${ds.map(m=>`<option value="${esc(m.n)}" ${(v.para||'')===m.n?'selected':''} ${e&&e.para===m.n?'disabled':''}>${esc(m.n)} · ${esc(m.c)}${e&&e.para===m.n?' (actual)':''}</option>`).join('')}</select></label>
+        <label class="small" style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:240px">Qué tiene que corregir
+          <input id="escNota" value="${esc(v.nota||'')}" maxlength="300" autocomplete="off" placeholder="Por ejemplo: el plazo de SEC-REQ-009 no cumple IS.I.OR.210"></label>
+        <button class="ghost" data-act="escAbrir">Cancelar</button><button class="ok" data-act="escGuardar" ${ds.length?'':'disabled'}>${e?'Cambiar destinatario':'Devolver'}</button>
+        ${ds.length?'':`<p class="small" style="flex-basis:100%;margin:2px 0 0">Para devolver un documento, alguien del equipo tiene que tener el rol Dueño de Proceso.${puede('configuracion','gestionar_usuarios')?' <button class="enlace" data-act="nav" data-v="usuarios">Asignarlo en Configuración → Usuarios</button>':' Pídeselo a un administrador.'}</p>`}
+        <p class="small" style="flex-basis:100%;margin:2px 0 0">Mientras tanto, Aprobar y Rechazar quedan desactivados hasta que esa persona guarde sus cambios.</p></div>`;
   }
   if(!e&&!form) return '';
-  return `<div class="card" style="margin-bottom:14px;padding:12px 16px;border-left:4px solid var(--tint)">${estado||'<div class="small">Este documento no está escalado.</div>'}${form}
-    ${hist.length?`<details style="margin-top:6px"><summary class="small">Historial del escalamiento</summary>${hist.map(h=>`<div class="small">· ${esc(h.por)} ${ACC[h.accion]||h.accion} ${esc(h.para)} · ${fmtFecha(h.fecha)}${h.nota?' · '+esc(h.nota):''}</div>`).join('')}</details>`:''}</div>`;
+  return `<div class="card esc-card">${estado||'<div class="small"><b>Escalar el documento</b> · devuélvelo a su Dueño de Proceso para que lo corrija.</div>'}${form}
+    ${hist.length?`<details style="margin-top:6px"><summary class="small">Historial</summary>${hist.map(h=>`<div class="small">· ${esc(h.por)} ${ACC[h.accion]||h.accion} ${h.accion==='corregir'?esc(h.nota||''):esc(h.para)} · ${fmtFecha(h.fecha)}${h.nota&&h.accion!=='corregir'?' · '+esc(h.nota):''}</div>`).join('')}</details>`:''}</div>`;
 }
 
 // Contenido del modal lateral de criterios: jerarquía, y por cada hallazgo qué se leyó, contra qué se contrastó y por qué.
@@ -1887,7 +1910,7 @@ function vInicio(){
     return `<div class="drow ${d.abrir?'':'off'}" style="--c:${ec[2]}" ${d.abrir?`data-act="abrir" data-doc="${esc(d.nombre)}" role="button" tabindex="0" aria-label="Abrir ${esc(d.nombre)}"`:''}>
       <div><div class="cod">${esc(d.nombre)}</div><div class="small">${esc(d.tipo)}${d.version?' · v'+esc(d.version):''}</div></div>
       <div><div class="tit">${esc(d.titulo)}</div>${etiquetas||'<span class="small">El auditor no encontró defectos en este documento.</span>'}${d.quien.length?`<div class="small" style="margin-top:2px">Revisado por ${esc(d.quien.join(', '))}</div>`:''}</div>
-      <div class="estado">${pill('● '+esc(d.est),ec)}${(S.escalados||{})[d.nombre]?`<div class="small" style="margin-top:4px;color:var(--tint);font-weight:600">⇪ Escalado a ${esc(S.escalados[d.nombre].para)}${S.escalados[d.nombre].para===S.user.nombre?' (tú)':''}</div>`:''}${avance}${fh?`<div class="small" style="margin-top:4px;color:var(--tint);font-weight:600">${d.coinc} de ${d.hall} coinciden</div>`:''}</div>
+      <div class="estado">${pill('● '+esc(d.est),ec)}${(S.escalados||{})[d.nombre]?`<div class="small" style="margin-top:4px;color:var(--tint);font-weight:600">Devuelto a ${esc(S.escalados[d.nombre].para)}${S.escalados[d.nombre].para===S.user.nombre?' (tú)':''}</div>`:''}${avance}${fh?`<div class="small" style="margin-top:4px;color:var(--tint);font-weight:600">${d.coinc} de ${d.hall} coinciden</div>`:''}</div>
       <div class="dias">${celdaDias(d.dias)}</div>
     </div>`;
   });
