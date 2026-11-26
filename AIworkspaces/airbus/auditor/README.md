@@ -87,8 +87,16 @@ La consola muestra dos direcciones: `http://localhost:8765` para ti y `http://<t
 **conectados a la misma Wi-Fi** (si Windows pregunta por el Firewall, pulsa «Permitir»). Con el servidor:
 - las decisiones (aprobar / rechazar) son compartidas: si alguien aprueba, lo veis todos en unos segundos;
 - cada hallazgo tiene un **debate** con comentarios; escribe `@nombre` para avisar a alguien;
-- la **campanita** muestra cuántas menciones tienes sin leer y te lleva al hallazgo;
-- «*Marina también está en este hallazgo*»: quién está mirando lo mismo que tú.
+- la **campanita** agrupa las notificaciones por chat o hallazgo («2 nuevos · 1 mención»), con «Ver» y × para borrarlas;
+- «*Marina también está en este hallazgo*»: quién está mirando lo mismo que tú;
+- **Chat** con tres tipos: **canales públicos** (los crea o borra un administrador del equipo), **grupos** (los crea
+  cualquiera; su creador los administra: nombre, integrantes y papeles) y **privados** entre dos personas. Cada uno
+  solo recibe los chats en los que está; `#número` enlaza un hallazgo;
+- **Configuración → Usuarios y roles**: alta y baja de miembros y roles (Administrador, Aprobador, Revisor).
+
+Para conectarse desde fuera de la red (por ejemplo, desde casa) se puede usar Radmin VPN: todos en la misma red
+de Radmin y se abre `http://<IP de Radmin del ordenador con el servidor>:8765`. El inicio de sesión es de prototipo
+(no comprueba contraseñas); en producción se conectaría a Entra ID.
 
 Todo se guarda en `salidas/colaboracion.json`, en el ordenador que ejecuta el servidor; nada sale fuera.
 

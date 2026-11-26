@@ -113,6 +113,24 @@ mark{background:#ffe27a;padding:0 2px;border-radius:3px}
 .avisos{position:fixed;top:62px;right:16px;width:min(380px,92vw);max-height:70vh;overflow:auto;background:#fff;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.2);z-index:40;padding:16px}
 .aviso{display:block;width:100%;text-align:left;background:#fdeef2;color:var(--text);border-radius:10px;padding:10px 12px;margin-top:8px;font-size:14px}
 .aviso.leido{background:#f7f7fa}
+/* Notificaciones tipo macOS: tarjeta translúcida, icono, resumen, «Ver» y × para eliminar */
+.avisos{background:rgba(246,246,248,.96);backdrop-filter:blur(14px)}
+.noti{position:relative;display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.92);border-radius:18px;padding:12px 14px;margin-top:10px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.noti.leida{opacity:.7}
+.noti .ico{width:40px;height:40px;border-radius:10px;background:#eef0f4;display:inline-flex;align-items:center;justify-content:center;font-size:18px;flex:none;color:#3a3a3c;font-weight:700}
+.noti .av{width:40px!important;height:40px!important;font-size:14px}
+.noti-t{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.noti-m{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
+.noti-ver{background:#e9e9ee;color:var(--text);border-radius:999px;padding:7px 14px;font-size:13px;font-weight:600;flex:none}
+.noti-x{position:absolute;top:-7px;left:-7px;width:22px;height:22px;border-radius:50%;padding:0;background:#e5e5ea;color:#3a3a3c;font-size:14px;line-height:22px;box-shadow:0 1px 3px rgba(0,0,0,.2);opacity:0;transition:opacity .15s}
+.noti:hover .noti-x,.noti-x:focus-visible{opacity:1}
+@media (hover:none){.noti-x{opacity:1}}
+.cnt{display:inline-flex;align-items:center;justify-content:center;background:var(--err);color:#fff;font-size:11px;font-weight:700;border-radius:999px;min-width:18px;height:18px;padding:0 5px;margin-left:6px;vertical-align:middle}
+/* Lista propia para «Nuevo privado»: siempre se despliega hacia abajo */
+.desplegable{margin-top:6px;border:1px solid var(--sep);border-radius:10px;overflow:hidden;background:#fff}
+.desplegable button{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:#fff;color:var(--text);border-radius:0;padding:8px 12px;font-size:14px;border-bottom:1px solid #f0f0f5}
+.desplegable button:last-child{border-bottom:0}
+.desplegable button:hover{background:#f0f0f5}
 .pres{font-size:12px;color:#c2185b;display:flex;align-items:center;gap:6px;margin:0 0 8px}
 .debate{margin-top:10px;border-top:1px solid var(--sep);padding-top:10px}
 .com{background:#f7f7fa;border-radius:10px;padding:8px 10px;margin:6px 0;font-size:13px}
@@ -123,7 +141,11 @@ mark{background:#ffe27a;padding:0 2px;border-radius:3px}
 .envivo.off i{background:var(--err)}
 @media (max-width:700px){.who span:last-child,.envivo span{display:none}}
 /* Chat del equipo (estructura del de Marina) */
-.chatgrid{display:grid;grid-template-columns:270px minmax(0,1fr);gap:16px;align-items:start}
+.chatgrid{display:grid;grid-template-columns:300px minmax(0,1fr);gap:16px;align-items:start}
+.dialog .miembro input[type=checkbox]{width:18px;flex:none}
+.dialog .miembro select{flex:none;width:auto;max-width:190px}
+.miembro .acc{display:flex;gap:4px;flex:none}
+.miembro .acc button{padding:4px 7px;font-size:13px}
 .canal{display:block;width:100%;text-align:left;background:none;color:var(--text);padding:9px 12px;border-radius:10px;font-weight:600;margin-bottom:2px}
 .canal:hover{background:#f0f0f5}
 .canal.on{background:#e5f1ff;color:var(--tint);box-shadow:inset 3px 0 0 #c2185b}
@@ -251,7 +273,8 @@ const ROLES={Administrador:'Gestiona el equipo y los chats; decide sobre los hal
 S.equipo=[{n:'Sergio',c:'sergio@airbus.es',rol:'Administrador'},{n:'Marina',c:'marina@airbus.es',rol:'Aprobador'},
   {n:'Nelson',c:'nelson@airbus.es',rol:'Revisor'},{n:'Valentina',c:'valentina@airbus.es',rol:'Revisor'},
   {n:'Daniela',c:'daniela@airbus.es',rol:'Revisor'}];
-S.canal_autor={}; S.abierto={chats:true,equipo:true};
+S.chats=[{id:'general',tipo:'canal',nombre:'general',autor:'',miembros:{}}];
+S.abierto={canales:true,grupos:true,privados:true,equipo:true}; S.dlg=null;
 function miRol(){const m=S.equipo.find(x=>x.n===S.user.nombre); return m?m.rol:'';}
 function esAdmin(){return miRol()==='Administrador';}
 function aviso(txt){S.toast=txt; pintarToast(); clearTimeout(S._tt); S._tt=setTimeout(()=>{S.toast=''; pintarToast();},3500);}
@@ -284,9 +307,13 @@ async function sondear(){
     if(!r.ok) throw new Error(r.status);
     const d=await r.json();
     Object.assign(S,{dec:d.dec,coms:d.comentarios,avisos:d.avisos,pres:d.presencia,
-                     mensajes:d.mensajes||[],canales:d.canales||['general'],canal_autor:d.canal_autor||{}});
+                     mensajes:d.mensajes||[],chats:d.chats||S.chats});
     if(d.equipo&&d.equipo.length) S.equipo=d.equipo;
-    if(!S.canales.includes(S.canal)) S.canal='general';             // alguien borró o renombró el chat abierto
+    if(!S.chats.some(c=>c.id===S.canal)) S.canal='general';         // el chat abierto se borró o ya no eres miembro
+    const kAbierto='chat:'+S.canal;                                   // lo que ya estás viendo no queda como «nuevo»
+    if(S.view==='chat'&&S.avisos.some(x=>x.key===kAbierto&&!x.leido)){
+      S.avisos.forEach(x=>{if(x.key===kAbierto) x.leido=true;}); api('/api/leido',{key:kAbierto});
+    }
     const firma=d.seq+'|'+JSON.stringify(d.presencia);
     const cambio=firma!==_firma||S.online!==true;      // solo se redibuja si hay novedades
     _firma=firma; S.online=true;
@@ -331,40 +358,83 @@ function textoChat(t){
 }
 function vChat(){
   if(!SRV) return `<h2>Chat</h2><div class="card"><p class="sub" style="margin:0">El chat del equipo necesita la revisión en equipo: en la carpeta del auditor ejecuta <b>python servidor.py</b> y abre la dirección que muestra.</p></div>`;
-  const canal=S.canal||'general';
+  const actual=S.chats.find(c=>c.id===S.canal)||S.chats[0];
+  const canal=actual.id;
   const lista=(S.mensajes||[]).filter(m=>m.canal===canal).map(m=>`<div class="mens">${av(m.user)}<div style="min-width:0;flex:1">
       <div><b>${esc(m.user)}</b> <span class="small">${hace(m.fecha)}</span></div>
       <div style="white-space:pre-wrap;overflow-wrap:anywhere">${textoChat(m.texto)}</div></div></div>`).join('');
-  const puedeEditar=c=>c!=='general'&&(S.canal_autor[c]===S.user.nombre||esAdmin());
-  const canales=(S.canales||['general']).map(c=>`<div class="fcanal">
-      <button class="canal ${c===canal?'on':''}" data-act="canal" data-v="${esc(c)}" title="#${esc(c)}">#${esc(c)}</button>
-      ${puedeEditar(c)?`<button class="mini-btn" data-act="renombrarCanal" data-v="${esc(c)}" title="Renombrar #${esc(c)}" aria-label="Renombrar #${esc(c)}">✎</button>
-      <button class="mini-btn" data-act="borrarCanal" data-v="${esc(c)}" title="Eliminar #${esc(c)}" aria-label="Eliminar #${esc(c)}">✕</button>`:''}</div>`).join('');
-  const miembros=S.equipo.map(m=>{
-    const on=enLinea(m.n), yo=m.n===S.user.nombre;
-    return `<div class="miembro">${av(m.n,30)}<div style="flex:1;min-width:0"><b style="font-size:14px">${esc(m.n)}</b>${yo?' <span class="small">(tú)</span>':''}<span class="rolpill">${esc(m.rol||'Revisor')}</span>
-        <div class="small" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(m.c)}</div></div>
-      <span class="dot ${on?'on':''}" title="${on?'En línea':'Desconectado'}"></span>
-      ${yo?'':`<button class="ghost" data-act="mencionar" data-v="${esc(m.n)}" title="Mencionar a ${esc(m.n)}" aria-label="Mencionar a ${esc(m.n)}" style="padding:4px 9px;font-size:13px">@</button>`}</div>`;
-  }).join('');
-  const nOn=S.equipo.filter(m=>enLinea(m.n)).length;
+  const gestiona=c=>c.tipo==='canal'?esAdmin():c.tipo==='grupo'?c.miembros[S.user.nombre]==='admin':false;
+  const nl=id=>{const n=noLeidos(id); return n?`<span class="cnt" aria-label="${n} sin leer">${n}</span>`:'';};
+  const fila=(c,icono)=>`<div class="fcanal">
+      <button class="canal ${c.id===canal?'on':''}" data-act="canal" data-v="${esc(c.id)}" title="${esc(nombreChat(c))}">${icono}${esc(nombreChat(c))}${nl(c.id)}</button>
+      ${c.tipo==='canal'&&gestiona(c)&&c.id!=='general'?`<button class="mini-btn" data-act="renombrarChat" data-v="${esc(c.id)}" title="Renombrar" aria-label="Renombrar ${esc(nombreChat(c))}">✎</button>`:''}
+      ${c.tipo==='grupo'&&gestiona(c)?`<button class="mini-btn" data-act="gestionarGrupo" data-v="${esc(c.id)}" title="Gestionar grupo" aria-label="Gestionar ${esc(c.nombre)}">✎</button>`:''}
+      ${(gestiona(c)||c.tipo==='privado')&&c.id!=='general'?`<button class="mini-btn" data-act="borrarChat" data-v="${esc(c.id)}" title="Eliminar" aria-label="Eliminar ${esc(nombreChat(c))}">✕</button>`:''}</div>`;
+  const de=t=>S.chats.filter(c=>c.tipo===t);
+  const canales=de('canal').map(c=>fila(c,'')).join('');
+  // Integrantes de un grupo, con el mismo formato que tenía el recuadro «Equipo» (papel en el grupo, conexión, 💬 y @)
+  const integrante=(m,c)=>{
+    const on=enLinea(m.n), yo=m.n===S.user.nombre, papel=c.miembros[m.n]==='admin'?'Admin del grupo':'Miembro';
+    return `<div class="miembro">${av(m.n,30)}<div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:6px"><b style="font-size:14px">${esc(m.n)}</b>${yo?'<span class="small">(tú)</span>':''}<span class="dot ${on?'on':''}" title="${on?'En línea':'Desconectado'}"></span></div>
+        <div class="small" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><span class="rolpill" style="margin:0 4px 0 0">${papel}</span>${esc(m.c)}</div></div>
+      ${yo?'':`<div class="acc"><button class="ghost" data-act="privado" data-v="${esc(m.n)}" title="Chat privado con ${esc(m.n)}" aria-label="Chat privado con ${esc(m.n)}">💬</button>
+      <button class="ghost" data-act="mencionar" data-v="${esc(m.n)}" data-chat="${esc(c.id)}" title="Mencionar a ${esc(m.n)}" aria-label="Mencionar a ${esc(m.n)}">@</button></div>`}</div>`;
+  };
+  // Cada grupo: su nombre y un desplegable con sus integrantes (abierto por defecto el grupo que estás viendo)
+  const grupos=de('grupo').map(c=>{
+    const k='g:'+c.id, abierto=S.abierto[k]??(c.id===canal);
+    const gente=S.equipo.filter(m=>m.n in c.miembros).sort((a,b)=>(c.miembros[b.n]==='admin')-(c.miembros[a.n]==='admin')||a.n.localeCompare(b.n));
+    const nOn=gente.filter(m=>enLinea(m.n)).length;
+    return `<div style="border-bottom:1px solid var(--sep);padding:4px 0">
+      <div style="display:flex;align-items:center;gap:2px">
+        <button class="mini-btn" data-act="plegarGrupo" data-v="${esc(c.id)}" aria-expanded="${abierto}" aria-label="${abierto?'Ocultar':'Ver'} integrantes de ${esc(c.nombre)}" style="opacity:1;padding:4px 6px"><span class="flecha" style="display:inline-block;transition:transform .15s;${abierto?'':'transform:rotate(-90deg)'}">▼</span></button>
+        <div style="flex:1;min-width:0">${fila(c,'👥 ')}</div>
+      </div>
+      <div ${abierto?'':'hidden'} style="padding:0 0 4px 8px">
+        <div class="small" style="margin:2px 0 2px 4px">${gente.length} integrantes · ${nOn} en línea</div>
+        ${gente.map(m=>integrante(m,c)).join('')}
+        ${c.miembros[S.user.nombre]==='admin'?`<button class="ghost" data-act="gestionarGrupo" data-v="${esc(c.id)}" style="width:100%;margin-top:6px;font-size:13px;padding:7px">Añadir o quitar integrantes</button>`:''}
+      </div></div>`;
+  }).join('')||'<p class="small" style="margin:6px 4px">Aún no estás en ningún grupo.</p>';
+  const privados=de('privado').map(c=>fila(c,av(nombreChat(c),20)+' ')).join('')||'<p class="small" style="margin:6px 4px">Todavía no tienes conversaciones privadas.</p>';
+  const nuevoPrivado=`<button class="ghost" data-act="menuPrivado" aria-expanded="${!!S.privOpen}" style="width:100%;margin-top:8px;font-size:14px">+ Nuevo privado ${S.privOpen?'▴':'▾'}</button>
+    ${S.privOpen?`<div class="desplegable" role="menu">${S.equipo.filter(m=>m.n!==S.user.nombre).map(m=>`<button role="menuitem" data-act="abrirPrivado" data-v="${esc(m.n)}">${av(m.n,24)}${esc(m.n)}<span class="dot ${enLinea(m.n)?'on':''}" style="margin-left:auto"></span></button>`).join('')}</div>`:''}`;
   const seccion=(id,titulo,n,cuerpo)=>`<button class="plegar" data-act="plegar" data-v="${id}" aria-expanded="${S.abierto[id]}"><span class="flecha">▼</span>${titulo}<span class="n">${n}</span></button>
       <div ${S.abierto[id]?'':'hidden'}>${cuerpo}</div>`;
+  // Cabecera según el tipo de chat
+  let cab, sub;
+  if(actual.tipo==='grupo'){
+    const ms=Object.entries(actual.miembros);
+    cab=`👥 ${esc(actual.nombre)}`;
+    sub=`${ms.length} personas: ${ms.map(([n,r])=>esc(n)+(r==='admin'?' (admin)':'')).join(', ')}`;
+  }else if(actual.tipo==='privado'){
+    cab=`${av(nombreChat(actual),26)} ${esc(nombreChat(actual))}`;
+    sub='🔒 Conversación privada: solo la veis vosotros dos.';
+  }else{
+    cab='#'+esc(actual.nombre);
+    sub='Canal público del equipo. Escribe #número para enlazar un hallazgo y @nombre para avisar a alguien.';
+  }
+  const accionesGrupo=actual.tipo==='grupo'?`<div style="display:flex;gap:6px">
+      ${gestiona(actual)?`<button class="ghost" data-act="gestionarGrupo" data-v="${esc(actual.id)}" style="font-size:13px;padding:6px 12px">Gestionar</button>`:''}
+      <button class="ghost" data-act="salirGrupo" data-v="${esc(actual.id)}" style="font-size:13px;padding:6px 12px">Salir</button></div>`:'';
   return `<h2>Chat</h2>
     <div class="chatgrid">
-      <div style="display:flex;flex-direction:column;gap:16px">
-        <div class="card" style="padding:12px">${seccion('chats','Chats',S.canales.length,
-          `<div style="margin-top:6px;max-height:40vh;overflow:auto">${canales}</div>
-          <form id="canalForm" style="margin-top:8px"><input id="ncanal" placeholder="Nuevo chat" aria-label="Nuevo chat" style="width:100%" autocomplete="off"></form>`)}</div>
-        <div class="card" style="padding:12px 16px">${seccion('equipo','Equipo',`${nOn} de ${S.equipo.length} en línea`,
-          `${miembros}${esAdmin()?'<button class="ghost" data-act="nav" data-v="usuarios" style="width:100%;margin-top:8px;font-size:14px">Gestionar equipo</button>':''}`)}</div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="card" style="padding:12px">${seccion('canales','Canales',de('canal').length,
+          `<div style="margin-top:6px">${canales}</div>
+          ${esAdmin()?'<button class="ghost" data-act="nuevoCanal" style="width:100%;margin-top:8px;font-size:14px">+ Nuevo canal público</button>':''}`)}</div>
+        <div class="card" style="padding:12px">${seccion('grupos','Grupos',de('grupo').length,
+          `<div style="margin-top:6px">${grupos}</div><button class="ghost" data-act="nuevoGrupo" style="width:100%;margin-top:8px;font-size:14px">+ Nuevo grupo</button>`)}</div>
+        <div class="card" style="padding:12px">${seccion('privados','Privados',de('privado').length,`<div style="margin-top:6px">${privados}</div>${nuevoPrivado}`)}</div>
       </div>
       <div class="card chatbox">
-        <div style="border-bottom:1px solid var(--sep);padding-bottom:10px"><h3 style="margin:0">#${esc(canal)}</h3>
-          <div class="small">Escribe #número para enlazar un hallazgo y @nombre para avisar a alguien.</div></div>
-        <div class="chatlist" id="chatlist">${lista||'<p class="small" style="margin-top:12px">Todavía no hay mensajes en este canal.</p>'}</div>
+        <div style="border-bottom:1px solid var(--sep);padding-bottom:10px;display:flex;align-items:center;gap:12px">
+          <div style="flex:1;min-width:0"><h3 style="margin:0;display:flex;align-items:center;gap:8px">${cab}</h3>
+          <div class="small">${sub}</div></div>${accionesGrupo}</div>
+        <div class="chatlist" id="chatlist">${lista||'<p class="small" style="margin-top:12px">Todavía no hay mensajes en este chat.</p>'}</div>
         <form id="chatEq" class="chatin" style="margin-top:8px;align-items:flex-end">
-          <textarea id="ctx" rows="2" placeholder="Mensaje para #${esc(canal)}" aria-label="Mensaje" style="flex:1;resize:vertical">${esc(S.ctx||'')}</textarea>
+          <textarea id="ctx" rows="2" placeholder="Mensaje para ${esc(nombreChat(actual))}" aria-label="Mensaje" style="flex:1;resize:vertical">${esc(S.ctx||'')}</textarea>
           <button type="submit">Enviar</button></form>
       </div>
     </div>`;
@@ -397,8 +467,41 @@ async function enviarMensaje(){
   const t=(S.ctx||'').trim(); if(!t) return;
   const canal=S.canal||'general';
   S.ctx=''; S.mensajes.push({canal,user:S.user.nombre,texto:t,fecha:new Date().toISOString()}); S.chatAbajo=true; render();
-  await api('/api/mensaje',{canal,texto:t}); sondear();
+  await api('/api/mensaje',{chat:canal,texto:t}); sondear();
 }
+// Ventana para crear o gestionar un grupo: nombre, quién entra y quién lo administra
+function abrirDlgGrupo(c){
+  const m={};
+  if(c) Object.assign(m,c.miembros); else m[S.user.nombre]='admin';
+  S.dlg={id:c?c.id:null,nombre:c?c.nombre:'',miembros:m};
+  render();
+  setTimeout(()=>{const i=document.getElementById('gN'); if(i) i.focus();},30);
+}
+function vDlgGrupo(){
+  const g=S.dlg; if(!g) return '';
+  const filas=S.equipo.map(p=>{
+    const dentro=p.n in g.miembros, yo=p.n===S.user.nombre&&!g.id;
+    return `<div class="miembro">${av(p.n,28)}<div style="flex:1;min-width:0"><b style="font-size:14px">${esc(p.n)}</b><div class="small">${esc(p.c)}</div></div>
+      <select data-grol="${esc(p.n)}" aria-label="Papel de ${esc(p.n)} en el grupo" ${dentro?'':'disabled'} style="font-size:13px;padding:5px 8px">
+        <option value="miembro" ${g.miembros[p.n]!=='admin'?'selected':''}>Miembro</option><option value="admin" ${g.miembros[p.n]==='admin'?'selected':''}>Administrador del grupo</option></select>
+      <input type="checkbox" data-gmiem="${esc(p.n)}" ${dentro?'checked':''} ${yo?'disabled':''} aria-label="${esc(p.n)} en el grupo"></div>`;
+  }).join('');
+  return `<div class="scrim" data-act="cerrarDlg"></div>
+    <div class="dialog" role="dialog" aria-label="${g.id?'Gestionar grupo':'Nuevo grupo'}" style="max-height:88vh;overflow:auto">
+      <h2 style="margin:0 0 4px">${g.id?'Gestionar grupo':'Nuevo grupo'}</h2>
+      <p class="small" style="margin:0 0 12px">Solo las personas del grupo ven sus mensajes. Los administradores del grupo pueden renombrarlo, añadir o quitar gente y cambiar sus papeles.</p>
+      <label class="small" for="gN">Nombre del grupo</label>
+      <input id="gN" value="${esc(g.nombre)}" maxlength="40" style="margin:6px 0 12px" autocomplete="off">
+      <div class="small" style="margin-bottom:4px">Personas</div>${filas}
+      <div class="fbtns"><button class="ghost" data-act="cerrarDlg">Cancelar</button><button class="ok" data-act="guardarGrupo">${g.id?'Guardar cambios':'Crear grupo'}</button></div>
+    </div>`;
+}
+function nombreChat(c){
+  if(!c) return '';
+  if(c.tipo==='privado') return Object.keys(c.miembros).find(n=>n!==S.user.nombre)||'Privado';
+  return c.tipo==='canal'?'#'+c.nombre:c.nombre;
+}
+function noLeidos(id){return (S.avisos||[]).filter(a=>!a.leido&&a.key==='chat:'+id).length;}
 function pintarBarra(){
   document.getElementById('uAv').textContent=ini(S.user.nombre);
   document.getElementById('uAv').style.background=colorDe(S.user.nombre);
@@ -410,11 +513,38 @@ function pintarBarra(){
   const n=(S.avisos||[]).filter(a=>!a.leido).length, bn=document.getElementById('bellN');
   bn.textContent=n; bn.classList.toggle('hidden',!n);
   const p=document.getElementById('avisos'); p.classList.toggle('hidden',!S.avisosOpen);
-  if(S.avisosOpen) p.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">Avisos</h3><button class="ghost" data-act="avisos" aria-label="Cerrar">×</button></div>`+
-    ((S.avisos||[]).slice().reverse().map(a=>{
-      const chat=a.key.startsWith('chat:'), donde=chat?'Chat · #'+a.key.slice(5):a.key.replace('|',' · ');
-      return `<button class="aviso ${a.leido?'leido':''}" data-act="irAviso" data-k="${esc(a.key)}"><b>${esc(a.de)}</b> ${chat?'te ha mencionado en #'+esc(a.key.slice(5)):'te ha mencionado'}<div class="small" style="color:var(--text);margin-top:2px">${menciones(esc(a.texto))}</div><div class="small">${esc(donde)} · ${hace(a.fecha)}</div></button>`;
-    }).join('')||'<p class="small">No tienes avisos.</p>');
+  if(S.avisosOpen) p.innerHTML=vAvisos();
+}
+// Notificaciones agrupadas por chat (o por hallazgo): una tarjeta con icono, resumen y último mensaje; «Ver» y «×»
+function vAvisos(){
+  const grupos={};
+  (S.avisos||[]).forEach(a=>{(grupos[a.key]=grupos[a.key]||[]).push(a);});
+  const tarjetas=Object.entries(grupos).map(([k,as])=>{
+    as.sort((x,y)=>x.fecha<y.fecha?-1:1);
+    const ult=as[as.length-1], nuevos=as.filter(a=>!a.leido).length, menc=as.filter(a=>a.mencion||!k.startsWith('chat:')).length;
+    let icono, titulo;
+    if(k.startsWith('chat:')){
+      const ch=S.chats.find(c=>c.id===k.slice(5));
+      titulo=ch?nombreChat(ch):k.slice(5);
+      icono=!ch?'💬':ch.tipo==='privado'?av(titulo,40):`<span class="ico">${ch.tipo==='grupo'?'👥':'#'}</span>`;
+    }else{
+      const [doc,u]=k.split('|'); titulo=`${doc} · ${u}`; icono='<span class="ico">📄</span>';
+    }
+    const partes=[nuevos?`${nuevos} ${nuevos===1?'nuevo':'nuevos'}`:'leídos', menc&&k.startsWith('chat:')?`${menc} ${menc===1?'mención':'menciones'}`:''].filter(Boolean);
+    return {fecha:ult.fecha,nuevos,html:`<div class="noti ${nuevos?'':'leida'}">
+      <button class="noti-x" data-act="borrarAviso" data-k="${esc(k)}" aria-label="Eliminar las notificaciones de ${esc(titulo)}" title="Eliminar">×</button>
+      ${icono}
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;gap:8px;align-items:baseline"><b class="noti-t">${esc(titulo)}</b><span class="small" style="margin-left:auto;white-space:nowrap">${hace(ult.fecha)}</span></div>
+        <div class="small" style="color:var(--text)">${partes.join(' · ')}</div>
+        <div class="small noti-m"><b>${esc(ult.de)}:</b> ${menciones(esc(ult.texto))}</div>
+      </div>
+      <button class="noti-ver" data-act="irAviso" data-k="${esc(k)}">Ver</button></div>`};
+  }).sort((a,b)=>(b.nuevos>0)-(a.nuevos>0)||(a.fecha<b.fecha?1:-1));
+  return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><h3 style="margin:0">Notificaciones</h3>
+      <div style="display:flex;gap:6px">${tarjetas.length?'<button class="ghost" data-act="borrarAviso" data-k="" style="font-size:12px;padding:5px 10px">Borrar todas</button>':''}
+      <button class="ghost" data-act="avisos" aria-label="Cerrar" style="padding:5px 10px">×</button></div></div>`
+    +(tarjetas.map(t=>t.html).join('')||'<p class="small">No tienes notificaciones.</p>');
 }
 
 // ---------- Idioma: traduce los textos de la interfaz (no los hallazgos, que salen del auditor en español).
@@ -447,6 +577,20 @@ const EN={'Inicio':'Home','Revisión':'Review','Panel de control IA':'AI control
  'Especificaciones':'Specifications','Registros operativos':'Operational records','Proveedores':'Suppliers','Evaluaciones de riesgos':'Risk assessments',
  'Auditorias y revision':'Audits and review','Verificacion':'Verification','Interfaces':'Interfaces','Politicas y estandares':'Policies and standards','Nucleo':'Core',
  'Equipo':'Team','Nuevo canal':'New channel','Chats':'Chats','Nuevo chat':'New chat','Gestionar equipo':'Manage team',
+ 'Canales':'Channels','Grupos':'Groups','Privados':'Direct messages','+ Nuevo grupo':'+ New group','Nuevo canal público':'New public channel',
+ 'Aún no estás en ningún grupo.':'You are not in any group yet.','Pulsa 💬 junto a alguien del equipo para hablarle en privado.':'Click 💬 next to a teammate to message them privately.',
+ 'Gestionar':'Manage','Salir':'Leave','Nuevo grupo':'New group','Gestionar grupo':'Manage group','Nombre del grupo':'Group name','Personas':'People',
+ 'Miembro':'Member','Administrador del grupo':'Group admin','Crear grupo':'Create group','Guardar cambios':'Save changes',
+ '🔒 Conversación privada: solo la veis vosotros dos.':'🔒 Private conversation: only you two can see it.',
+ 'Canal público del equipo. Escribe #número para enlazar un hallazgo y @nombre para avisar a alguien.':'Public team channel. Type #number to link a finding and @name to notify someone.',
+ 'Todavía no hay mensajes en este chat.':'No messages in this chat yet.','te ha escrito en privado':'sent you a private message',
+ 'En esta conversación':'In this conversation','Añadir o quitar miembros':'Add or remove members',
+ '+ Nuevo privado con…':'+ New direct message with…','Todavía no tienes conversaciones privadas.':'You have no direct messages yet.',
+ 'Añadir o quitar integrantes':'Add or remove members','Admin del grupo':'Group admin',
+ 'Notificaciones':'Notifications','Borrar todas':'Clear all','Ver':'Show','No tienes notificaciones.':'No notifications.','leídos':'read',
+ '+ Nuevo canal público':'+ New public channel','+ Nuevo privado ▾':'+ New direct message ▾','+ Nuevo privado ▴':'+ New direct message ▴',
+ 'Para hablar en privado con alguien que no está aquí, ábrelo desde':'To message someone who is not here, open it from',
+ 'Solo las personas del grupo ven sus mensajes. Los administradores del grupo pueden renombrarlo, añadir o quitar gente y cambiar sus papeles.':'Only group members see its messages. Group admins can rename it, add or remove people and change their roles.',
  'Añadir miembro':'Add member','Nombre':'Name','Correo':'Email','Rol':'Role','Añadir':'Add','Eliminar':'Remove','Persona':'Person','Estado':'Status',
  'En línea':'Online','Desconectado':'Offline','Personas, rol y estado de conexión.':'People, role and connection status.',
  'Administrador':'Administrator','Aprobador':'Approver','Revisor':'Reviewer',
@@ -460,8 +604,10 @@ const EN={'Inicio':'Home','Revisión':'Review','Panel de control IA':'AI control
 const EN_RE=[[/^(\d+) de (\d+) revisados$/,'$1 of $2 reviewed'],[/^Página (\d+) de (\d+)$/,'Page $1 of $2'],[/^(\d+) de (\d+) documentos$/,'$1 of $2 documents'],
  [/^(\d+) documentos · (\d+) hallazgos$/,'$1 documents · $2 findings'],[/^(\d+) de (\d+) hallazgos$/,'$1 of $2 findings'],[/^Revisado por (.+)$/,'Reviewed by $1'],
  [/^(.+) también (?:está|están) en este hallazgo$/,'$1 also on this finding'],[/^Cláusula (.+)$/,'Clause $1'],
- [/^te ha mencionado en (#.+)$/,'mentioned you in $1'],[/^hace (\d+) min$/,'$1 min ago'],[/^hace (\d+) h$/,'$1 h ago'],
- [/^(\d+) de (\d+) en línea$/,'$1 of $2 online'],[/^Mensaje para (#.+)$/,'Message for $1'],[/^Chat · (#.+) · (.+)$/,'Chat · $1 · $2'],[/^Agente (\d+)$/,'Agent $1'],[/^En línea: (.+)$/,'Online: $1'],
+ [/^te ha mencionado en (.+)$/,'mentioned you in $1'],[/^hace (\d+) min$/,'$1 min ago'],[/^hace (\d+) h$/,'$1 h ago'],
+ [/^(\d+) de (\d+) en línea$/,'$1 of $2 online'],[/^Mensaje para (.+)$/,'Message for $1'],[/^Chat · (.+) · (.+)$/,'Chat · $1 · $2'],
+ [/^(\d+) personas: (.+)$/,'$1 people: $2'],[/^Miembros de (.+)$/,'Members of $1'],[/^(\d+) integrantes · (\d+) en línea$/,'$1 members · $2 online'],
+ [/^(\d+) nuevos? · (\d+) menci(?:ón|ones)$/,'$1 new · $2 mentions'],[/^(\d+) nuevos?$/,'$1 new'],[/^leídos · (\d+) menci(?:ón|ones)$/,'read · $1 mentions'],[/^Agente (\d+)$/,'Agent $1'],[/^En línea: (.+)$/,'Online: $1'],
  [/^(.+) · (\d+)$/,(m,a,b)=>(EN[a]||a)+' · '+b],[/^(.+) · v([\d.]+)$/,(m,a,b)=>(EN[a]||a)+' · v'+b]];
 function tr(s){
   const t=s.trim(); if(!t) return null;
@@ -966,7 +1112,7 @@ function render(){
         <button class="ok" data-act="guardarExtra">Guardar comentario</button>
       </div>
     </div>`:'';
-  document.getElementById('view').innerHTML=VIEWS[S.view]()+criterios+comentario;
+  document.getElementById('view').innerHTML=VIEWS[S.view]()+criterios+comentario+(S.view==='chat'?vDlgGrupo():'');
   scr.forEach(([s,y])=>{const el=document.querySelector(s); if(el&&y) el.scrollTop=y;});
   const cl=document.getElementById('chatlist');                   // chat: baja al último mensaje si hay nuevos
   if(cl){
@@ -995,26 +1141,64 @@ document.addEventListener('click',e=>{
   if(!el||el.disabled) return;
   const a=el.dataset.act;
   if(a==='lang'){S.lang=el.dataset.v; try{localStorage.setItem('rv_lang',S.lang);}catch(err){} render(); return;}
-  if(a==='avisos'){
-    S.avisosOpen=!S.avisosOpen; pintarBarra(); aplicarIdioma();
-    if(S.avisosOpen&&S.avisos.some(x=>!x.leido)) api('/api/leido',{}).then(()=>{S.avisos.forEach(x=>{x.leido=true;});});
+  if(a==='avisos'){S.avisosOpen=!S.avisosOpen; pintarBarra(); aplicarIdioma(); return;}
+  if(a==='borrarAviso'){                                      // × de una tarjeta, o «Borrar todas» (clave vacía)
+    const k=el.dataset.k;
+    S.avisos=(S.avisos||[]).filter(x=>k&&x.key!==k);
+    pintarBarra(); aplicarIdioma(); api('/api/avisos/borrar',k?{key:k}:{});
     return;
+  }
+  if(a==='irAviso'){                                          // «Ver»: abre el chat o el hallazgo y lo marca como leído
+    S.avisos.forEach(x=>{if(x.key===el.dataset.k) x.leido=true;}); api('/api/leido',{key:el.dataset.k});
   }
   if(a==='irAviso'&&el.dataset.k.startsWith('chat:')){
     S.avisosOpen=false; S.view='chat'; S.canal=el.dataset.k.slice(5); S.chatAbajo=true; render(); window.scrollTo(0,0); return;
   }
-  if(a==='canal'){S.canal=el.dataset.v; S.chatAbajo=true; render(); return;}
-  if(a==='plegar'){S.abierto[el.dataset.v]=!S.abierto[el.dataset.v]; render(); return;}
-  if(a==='renombrarCanal'){
-    const de=el.dataset.v, nuevo=(prompt(`Nuevo nombre para #${de}:`,de)||'').trim();
-    if(!nuevo||nuevo===de) return;
-    api('/api/canal/renombrar',{nombre:de,nuevo}).then(r=>{if(r.ok&&S.canal===de) S.canal=nuevo.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,'-').replace(/[^a-z0-9ñ-]/g,'').slice(0,30); sondear();});
+  if(a==='nuevoCanal'){
+    const nombre=(prompt('Nombre del nuevo canal público (lo verá todo el equipo):')||'').trim(); if(!nombre) return;
+    api('/api/chat/crear',{tipo:'canal',nombre}).then(r=>{if(r.ok){S.canal=r.id; S.chatAbajo=true; sondear();}});
     return;
   }
-  if(a==='borrarCanal'){
-    const c=el.dataset.v;
-    if(!confirm(`¿Eliminar el chat #${c} y todos sus mensajes? No se puede deshacer.`)) return;
-    api('/api/canal/borrar',{nombre:c}).then(r=>{if(r.ok&&S.canal===c) S.canal='general'; sondear();});
+  if(a==='menuPrivado'){S.privOpen=!S.privOpen; render(); return;}
+  if(a==='abrirPrivado'){
+    S.privOpen=false;
+    api('/api/chat/crear',{tipo:'privado',con:el.dataset.v}).then(r=>{if(r.ok){S.canal=r.id; S.chatAbajo=true; S.abierto.privados=true; sondear();}});
+    return;
+  }
+  if(a==='canal'){S.canal=el.dataset.v; S.chatAbajo=true; render(); return;}
+  if(a==='plegar'){S.abierto[el.dataset.v]=!S.abierto[el.dataset.v]; render(); return;}
+  if(a==='plegarGrupo'){const k='g:'+el.dataset.v; S.abierto[k]=el.getAttribute('aria-expanded')!=='true'; render(); return;}
+  if(a==='renombrarChat'){                                          // canal público: solo el administrador del equipo
+    const c=S.chats.find(x=>x.id===el.dataset.v); if(!c) return;
+    const nuevo=(prompt(`Nuevo nombre para #${c.nombre}:`,c.nombre)||'').trim();
+    if(!nuevo||nuevo===c.nombre) return;
+    api('/api/chat/editar',{id:c.id,nombre:nuevo}).then(sondear);
+    return;
+  }
+  if(a==='borrarChat'){
+    const c=S.chats.find(x=>x.id===el.dataset.v); if(!c) return;
+    if(!confirm(`¿Eliminar ${nombreChat(c)} y todos sus mensajes? No se puede deshacer.`)) return;
+    api('/api/chat/borrar',{id:c.id}).then(r=>{if(r.ok&&S.canal===c.id) S.canal='general'; sondear();});
+    return;
+  }
+  if(a==='nuevoGrupo'){abrirDlgGrupo(null); return;}
+  if(a==='gestionarGrupo'){abrirDlgGrupo(S.chats.find(x=>x.id===el.dataset.v)); return;}
+  if(a==='cerrarDlg'){S.dlg=null; render(); return;}
+  if(a==='guardarGrupo'){
+    const g=S.dlg; g.nombre=(document.getElementById('gN').value||'').trim();
+    if(!g.nombre){aviso('Pon un nombre al grupo'); return;}
+    const p=g.id?api('/api/chat/editar',{id:g.id,nombre:g.nombre,miembros:g.miembros}):api('/api/chat/crear',{tipo:'grupo',nombre:g.nombre,miembros:g.miembros});
+    p.then(r=>{if(r.ok){S.dlg=null; if(r.id){S.canal=r.id; S.chatAbajo=true;} sondear(); render();}});
+    return;
+  }
+  if(a==='salirGrupo'){
+    const c=S.chats.find(x=>x.id===el.dataset.v); if(!c) return;
+    if(!confirm(`¿Salir del grupo ${c.nombre}? Dejarás de ver sus mensajes.`)) return;
+    api('/api/chat/salir',{id:c.id}).then(r=>{if(r.ok) S.canal='general'; sondear();});
+    return;
+  }
+  if(a==='privado'){
+    api('/api/chat/crear',{tipo:'privado',con:el.dataset.v}).then(r=>{if(r.ok){S.canal=r.id; S.chatAbajo=true; S.abierto.privados=true; sondear();}});
     return;
   }
   if(a==='bajaEq'){
@@ -1024,6 +1208,7 @@ document.addEventListener('click',e=>{
     return;
   }
   if(a==='mencionar'){
+    if(el.dataset.chat&&el.dataset.chat!==S.canal){S.canal=el.dataset.chat; S.chatAbajo=true;}   // se menciona dentro de su grupo
     S.ctx=(S.ctx?S.ctx.replace(/\s*$/,' '):'')+'@'+el.dataset.v+' '; render();
     const t=document.getElementById('ctx'); if(t){t.focus(); t.setSelectionRange(t.value.length,t.value.length);} return;
   }
@@ -1075,6 +1260,7 @@ document.addEventListener('input',e=>{
   if(e.target.id==='fcom'){S.comment=e.target.value;}
   if(e.target.id==='ccom'){S.ccom=e.target.value;}
   if(e.target.id==='ctx'){S.ctx=e.target.value;}
+  if(e.target.id==='gN'&&S.dlg){S.dlg.nombre=e.target.value;}
   if(e.target.id==='cq'){S.cq=e.target.value;}
   if(e.target.id==='xref'){S.extraForm.ref=e.target.value;}
   if(e.target.id==='xtxt'){S.extraForm.txt=e.target.value;}
@@ -1086,6 +1272,16 @@ document.addEventListener('change',e=>{
   if(e.target.id==='iest'){S.iest=e.target.value; render();}
   if(e.target.id==='umbral'){S.umbral=Math.min(100,Math.max(0,Number(e.target.value)||0)); render();}
   if(e.target.dataset&&e.target.dataset.rol){api('/api/equipo/rol',{n:e.target.dataset.rol,rol:e.target.value}).then(sondear);}
+  // Ventana de grupo: marcar quién entra y su papel (se guarda al pulsar «Crear grupo» / «Guardar cambios»)
+  if(S.dlg&&e.target.dataset&&e.target.dataset.gmiem){
+    const n=e.target.dataset.gmiem; S.dlg.nombre=(document.getElementById('gN').value||'');
+    if(e.target.checked) S.dlg.miembros[n]=S.dlg.miembros[n]||'miembro'; else delete S.dlg.miembros[n];
+    render();
+  }
+  if(S.dlg&&e.target.dataset&&e.target.dataset.grol){S.dlg.miembros[e.target.dataset.grol]=e.target.value;}
+  if(e.target.id==='nuevoPrivado'&&e.target.value){
+    api('/api/chat/crear',{tipo:'privado',con:e.target.value}).then(r=>{if(r.ok){S.canal=r.id; S.chatAbajo=true; S.abierto.privados=true; sondear();}});
+  }
   if(e.target.id==='archivo'){
     const f=e.target.files&&e.target.files[0];
     if(f){S.uploads.push({nombre:f.name,fecha:new Date().toISOString()}); render();}
@@ -1120,9 +1316,7 @@ document.addEventListener('submit',e=>{
     api('/api/equipo/alta',{n,c,rol}).then(r=>{if(r.ok){aviso(`${n} añadido al equipo`); sondear();}});
   } else if(e.target.id==='canalForm'){
     const nombre=(document.getElementById('ncanal').value||'').trim(); if(!nombre) return;
-    S.canal=nombre.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,'-').replace(/[^a-z0-9ñ-]/g,'').slice(0,30);
-    S.canales=[...new Set([...(S.canales||[]),S.canal])]; S.chatAbajo=true; render();
-    api('/api/canal',{nombre}).then(sondear);
+    api('/api/chat/crear',{tipo:'canal',nombre}).then(r=>{if(r.ok){S.canal=r.id; S.chatAbajo=true; sondear();}});
   }
 });
 

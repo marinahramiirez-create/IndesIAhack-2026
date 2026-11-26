@@ -3,13 +3,20 @@ Revisión EN EQUIPO y en vivo de la pantalla de hallazgos (sin instalar nada: so
 
     .\\.venv\\Scripts\\python servidor.py            # después de generar_revision.py
 
-Sirve salidas/revision/ en http://<tu-IP>:8765 para que los compañeros de la MISMA red Wi-Fi la abran en su navegador.
+Sirve salidas/revision/ en http://<tu-IP>:8765 para los compañeros de la misma red (o de la misma red de Radmin VPN).
 Guarda en salidas/colaboracion.json, compartido por todos:
   - decisiones (aprobar / rechazar con comentario), con quién y cuándo;
   - comentarios por hallazgo, con @menciones → avisos (la campanita);
-  - presencia: quién está mirando cada hallazgo («Marina también está en este hallazgo»).
+  - presencia: quién está mirando cada hallazgo («Marina también está en este hallazgo»);
+  - equipo con roles (Administrador, Aprobador, Revisor);
+  - chats de tres tipos:
+      canal   público para todo el equipo; solo el administrador del equipo lo crea, renombra o borra;
+      grupo   lo crea cualquiera y elige quién entra; su creador es administrador del grupo (renombra,
+              añade o quita miembros, da o quita el rol de administrador del grupo);
+      privado conversación entre dos personas; solo ellas la ven.
+El servidor solo envía a cada persona los chats y mensajes que puede ver. Aviso: el inicio de sesión es de prototipo
+(no comprueba contraseñas), así que la privacidad depende de que cada uno entre con su propio correo.
 La página pregunta cada 2,5 s si hay novedades. Nada sale de este ordenador; no toca respuestas.csv.
-Abierta con doble clic (sin servidor), la página sigue funcionando sola, guardando en el navegador.
 """
 import argparse
 import json
@@ -30,7 +37,6 @@ PRESENCIA_S = 20          # segundos sin señal para dejar de mostrar a alguien 
 MAX_TEXTO = 2000
 
 # Equipo inicial (después se gestiona desde Configuración → Usuarios y roles; se guarda en colaboracion.json).
-# Se puede mencionar a cualquier miembro aunque todavía no se haya conectado.
 ROLES = ("Administrador", "Aprobador", "Revisor")
 EQUIPO_INICIAL = [{"n": "Sergio", "c": "sergio@airbus.es", "rol": "Administrador"},
                   {"n": "Marina", "c": "marina@airbus.es", "rol": "Aprobador"},
@@ -39,8 +45,8 @@ EQUIPO_INICIAL = [{"n": "Sergio", "c": "sergio@airbus.es", "rol": "Administrador
                   {"n": "Daniela", "c": "daniela@airbus.es", "rol": "Revisor"}]
 
 _lock = threading.Lock()
-_estado = {"seq": 0, "dec": {}, "comentarios": [], "avisos": [], "mensajes": [], "canales": ["general"],
-           "canal_autor": {}, "equipo": [dict(m) for m in EQUIPO_INICIAL]}
+_estado = {"seq": 0, "dec": {}, "comentarios": [], "avisos": [], "mensajes": [], "equipo": [dict(m) for m in EQUIPO_INICIAL],
+           "chats": [{"id": "general", "tipo": "canal", "nombre": "general", "autor": "", "miembros": {}}], "n_grupos": 0}
 _presencia: dict[str, dict] = {}       # usuario → {"key", "t"}
 
 
@@ -56,10 +62,18 @@ def _cargar():
     global _estado
     if DATOS.exists():
         try:
-            _estado = {**_estado, **json.loads(DATOS.read_text(encoding="utf-8"))}
+            datos = json.loads(DATOS.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             print(f"aviso: {DATOS} no se pudo leer; se empieza vacío (el archivo se conserva)")
             DATOS.rename(DATOS.with_suffix(f".roto-{int(time.time())}.json"))
+            return
+        if "chats" not in datos:          # versión anterior: «canales» públicos → chats de tipo canal
+            autor = datos.get("canal_autor", {})
+            datos["chats"] = [{"id": c, "tipo": "canal", "nombre": c, "autor": autor.get(c, ""), "miembros": {}}
+                              for c in datos.get("canales", ["general"])]
+        datos.pop("canales", None)
+        datos.pop("canal_autor", None)
+        _estado = {**_estado, **datos}
 
 
 def _guardar():
@@ -91,6 +105,35 @@ def _mencionados(texto: str, autor: str) -> set[str]:
             if u != autor and _norm(u).startswith(clave):
                 salida.add(u)
     return salida
+
+
+# ------------------------------------------------------------------ chats y permisos
+def _chat(cid: str) -> dict | None:
+    return next((c for c in _estado["chats"] if c["id"] == cid), None)
+
+
+def _ve(user: str, c: dict) -> bool:
+    return c["tipo"] == "canal" or user in c["miembros"]
+
+
+def _gestiona(user: str, c: dict) -> bool:
+    """Canal: el administrador del equipo. Grupo: un administrador del grupo. Privado: nadie lo renombra."""
+    if c["tipo"] == "canal":
+        return _rol(user) == "Administrador"
+    if c["tipo"] == "grupo":
+        return c["miembros"].get(user) == "admin"
+    return False
+
+
+def _miembros_validos(m: dict) -> dict:
+    nombres = {x["n"] for x in _estado["equipo"]}
+    return {str(n): ("admin" if r == "admin" else "miembro") for n, r in (m or {}).items() if n in nombres}
+
+
+def _borrar_chat(cid: str):
+    _estado["chats"] = [c for c in _estado["chats"] if c["id"] != cid]
+    _estado["mensajes"] = [m for m in _estado["mensajes"] if m["canal"] != cid]
+    _estado["avisos"] = [a for a in _estado["avisos"] if a["key"] != f"chat:{cid}"]
 
 
 class Manejador(SimpleHTTPRequestHandler):
@@ -129,10 +172,12 @@ class Manejador(SimpleHTTPRequestHandler):
             if user:
                 _presencia[user] = {"key": key, "t": time.time()}
             vivos = {n: p["key"] for n, p in _presencia.items() if time.time() - p["t"] < PRESENCIA_S}
+            chats = [c for c in _estado["chats"] if _ve(user, c)]          # cada uno solo recibe lo que puede ver
+            ids = {c["id"] for c in chats}
             self._json({"seq": _estado["seq"], "dec": _estado["dec"], "comentarios": _estado["comentarios"],
                         "avisos": [a for a in _estado["avisos"] if a["para"] == user], "presencia": vivos,
-                        "mensajes": _estado["mensajes"][-500:], "canales": _estado["canales"],
-                        "canal_autor": _estado["canal_autor"], "equipo": _estado["equipo"]})
+                        "chats": chats, "mensajes": [m for m in _estado["mensajes"] if m["canal"] in ids][-800:],
+                        "equipo": _estado["equipo"]})
 
     def do_POST(self):
         u = urlparse(self.path).path
@@ -140,6 +185,7 @@ class Manejador(SimpleHTTPRequestHandler):
         user = str(d.get("user", ""))[:80].strip()
         if not user:
             return self._json({"error": "falta el usuario"}, 400)
+        extra = {}
         with _lock:
             if u == "/api/decision":
                 for key in d.get("keys", [])[:500]:
@@ -157,46 +203,82 @@ class Manejador(SimpleHTTPRequestHandler):
                 for p in _mencionados(texto, user):
                     _estado["avisos"].append({"para": p, "de": user, "key": key, "texto": texto[:300],
                                               "fecha": _ahora(), "leido": False, "cid": cid})
-            elif u == "/api/mensaje":                       # chat del equipo, por canales
+            elif u == "/api/mensaje":
                 texto = str(d.get("texto", "")).strip()[:MAX_TEXTO]
-                canal = str(d.get("canal", "general"))[:40]
-                if not texto or canal not in _estado["canales"]:
-                    return self._json({"error": "mensaje vacío o canal inexistente"}, 400)
+                c = _chat(str(d.get("chat") or d.get("canal") or "general"))
+                if not texto or not c or not _ve(user, c):
+                    return self._json({"error": "mensaje vacío o chat no disponible"}, 400)
                 mid = len(_estado["mensajes"]) + 1
-                _estado["mensajes"].append({"id": mid, "canal": canal, "user": user, "texto": texto, "fecha": _ahora()})
-                for p in _mencionados(texto, user):
-                    _estado["avisos"].append({"para": p, "de": user, "key": f"chat:{canal}", "texto": texto[:300],
-                                              "fecha": _ahora(), "leido": False, "mid": mid})
-            elif u == "/api/canal":
-                nombre = _nombre_canal(d.get("nombre", ""))
-                if not nombre:
-                    return self._json({"error": "nombre de canal vacío"}, 400)
-                if nombre not in _estado["canales"]:
-                    _estado["canales"].append(nombre)
-                    _estado["canal_autor"][nombre] = user
-            elif u in ("/api/canal/renombrar", "/api/canal/borrar"):
-                # Solo quien creó el chat o un administrador; #general no se toca
-                de = str(d.get("nombre", ""))
-                if de not in _estado["canales"] or de == "general":
-                    return self._json({"error": "ese chat no se puede modificar"}, 400)
-                if user != _estado["canal_autor"].get(de) and _rol(user) != "Administrador":
-                    return self._json({"error": "solo quien creó el chat o un administrador"}, 403)
-                if u.endswith("borrar"):
-                    _estado["canales"].remove(de)
-                    _estado["mensajes"] = [m for m in _estado["mensajes"] if m["canal"] != de]
-                    _estado["avisos"] = [a for a in _estado["avisos"] if a["key"] != f"chat:{de}"]
-                else:
-                    a = _nombre_canal(d.get("nuevo", ""))
-                    if not a or a in _estado["canales"]:
+                _estado["mensajes"].append({"id": mid, "canal": c["id"], "user": user, "texto": texto, "fecha": _ahora()})
+                mencion = _mencionados(texto, user)
+                # Canal público: solo avisa a quien mencionas. Grupo o privado: avisa a todos los que están dentro
+                # (como un chat de mensajería); quien está mencionado lo ve marcado como mención.
+                avisar = mencion if c["tipo"] == "canal" else (set(c["miembros"]) - {user})
+                for p in avisar:
+                    _estado["avisos"].append({"para": p, "de": user, "key": f"chat:{c['id']}", "texto": texto[:300],
+                                              "fecha": _ahora(), "leido": False, "mid": mid,
+                                              "mencion": p in mencion})
+            elif u == "/api/chat/crear":
+                tipo = d.get("tipo")
+                if tipo == "canal":
+                    if _rol(user) != "Administrador":
+                        return self._json({"error": "solo el administrador del equipo crea canales públicos"}, 403)
+                    cid = _nombre_canal(d.get("nombre", ""))
+                    if not cid or _chat(cid):
                         return self._json({"error": "nombre vacío o ya existe"}, 400)
-                    _estado["canales"][_estado["canales"].index(de)] = a
-                    _estado["canal_autor"][a] = _estado["canal_autor"].pop(de, user)
-                    for m in _estado["mensajes"]:
-                        if m["canal"] == de:
-                            m["canal"] = a
-                    for av in _estado["avisos"]:
-                        if av["key"] == f"chat:{de}":
-                            av["key"] = f"chat:{a}"
+                    _estado["chats"].append({"id": cid, "tipo": "canal", "nombre": cid, "autor": user, "miembros": {}})
+                elif tipo == "grupo":
+                    nombre = str(d.get("nombre", "")).strip()[:40]
+                    miembros = _miembros_validos(d.get("miembros"))
+                    miembros[user] = "admin"         # quien crea el grupo es su administrador
+                    if not nombre or len(miembros) < 2:
+                        return self._json({"error": "pon un nombre y al menos otra persona"}, 400)
+                    _estado["n_grupos"] = _estado.get("n_grupos", 0) + 1
+                    cid = f"g{_estado['n_grupos']}"
+                    _estado["chats"].append({"id": cid, "tipo": "grupo", "nombre": nombre, "autor": user, "miembros": miembros})
+                elif tipo == "privado":
+                    con = str(d.get("con", ""))
+                    if con == user or con not in {x["n"] for x in _estado["equipo"]}:
+                        return self._json({"error": "elige a otra persona del equipo"}, 400)
+                    cid = "dm:" + "|".join(sorted([user, con]))
+                    if not _chat(cid):
+                        _estado["chats"].append({"id": cid, "tipo": "privado", "nombre": "", "autor": user,
+                                                 "miembros": {user: "miembro", con: "miembro"}})
+                else:
+                    return self._json({"error": "tipo de chat no válido"}, 400)
+                extra = {"id": cid}
+            elif u == "/api/chat/editar":
+                c = _chat(str(d.get("id", "")))
+                if not c or not _gestiona(user, c):
+                    return self._json({"error": "solo el administrador de este chat puede editarlo"}, 403)
+                if "nombre" in d:
+                    nombre = str(d.get("nombre", "")).strip()[:40]
+                    if not nombre:
+                        return self._json({"error": "el nombre no puede quedar vacío"}, 400)
+                    c["nombre"] = _nombre_canal(nombre) if c["tipo"] == "canal" else nombre
+                if c["tipo"] == "grupo" and "miembros" in d:
+                    m = _miembros_validos(d.get("miembros"))
+                    if not any(r == "admin" for r in m.values()):
+                        return self._json({"error": "el grupo necesita al menos un administrador"}, 400)
+                    if len(m) < 2:
+                        return self._json({"error": "un grupo necesita al menos dos personas"}, 400)
+                    c["miembros"] = m
+            elif u == "/api/chat/borrar":
+                c = _chat(str(d.get("id", "")))
+                if not c or c["id"] == "general":
+                    return self._json({"error": "ese chat no se puede eliminar"}, 400)
+                if not (_gestiona(user, c) or (c["tipo"] == "privado" and user in c["miembros"])):
+                    return self._json({"error": "solo el administrador de este chat puede eliminarlo"}, 403)
+                _borrar_chat(c["id"])
+            elif u == "/api/chat/salir":
+                c = _chat(str(d.get("id", "")))
+                if not c or c["tipo"] != "grupo" or user not in c["miembros"]:
+                    return self._json({"error": "no estás en ese grupo"}, 400)
+                c["miembros"].pop(user)
+                if len(c["miembros"]) < 1:
+                    _borrar_chat(c["id"])
+                elif not any(r == "admin" for r in c["miembros"].values()):
+                    c["miembros"][next(iter(c["miembros"]))] = "admin"     # alguien hereda la administración
             elif u in ("/api/equipo/alta", "/api/equipo/baja", "/api/equipo/rol"):
                 if _rol(user) != "Administrador":
                     return self._json({"error": "solo un administrador gestiona el equipo"}, 403)
@@ -224,15 +306,19 @@ class Manejador(SimpleHTTPRequestHandler):
                     for m in eq:
                         if m["n"] == n:
                             m["rol"] = rol
-            elif u == "/api/leido":
+            elif u == "/api/leido":                         # marca como leídos los avisos (de un chat o todos)
+                k = d.get("key")
                 for a in _estado["avisos"]:
-                    if a["para"] == user:
+                    if a["para"] == user and (not k or a["key"] == k):
                         a["leido"] = True
+            elif u == "/api/avisos/borrar":                 # quita de la campanita los avisos de un chat (o todos)
+                k = d.get("key")
+                _estado["avisos"] = [a for a in _estado["avisos"] if not (a["para"] == user and (not k or a["key"] == k))]
             else:
                 return self._json({"error": "ruta desconocida"}, 404)
             _estado["seq"] += 1
             _guardar()
-            return self._json({"ok": True, "seq": _estado["seq"]})
+            return self._json({"ok": True, "seq": _estado["seq"], **extra})
 
 
 def ips_locales() -> list[str]:
@@ -262,8 +348,8 @@ def main():
     print("\nRevisión en equipo en marcha. Ábrela en el navegador:")
     print(f"  · En este ordenador:   http://localhost:{a.puerto}")
     for ip in ips_locales():
-        print(f"  · Compañeros (misma Wi-Fi):  http://{ip}:{a.puerto}")
-    print("\nSi Windows pregunta por el Firewall, pulsa «Permitir» (redes privadas).")
+        print(f"  · Compañeros (misma red o Radmin VPN):  http://{ip}:{a.puerto}")
+    print("\nSi Windows pregunta por el Firewall, pulsa «Permitir».")
     print("Ctrl+C para pararla. Lo compartido se guarda en salidas\\colaboracion.json.\n", flush=True)
     try:
         srv.serve_forever()
