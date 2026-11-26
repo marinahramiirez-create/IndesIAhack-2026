@@ -2297,7 +2297,7 @@ function vCfg(){
   } else {
     body=vEquipo();
   }
-  return `<div class="tabs" role="tablist">
+  return `<h2 style="margin-bottom:14px">Configuración</h2><div class="tabs" role="tablist">
     <button role="tab" class="${tab==='reglas'?'on':''}" data-act="nav" data-v="reglas">Reglas</button>
     <button role="tab" class="${tab==='usuarios'?'on':''}" data-act="nav" data-v="usuarios">Usuarios</button>
   </div>${body}`;
@@ -2321,7 +2321,8 @@ function render(){
   const scr=['.lista-scroll','.motivo-scroll','.hscroll','#msgs','.sidemodal'].map(s=>{const el=document.querySelector(s);return [s,el?el.scrollTop:0];});
   document.getElementById('uN').textContent=S.user.nombre;
   document.getElementById('uC').textContent=S.user.cargo;
-  document.getElementById('ttl').textContent=TITLES[S.view];
+  // La barra superior siempre muestra el nombre de la app; el de la sección va como título dentro de la página
+  document.title=`${TITLES[S.view]} · Nimbus Audit Studio | Airbus`;
   document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.v===S.view));
   const criterios=S.criteriosOpen?`<div class="scrim" data-act="cerrarCriterios"></div>
     <aside class="sidemodal" role="dialog" aria-label="Criterios de validación">
