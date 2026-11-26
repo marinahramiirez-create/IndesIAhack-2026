@@ -423,7 +423,7 @@ class Manejador(SimpleHTTPRequestHandler):
                 _estado["mensajes"].append({"id": mid, "canal": c["id"], "user": user, "texto": texto, "fecha": _ahora(),
                                             "vistos": {}, **({"adjuntos": adj} if adj else {})})
                 if not texto:
-                    texto = "📎 " + ", ".join(a["nombre"] for a in adj)
+                    texto = "Adjunto: " + ", ".join(a["nombre"] for a in adj)
                 mencion = _mencionados(texto, user)
                 # Canal público: solo avisa a quien mencionas. Grupo o privado: avisa a todos los que están dentro
                 # (como un chat de mensajería); quien está mencionado lo ve marcado como mención.
