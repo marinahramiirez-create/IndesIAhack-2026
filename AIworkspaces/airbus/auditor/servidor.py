@@ -61,6 +61,8 @@ _estado = {"seq": 0, "dec": {}, "comentarios": [], "avisos": [], "mensajes": [],
 VERSIONES = RAIZ / "salidas" / "versiones"   # un JSON por versión; el PDF original del corpus nunca se modifica
 MAX_VERSION = 3_000_000                      # bytes del cuerpo al guardar una versión (el resto de peticiones: 20 KB)
 _presencia: dict[str, dict] = {}       # usuario → {"key", "t"}
+_sesiones: dict[str, dict] = {}        # usuario → {id de sesión → {"inicio", "ua", "t"}} (en memoria; solo informativo)
+SESION_S = 30 * 60                     # una sesión sin señales durante 30 min deja de listarse
 
 
 def _ahora() -> str:
@@ -255,9 +257,17 @@ class Manejador(SimpleHTTPRequestHandler):
         q = parse_qs(u.query)
         user = (q.get("user") or [""])[0][:80]
         key = (q.get("key") or [""])[0][:200]
+        sid = (q.get("sid") or [""])[0][:40]
         with _lock:
             if user:
                 _presencia[user] = {"key": key, "t": time.time()}
+            if user and sid:                  # «Mi cuenta → Sesiones abiertas»: cada pestaña del navegador es una sesión
+                s = _sesiones.setdefault(user, {}).setdefault(sid, {"inicio": _ahora(), "ua": self.headers.get("User-Agent", "")[:300]})
+                s["t"] = time.time()
+            ahora_t = time.time()
+            mias = sorted(({"sid": k, "inicio": v["inicio"], "ua": v["ua"], "hace_s": int(ahora_t - v["t"])}
+                           for k, v in _sesiones.get(user, {}).items() if ahora_t - v["t"] < SESION_S),
+                          key=lambda x: x["hace_s"])
             vivos = {n: p["key"] for n, p in _presencia.items() if time.time() - p["t"] < PRESENCIA_S}
             chats = [c for c in _estado["chats"] if _ve(user, c)]          # cada uno solo recibe lo que puede ver
             ids = {c["id"] for c in chats}
@@ -268,7 +278,7 @@ class Manejador(SimpleHTTPRequestHandler):
                         "avisos": [a for a in _estado["avisos"] if a["para"] == user], "presencia": vivos,
                         "chats": chats, "mensajes": visibles[-800:],
                         "equipo": _estado["equipo"], "ediciones": _estado["ediciones"],
-                        "versiones": _estado.get("versiones", {})})
+                        "versiones": _estado.get("versiones", {}), "sesiones": mias})
 
     def do_POST(self):
         u = urlparse(self.path).path
@@ -446,6 +456,10 @@ class Manejador(SimpleHTTPRequestHandler):
                 lista.append({"n": n, "user": user, "fecha": _ahora(), "nota": str(d.get("nota", "")).strip()[:300],
                               "paginas": sorted(int(k) for k in pags)})
                 extra = {"n": n}
+            elif u == "/api/sesion/cerrar":                # «Cerrar sesión»: deja de listarse en «Sesiones abiertas»
+                _sesiones.get(user, {}).pop(str(d.get("sid", ""))[:40], None)
+                _presencia.pop(user, None)
+                return self._json({"ok": True})
             elif u == "/api/chat/vaciar":                   # vacía el chat SOLO para este usuario; los demás lo siguen viendo
                 c = _chat(str(d.get("id", "")))
                 if not c or not _ve(user, c):

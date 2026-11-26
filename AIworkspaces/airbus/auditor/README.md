@@ -82,6 +82,11 @@ La página funciona sin servidor: doble clic y listo. Tiene estas pantallas:
   como versión nueva con una nota. «Comparar» enseña original y versión lado a lado (amarillo = añadido o cambiado,
   rojo = quitado) y «.txt» descarga el texto completo. Las versiones se guardan en `salidas/versiones/`.
 - **Configuración**.
+- **Mi cuenta** (*My account* en inglés; también pulsando tu nombre arriba a la derecha): perfil (nombre, usuario,
+  correo, rol, idioma y cerrar sesión), **sesiones abiertas** (navegador y desde cuándo; las lleva el servidor) y la
+  **política de acceso real** del prototipo, separada de lo previsto. Llaves de acceso, app de autenticación y códigos
+  de recuperación aparecen como «Próximamente»: llegarán con el inicio de sesión de Microsoft (Entra ID, ver
+  `AIworkspaces/airbus/AUTENTICACION.md`).
 
 El menú lateral lleva un icono junto a cada opción.
 
