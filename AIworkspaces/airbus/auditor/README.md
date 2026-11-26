@@ -69,16 +69,20 @@ Opciones de `auditar.py`:
 `generar_revision.py` toma el diseño de `src/plantilla_revision.html` (el prototipo de Valentina) y le mete los datos reales. Genera la página `salidas/revision/index.html` y una imagen por cada página del PDF.
 
 La página funciona sin servidor: doble clic y listo. Tiene estas pantallas:
-- **Inicio**: los documentos auditados y los cargados, con las pestañas de estado (Todos, Pendientes, En revisión,
-  Completados, Sin hallazgos) y filtros: texto, decisión (Pendiente / Aceptado / Rechazado), tipo, familia, cláusula,
-  **prioridad**, **antigüedad** (hoy · esta semana · más de 7 días · vencidos), **orden** y las casillas «Míos»
-  (decididos por ti), «Nuevos» (que aún no has abierto, recordado en tu navegador), «Con comentarios» y **«En equipo»**
-  (compartidos contigo o por ti, o trabajados por ti y al menos otra persona; enseña quién y por qué).
+- **Auditorías** (antes Inicio): los documentos auditados y los cargados, con filtros en una línea (Buscar, Estado,
+  **Decisión** — Pendiente / Aceptado / Rechazado —, Tipo de hallazgo, Familia, Cláusula, **Prioridad**, **Antigüedad**
+  — hoy · esta semana · más de 7 días · vencidos — y «Asignado»: «Míos» (decididos por ti), «Nuevos» (que aún no has
+  abierto, recordado en tu navegador), «Con comentarios», **«En equipo»** (compartidos contigo o por ti, o trabajados por
+  ti y al menos otra persona; enseña quién y por qué) y **«Escalados a mí»**), columnas ordenables y paginador.
   - **Prioridad** Alta / Media / Baja: se **sugiere** según los hallazgos (5 o más «No cumple» → Alta; alguno → Media;
-    ninguno → Baja) y se cambia en Revisión; queda quién y cuándo. Por ahora la puede cambiar cualquiera del equipo.
-  - **Antigüedad y plazos**: alta 2 días, media 5, baja 10, contados desde la auditoría (o desde que se cargó el
-    documento). Si se pasa sin revisar, sale **«Vencido»**. «Urgencia» (el orden por defecto) pone primero lo que hay
-    que revisar, por prioridad y, dentro de cada una, lo que más lleva esperando.
+    ninguno → Baja) y se cambia en Revisión (permiso «Cambiar la prioridad»); queda quién y cuándo. Es una columna
+    ordenable.
+  - **Plazo**: el común de Configuración → Reglas («Días para responder»). Un documento cargado cuenta desde el día en
+    que se cargó y necesita respuesta hasta que alguien lo dé por revisado. Sin orden elegido, la lista va por
+    **urgencia**: primero lo que hay que revisar, por prioridad y, dentro de cada una, lo que menos plazo tiene.
+  - **Permisos** (matriz de roles, módulo Revisiones): «Cargar documentos», «Compartir documentos», «Cambiar la
+    prioridad» y «Marcar como revisado». En los roles guardados antes de existir, los tiene quien ya podía aprobar o
+    rechazar (`src/permisos.py`, pruebas en `tests/test_permisos_documentos.py`).
   - **Cargar archivo**: PDF, imagen, Word (.docx), Excel (.xlsx), CSV o texto (hasta 25 MB). El servidor lo prepara
     (`src/cargados.py`) y se puede **abrir enseguida** en Revisión, aunque no tenga hallazgos: el PDF página a página;
     el Word con títulos, párrafos y tablas; el Excel y el CSV como tablas. Queda **quién lo cargó y cuándo**; la
@@ -94,7 +98,8 @@ La página funciona sin servidor: doble clic y listo. Tiene estas pantallas:
     v3.0.2…**, con autor, fecha, nota y un nombre opcional. «Comparar con el original» enseña los dos textos lado a
     lado (amarillo = añadido o cambiado, rojo = quitado) y «.txt» descarga el texto completo. Se guardan en
     `salidas/versiones/`.
-  - **✎ Editar** (PDF): la página junto a su texto, ahora **legible** (párrafos juntos y tablas fila a fila,
+  - **✎ Editar** (PDF; solo el Dueño de Proceso al que se ha escalado el documento, mientras no esté completado; al resto
+    le sale el candado con el motivo): la página junto a su texto, ahora **legible** (párrafos juntos y tablas fila a fila,
     `src/texto_paginas.py`). Lo que cambias se **resalta mientras escribes** (amarillo; una marca roja donde se quitó
     algo, y debajo qué se quitó).
 - **Panel de control IA**: lo que hizo cada agente y el F1.
@@ -130,7 +135,33 @@ La consola muestra dos direcciones: `http://localhost:8765` para ti y `http://<t
 - **Chat** con tres tipos: **canales públicos** (los crea o borra un administrador del equipo), **grupos** (los crea
   cualquiera; su creador los administra: nombre, integrantes y papeles) y **privados** entre dos personas. Cada uno
   solo recibe los chats en los que está; `#número` enlaza un hallazgo;
-- **Configuración → Usuarios y roles**: alta y baja de miembros y roles (Administrador, Aprobador, Revisor).
+- **Configuración → Usuarios**: roles y usuarios con permisos por módulo (ver abajo).
+
+### Usuarios, roles y permisos
+
+Con el servidor, solo entra quien está dado de alta: `/api/login` da un token de sesión y **todas** las operaciones
+sacan el usuario de ese token (nunca del cuerpo de la petición) y comprueban el permiso de su rol en el servidor
+(`src/permisos.py`). El inicio de sesión todavía no pide contraseña (prototipo; en producción, Entra ID).
+
+- **Roles** (Configuración → Usuarios → Roles): nombre, descripción y una matriz de permisos por módulo.
+  Solo el rol **Admin** crea, edita o elimina roles; los demás los consultan. Ninguna casilla concede administrar roles.
+  Admin y Dueño de Proceso son roles del sistema (no se eliminan); un rol con usuarios tampoco se elimina.
+- **Permisos** (acciones reales de la app):
+  - Revisiones: consultar, **aprobar** y **rechazar** (independientes), comentar, editar hallazgos, escalar documentos,
+    editar documentos escalados.
+  - Configuración: consultar, cambiar el umbral, gestionar usuarios.
+  - Descarga de histórico: respuestas del auditor, revisión del equipo.
+- **Usuarios**: crear, editar (correo y rol) y eliminar. Todo usuario tiene un rol existente; solo un Admin da o quita
+  el rol Admin y siempre queda al menos uno. Al cambiar el rol cambian al momento los permisos.
+- **Escalamiento y edición de documentos**: en Revisión, «⇪ Escalar» asigna el documento a UNA persona con rol
+  **Dueño de Proceso**. Solo esa persona puede pulsar «✎ Editar» (crear versiones), y solo mientras el documento no
+  esté Completado. Si se escala a otra persona, el anterior deja de poder editarlo; ambos reciben un aviso.
+
+Pruebas (42, sin instalar nada; levantan el servidor en un puerto libre con datos temporales):
+
+```bash
+.venv/bin/python -m unittest tests.test_permisos -v      # Windows: .\.venv\Scripts\python -m unittest tests.test_permisos -v
+```
 - **Aviso emergente**: cuando llega una notificación nueva sale arriba a la derecha y se oculta solo a los **10 segundos**
   (con el ratón encima se pausa); la notificación sigue en la campanita;
 - **Editar un mensaje** solo durante los **30 minutos** siguientes a enviarlo (el ✎ desaparece después y el servidor lo rechaza);
