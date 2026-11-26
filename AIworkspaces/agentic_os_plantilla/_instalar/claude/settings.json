@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "additionalDirectories": [],
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep",
+      "WebSearch",
+      "WebFetch"
+    ],
+    "deny": [
+      "Bash(rm:*)",
+      "Bash(del:*)",
+      "Bash(rmdir:*)"
+    ]
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "areas": {
+    "trabajo": {
+      "nombre": "Trabajo",
+      "descripcion": "Trabajo, clientes, propuestas y búsqueda de empleo",
+      "color": "#2E7D6B"
+    },
+    "estudios": {
+      "nombre": "Estudios",
+      "descripcion": "Clases, exámenes, entregas y proyectos académicos",
+      "color": "#3F51B5"
+    },
+    "personal": {
+      "nombre": "Personal",
+      "descripcion": "Salud, deporte, viajes, familia y aficiones",
+      "color": "#16A085"
+    }
+  },
+  "conectores": {
+    "gmail": {
+      "nombre": "Gmail",
+      "origen": "claude.ai",
+      "descripcion": "Leer correos y dejar borradores (nunca enviar sin confirmar)"
+    },
+    "google-calendar": {
+      "nombre": "Google Calendar",
+      "origen": "claude.ai",
+      "descripcion": "Agenda, bloques de tiempo y fechas de entrega"
+    }
+  },
+  "links": {
+    "skill:briefing": {
+      "areas": ["trabajo", "estudios", "personal"],
+      "conectores": ["gmail", "google-calendar"]
+    },
+    "skill:cierre-semanal": {
+      "areas": ["trabajo", "estudios", "personal"],
+      "conectores": ["google-calendar"]
+    },
+    "skill:procesar-inbox": {
+      "areas": ["trabajo", "estudios", "personal"],
+      "conectores": []
+    },
+    "agent:orquestador": {
+      "areas": ["trabajo", "estudios", "personal"],
+      "conectores": []
+    },
+    "agent:arquitecto-os": {
+      "areas": [],
+      "conectores": []
+    },
+    "agent:asistente-agenda": {
+      "areas": ["trabajo", "estudios", "personal"],
+      "conectores": ["gmail", "google-calendar"]
+    },
+    "agent:investigador": {
+      "areas": ["trabajo"],
+      "conectores": []
+    },
+    "agent:analista-financiero": {
+      "areas": ["trabajo", "personal"],
+      "conectores": []
+    },
+    "agent:coach-carrera": {
+      "areas": ["trabajo"],
+      "conectores": []
+    },
+    "agent:tutor-estudios": {
+      "areas": ["estudios"],
+      "conectores": []
+    },
+    "connector:gmail": {
+      "areas": ["trabajo", "estudios"],
+      "conectores": []
+    },
+    "connector:google-calendar": {
+      "areas": ["trabajo", "estudios", "personal"],
+      "conectores": []
+    }
+  }
+}

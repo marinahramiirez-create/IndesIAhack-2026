@@ -1,0 +1,51 @@
+{
+  "collapse-filter": true,
+  "search": "-file:CLAUDE -file:pendientes -file:README",
+  "showTags": false,
+  "showAttachments": false,
+  "hideUnresolved": false,
+  "showOrphans": true,
+  "collapse-color-groups": true,
+  "colorGroups": [
+    {
+      "query": "tag:#area",
+      "color": {
+        "a": 1,
+        "rgb": 2063467
+      }
+    },
+    {
+      "query": "tag:#proyecto",
+      "color": {
+        "a": 1,
+        "rgb": 9323693
+      }
+    },
+    {
+      "query": "tag:#persona",
+      "color": {
+        "a": 1,
+        "rgb": 14711342
+      }
+    },
+    {
+      "query": "tag:#inicio",
+      "color": {
+        "a": 1,
+        "rgb": 2040616
+      }
+    }
+  ],
+  "collapse-display": true,
+  "showArrow": false,
+  "textFadeMultiplier": 0,
+  "nodeSizeMultiplier": 1,
+  "lineSizeMultiplier": 1,
+  "collapse-forces": true,
+  "centerStrength": 0.518713248970312,
+  "repelStrength": 10,
+  "linkStrength": 1,
+  "linkDistance": 250,
+  "scale": 0.8626483708093421,
+  "close": true
+}

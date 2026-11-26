@@ -31,6 +31,9 @@ MAX_FILE_BYTES = 5 * 1024 * 1024  # ignora archivos > 5 MB
 IGNORED_DIRS = {
     "_rag", ".git", ".venv", "venv", "env", "__pycache__", "node_modules", ".ipynb_checkpoints",
     ".idea", ".vscode", "dist", "build", "chroma_db",
+    # agentic_os_plantilla: plugin de Obsidian (1,3 MB de JS ajeno), copia duplicada de
+    # skills/agentes (_instalar) y papelera: solo meterían ruido en las búsquedas
+    ".obsidian", "_instalar", "_papelera",
 }
 
 # Archivos que genera este sistema (no se reindexan para no retroalimentarse)

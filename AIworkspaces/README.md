@@ -26,7 +26,8 @@ AIworkspaces/
    ollama pull llama3.2
    ollama pull nomic-embed-text
    ```
-3. El entorno Python ya está creado en `_rag/.venv`. Si hace falta recrearlo:
+3. El entorno Python ya está creado en `_rag/.venv`. Si hace falta recrearlo (usa Python 3.13 o
+   anterior: chromadb no se instala con 3.14/3.15; en Mac: `python3.13 -m venv _rag/.venv`):
    ```
    python -m venv _rag\.venv
    _rag\.venv\Scripts\pip install -r _rag\requirements.txt

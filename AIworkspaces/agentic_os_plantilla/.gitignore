@@ -1,0 +1,15 @@
+# Papelera del dashboard
+_papelera/
+
+# Estado local de Obsidian (cambia en cada uso)
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/cache
+
+# Configuración local de Claude Code
+.claude/settings.local.json
+
+# Sistema
+node_modules/
+Thumbs.db
+desktop.ini

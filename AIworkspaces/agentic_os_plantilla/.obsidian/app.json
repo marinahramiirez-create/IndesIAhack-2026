@@ -1,0 +1,11 @@
+{
+  "userIgnoreFilters": [
+    "_instalar/",
+    "dashboard/",
+    "_papelera/"
+  ],
+  "newFileLocation": "folder",
+  "newFileFolderPath": "inbox",
+  "attachmentFolderPath": "inbox/adjuntos",
+  "alwaysUpdateLinks": true
+}

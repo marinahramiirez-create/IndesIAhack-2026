@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agentic OS · Dashboard</title>
+<style>
+  :root{
+    --bg:#F5F4EF; --panel:#FFFFFF; --ink:#1F2328; --muted:#6B7078; --line:#E4E2DA;
+    --accent:#1F2328; --skill:#2C6E91; --agent:#B5602B; --conn:#5B4B8A; --danger:#B3261E;
+    --r:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+  header{display:flex;align-items:center;gap:18px;padding:14px 22px;border-bottom:1px solid var(--line);background:var(--panel)}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;letter-spacing:.2px}
+  .logo .dot{width:26px;height:26px;border-radius:8px;background:var(--ink);display:grid;place-items:center;color:#fff;font-size:13px}
+  .stats{display:flex;gap:8px;margin-left:8px}
+  .stat{font-size:12.5px;color:var(--muted);background:var(--bg);border:1px solid var(--line);padding:5px 10px;border-radius:999px}
+  .stat b{color:var(--ink)}
+  .spacer{flex:1}
+  .chips{display:flex;gap:6px}
+  .chip{font-size:12.5px;border:1px solid var(--line);background:#fff;padding:6px 11px;border-radius:999px;cursor:pointer;display:flex;align-items:center;gap:6px;user-select:none}
+  .chip.off{opacity:.4}
+  .sw{width:9px;height:9px;border-radius:3px;display:inline-block}
+  button{font:inherit;cursor:pointer}
+  .btn{border:1px solid var(--ink);background:var(--ink);color:#fff;padding:8px 14px;border-radius:10px;font-size:13.5px;font-weight:600}
+  .btn.ghost{background:#fff;color:var(--ink);border-color:var(--line)}
+  .btn.danger{background:#fff;color:var(--danger);border-color:#E9C9C6}
+  .btn:disabled{opacity:.5;cursor:default}
+  main{flex:1;display:flex;min-height:0}
+  #stage{flex:1;position:relative;min-width:0}
+  svg{width:100%;height:100%;display:block}
+  aside{width:400px;border-left:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;min-height:0}
+  .aside-body{padding:20px 22px;overflow:auto;flex:1}
+  .empty{color:var(--muted);font-size:14px;line-height:1.55}
+  .empty h3{color:var(--ink);margin:0 0 8px;font-size:16px}
+  .badge{font-size:11px;text-transform:uppercase;letter-spacing:.7px;font-weight:700;padding:3px 8px;border-radius:6px;color:#fff;display:inline-block}
+  h2{margin:10px 0 4px;font-size:21px}
+  .sub{color:var(--muted);font-size:12.5px;margin-bottom:16px;word-break:break-all}
+  label.f{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:14px 0 6px;text-transform:uppercase;letter-spacing:.5px}
+  input[type=text],textarea,select{width:100%;font:inherit;font-size:14px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:#FCFCFA;color:var(--ink)}
+  textarea{resize:vertical;min-height:70px;line-height:1.45}
+  textarea.code{font-family:Consolas,"Cascadia Mono",monospace;font-size:12.5px;min-height:240px}
+  .checks{display:flex;flex-wrap:wrap;gap:6px}
+  .ck{display:flex;align-items:center;gap:6px;font-size:13px;border:1px solid var(--line);border-radius:999px;padding:5px 10px;cursor:pointer;user-select:none;background:#fff}
+  .ck.on{border-color:var(--ink);background:var(--ink);color:#fff}
+  .row{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap}
+  .tabs{display:flex;gap:4px;margin-top:18px;border-bottom:1px solid var(--line)}
+  .tab{padding:7px 12px;font-size:13px;border:none;background:none;border-bottom:2px solid transparent;color:var(--muted)}
+  .tab.on{color:var(--ink);border-bottom-color:var(--ink);font-weight:600}
+  .bar{height:7px;border-radius:5px;background:var(--bg);overflow:hidden;margin-top:6px}
+  .bar i{display:block;height:100%}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-size:13.5px;opacity:0;transition:opacity .2s;pointer-events:none}
+  .toast.show{opacity:1}
+  .modal-bg{position:fixed;inset:0;background:rgba(20,22,26,.35);display:none;align-items:center;justify-content:center;z-index:10}
+  .modal-bg.show{display:flex}
+  .modal{background:#fff;border-radius:18px;width:520px;max-width:92vw;max-height:88vh;overflow:auto;padding:24px}
+  .modal h3{margin:0 0 4px}
+  .types{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+  .type{border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center;cursor:pointer;font-size:13px;background:#fff}
+  .type.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+  .type .ic{font-size:20px;display:block;margin-bottom:4px}
+  .hint{font-size:12px;color:var(--muted);margin-top:5px}
+  .legend{position:absolute;left:18px;bottom:16px;background:rgba(255,255,255,.9);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:12px;color:var(--muted);line-height:1.8}
+  .node{cursor:pointer}
+  .node text{font-size:12px;fill:var(--ink);pointer-events:none}
+  .node.dim, .edge.dim{opacity:.12}
+  .edge{fill:none;stroke-width:1.5;opacity:.3;transition:opacity .15s}
+  .edge.hot{opacity:.95;stroke-width:2.4}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><span class="dot">OS</span>Agentic OS</div>
+  <div class="stats" id="stats"></div>
+  <div class="spacer"></div>
+  <div class="chips" id="chips"></div>
+  <button class="btn ghost" id="reload" title="Recargar desde la carpeta">↻</button>
+  <button class="btn" id="addBtn">＋ Agregar</button>
+</header>
+<main>
+  <div id="stage">
+    <svg id="svg"></svg>
+    <div class="legend">
+      <div><span class="sw" style="background:#999;border-radius:50%"></span> Área (núcleo de trabajo)</div>
+      <div><span class="sw" style="background:var(--skill)"></span> Skill (rutina)</div>
+      <div><span class="sw" style="background:var(--agent);border-radius:50%"></span> Agente (especialista)</div>
+      <div><span class="sw" style="background:var(--conn);transform:rotate(45deg)"></span> Conector (app externa)</div>
+      <div><span class="sw" style="background:#fff;border:2px solid #777;border-radius:50%"></span> Proyecto (línea discontinua: área relacionada)</div>
+    </div>
+  </div>
+  <aside><div class="aside-body" id="panel"></div></aside>
+</main>
+
+<div class="modal-bg" id="modalBg"><div class="modal" id="modal"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const TYPES = {
+  area:{label:"Área",ic:"◎",color:"#777"},
+  skill:{label:"Skill",ic:"▣",color:"var(--skill)"},
+  agent:{label:"Agente",ic:"●",color:"var(--agent)"},
+  connector:{label:"Conector",ic:"◆",color:"var(--conn)"},
+};
+const TYPE_HEX = {skill:"#2C6E91",agent:"#B5602B",connector:"#5B4B8A",project:"#4A4F57"};
+let S = null, sel = null, hover = null;
+const visible = {skill:true,agent:true,connector:true,project:true};
+const areaColor = (id)=>(S.areas.find(a=>a.id===id)||{}).color||"#777";
+const $ = (id)=>document.getElementById(id);
+const esc = (s)=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+async function api(path, body){
+  let r;
+  try{ r = await fetch(path, body?{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}:{}); }
+  catch(e){ throw new Error("El dashboard está apagado. Abre iniciar_dashboard.bat, deja abierta la ventana negra y vuelve a intentarlo."); }
+  const j = await r.json();
+  if(!r.ok) throw new Error(j.error||"Error");
+  return j;
+}
+function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),2200)}
+
+async function load(keep=true){
+  S = await api("/api/state");
+  if(!keep || (sel && !allNodes().some(n=>n.key===sel))) sel=null;
+  renderStats(); renderChips(); draw(); renderPanel();
+}
+const allNodes = ()=>S?[...S.areas,...S.skills,...S.agents,...S.connectors,...(S.projects||[])]:[];
+const byKey = (k)=>allNodes().find(n=>n.key===k);
+
+function renderStats(){
+  const pend = S.areas.reduce((a,x)=>a+x.pendientes,0);
+  $("stats").innerHTML = `
+    <span class="stat"><b>${S.areas.length}</b> áreas</span>
+    <span class="stat"><b>${S.skills.length}</b> skills</span>
+    <span class="stat"><b>${S.agents.length}</b> agentes</span>
+    <span class="stat"><b>${S.connectors.length}</b> conectores</span>
+    <span class="stat"><b>${(S.projects||[]).length}</b> proyectos</span>
+    <span class="stat"><b>${pend}</b> pendientes</span>`;
+}
+function renderChips(){
+  $("chips").innerHTML = ["project","skill","agent","connector"].map(t=>`<span class="chip ${visible[t]?"":"off"}" data-t="${t}"><span class="sw" style="background:${TYPE_HEX[t]}${t==="project"?";border-radius:50%":""}"></span>${{project:"Proyectos",skill:"Skills",agent:"Agentes",connector:"Conectores"}[t]}</span>`).join("");
+  $("chips").querySelectorAll(".chip").forEach(c=>c.onclick=()=>{visible[c.dataset.t]=!visible[c.dataset.t];renderChips();draw()});
+}
+
+// ---------- grafo ----------
+function draw(){
+  const svg=$("svg"), W=svg.clientWidth||900, H=svg.clientHeight||700;
+  const cx=W/2, cy=H/2, R=Math.min(W,H);
+  const rIn=R*0.25, rxO=Math.min(W*0.36,R*0.6), ryO=R*0.43;
+  const pos={};
+  pos["core"]={x:cx,y:cy};
+  const areas=S.areas;
+  areas.forEach((a,i)=>{const ang=-Math.PI/2+i*2*Math.PI/Math.max(areas.length,1);pos[a.key]={x:cx+rIn*Math.cos(ang),y:cy+rIn*Math.sin(ang),ang}});
+  // exterior: ordenar por ángulo medio de sus áreas
+  const outer=[...S.skills,...S.agents,...S.connectors].filter(n=>visible[n.tipo]);
+  outer.forEach(n=>{
+    const la=(S.links[n.key]?.areas||[]).map(id=>pos["area:"+id]).filter(Boolean);
+    if(!la.length){n._a=10+["skill","agent","connector"].indexOf(n.tipo);return}
+    const sx=la.reduce((s,p)=>s+Math.cos(p.ang),0), sy=la.reduce((s,p)=>s+Math.sin(p.ang),0);
+    let a=Math.atan2(sy,sx); if(Math.hypot(sx,sy)<0.3) a=pos["area:"+(S.links[n.key].areas[0])].ang;
+    n._a=((a+Math.PI/2)%(2*Math.PI)+2*Math.PI)%(2*Math.PI);
+  });
+  outer.sort((a,b)=>a._a-b._a);
+  outer.forEach((n,i)=>{const ang=-Math.PI/2+(i+.5)*2*Math.PI/Math.max(outer.length,1);pos[n.key]={x:cx+rxO*Math.cos(ang),y:cy+ryO*Math.sin(ang),ang}});
+  // proyectos: anillo intermedio, repartidos alrededor del ángulo de su área
+  const projects=visible.project?(S.projects||[]):[];
+  const rMid=rIn+R*0.1, step=2*Math.PI/Math.max(areas.length,1)*0.3;
+  areas.forEach(a=>{
+    const mine=projects.filter(p=>p.area===a.id);
+    mine.forEach((p,i)=>{const ang=pos[a.key].ang+(i-(mine.length-1)/2)*step;pos[p.key]={x:cx+rMid*Math.cos(ang),y:cy+rMid*Math.sin(ang),ang}});
+  });
+
+  let edges="", nodes="";
+  areas.forEach(a=>{const p=pos[a.key];edges+=`<line x1="${cx}" y1="${cy}" x2="${p.x}" y2="${p.y}" stroke="${a.color}" stroke-width="2" opacity=".25"/>`});
+  const curve=(p,q,color,s,t,dash)=>{const mx=(p.x+q.x)/2+(cy-(p.y+q.y)/2)*0.15, my=(p.y+q.y)/2-(cx-(p.x+q.x)/2)*0.15;return `<path class="edge" data-s="${s}" data-t="${t}" d="M${p.x},${p.y} Q${mx},${my} ${q.x},${q.y}" stroke="${color}" ${dash?'stroke-dasharray="4 4"':''}/>`};
+  for(const n of outer){
+    const l=S.links[n.key]||{areas:[],conectores:[]}, p=pos[n.key];
+    for(const a of l.areas){const ar=byKey("area:"+a),q=pos["area:"+a];if(q) edges+=curve(p,q,ar.color,n.key,ar.key,false)}
+    for(const c of l.conectores){const q=pos["connector:"+c];if(q) edges+=curve(p,q,TYPE_HEX.connector,n.key,"connector:"+c,true)}
+  }
+  for(const n of projects){
+    const l=S.links[n.key]||{areas:[],conectores:[]}, p=pos[n.key]; if(!p) continue;
+    for(const a of l.areas){const q=pos["area:"+a];if(q) edges+=curve(p,q,areaColor(a),n.key,"area:"+a,a!==n.area)}
+    for(const c of l.conectores){const q=pos["connector:"+c];if(q) edges+=curve(p,q,TYPE_HEX.connector,n.key,"connector:"+c,true)}
+  }
+  // nodos
+  nodes+=`<g><circle cx="${cx}" cy="${cy}" r="${R*0.055}" fill="#1F2328"/><text x="${cx}" y="${cy-3}" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">Agentic</text><text x="${cx}" y="${cy+13}" text-anchor="middle" fill="#fff" font-size="11" opacity=".75">OS</text></g>`;
+  for(const a of areas){
+    const p=pos[a.key], r=R*0.036, s=sel===a.key;
+    const tot=a.pendientes+a.hechos, pct=tot?a.hechos/tot:0, C=2*Math.PI*(r+5);
+    nodes+=`<g class="node" data-k="${a.key}">
+      <circle cx="${p.x}" cy="${p.y}" r="${r+5}" fill="none" stroke="#E4E2DA" stroke-width="4"/>
+      <circle cx="${p.x}" cy="${p.y}" r="${r+5}" fill="none" stroke="${a.color}" stroke-width="4" stroke-dasharray="${C*pct} ${C}" transform="rotate(-90 ${p.x} ${p.y})"/>
+      <circle cx="${p.x}" cy="${p.y}" r="${r}" fill="${a.color}" ${s?'stroke="#1F2328" stroke-width="3"':''}/>
+      <text x="${p.x}" y="${p.y+4}" text-anchor="middle" fill="#fff" font-weight="700" font-size="13">${a.pendientes}</text>
+      <text x="${p.x}" y="${p.y+r+22}" text-anchor="middle" font-weight="600">${esc(a.nombre)}</text></g>`;
+  }
+  for(const n of outer){
+    const p=pos[n.key], s=sel===n.key, c=TYPE_HEX[n.tipo], z=11;
+    const st=s?'stroke="#1F2328" stroke-width="3"':'stroke="#fff" stroke-width="2"';
+    const shape = n.tipo==="skill"?`<rect x="${p.x-z}" y="${p.y-z}" width="${2*z}" height="${2*z}" rx="5" fill="${c}" ${st}/>`
+      : n.tipo==="agent"?`<circle cx="${p.x}" cy="${p.y}" r="${z}" fill="${c}" ${st}/>`
+      : `<rect x="${p.x-z*.85}" y="${p.y-z*.85}" width="${z*1.7}" height="${z*1.7}" fill="${c}" ${st} transform="rotate(45 ${p.x} ${p.y})"/>`;
+    const cos=Math.cos(p.ang), anchor=cos>0.25?"start":cos<-0.25?"end":"middle";
+    const lx=p.x+cos*(z+8), ly=p.y+Math.sin(p.ang)*(z+12)+4;
+    nodes+=`<g class="node" data-k="${n.key}">${shape}<text x="${lx}" y="${ly}" text-anchor="${anchor}">${esc(n.nombre)}</text></g>`;
+  }
+  for(const n of projects){
+    const p=pos[n.key]; if(!p) continue;
+    const s=sel===n.key, c=areaColor(n.area), cos=Math.cos(p.ang), anchor=cos>0.25?"start":cos<-0.25?"end":"middle";
+    nodes+=`<g class="node" data-k="${n.key}"><circle cx="${p.x}" cy="${p.y}" r="8" fill="#fff" stroke="${s?"#1F2328":c}" stroke-width="${s?4:3}"/>
+      <text x="${p.x+cos*14}" y="${p.y+Math.sin(p.ang)*16+4}" text-anchor="${anchor}" font-style="italic" font-size="11" fill="#4A4F57" paint-order="stroke" stroke="#F5F4EF" stroke-width="3">${esc(n.nombre)}</text></g>`;
+  }
+  svg.innerHTML=edges+nodes;
+  svg.querySelectorAll(".node[data-k]").forEach(g=>{
+    g.onclick=(e)=>{e.stopPropagation();sel=g.dataset.k;hover=null;draw();renderPanel()};
+    g.onmouseenter=()=>{hover=g.dataset.k;applyFocus()};
+    g.onmouseleave=()=>{hover=null;applyFocus()};
+  });
+  applyFocus();
+  svg.onclick=()=>{sel=null;draw();renderPanel()};
+}
+
+function applyFocus(){
+  const svg=$("svg"), focus=hover||sel, rel=new Set();
+  if(focus){
+    rel.add(focus);
+    for(const [k,l] of Object.entries(S.links)){
+      const ends=[...l.areas.map(a=>"area:"+a),...l.conectores.map(c=>"connector:"+c)];
+      if(k===focus) ends.forEach(e=>rel.add(e));
+      if(ends.includes(focus)) rel.add(k);
+    }
+  }
+  svg.querySelectorAll(".node[data-k]").forEach(g=>g.classList.toggle("dim",!!focus&&!rel.has(g.dataset.k)));
+  svg.querySelectorAll(".edge").forEach(e=>{const hot=!!focus&&(e.dataset.s===focus||e.dataset.t===focus);e.classList.toggle("hot",hot);e.classList.toggle("dim",!!focus&&!hot)});
+}
+
+// ---------- panel ----------
+let tab="info", fileCache={};
+function checksHTML(list, on, group){
+  return `<div class="checks">${list.map(x=>`<span class="ck ${on.includes(x.id)?"on":""}" data-g="${group}" data-id="${x.id}">${x.tipo==="area"?`<span class="sw" style="background:${x.color}"></span>`:""}${esc(x.nombre)}</span>`).join("")||'<span class="hint">No hay elementos todavía.</span>'}</div>`;
+}
+function renderPanel(){
+  const P=$("panel");
+  if(!sel){
+    const top=[...S.areas].sort((a,b)=>b.pendientes-a.pendientes);
+    P.innerHTML=`<div class="empty"><h3>Tu sistema de un vistazo</h3>
+      Haz clic en cualquier nodo para ver sus conexiones, editarlo o quitarlo. Pasa el ratón por encima para resaltar con qué se conecta.<br><br>
+      El número dentro de cada área son sus pendientes y el anillo muestra el avance.</div>
+      <label class="f">Pendientes por área</label>
+      ${top.map(a=>{const t=a.pendientes+a.hechos;return `<div style="margin:10px 0;cursor:pointer" data-go="${a.key}">
+        <div style="display:flex;justify-content:space-between;font-size:13.5px"><span>${esc(a.nombre)}</span><span style="color:var(--muted)">${a.hechos}/${t}</span></div>
+        <div class="bar"><i style="width:${t?100*a.hechos/t:0}%;background:${a.color}"></i></div></div>`}).join("")}
+      <label class="f">Carpeta</label><div class="sub">${esc(S.raiz)}</div>`;
+    P.querySelectorAll("[data-go]").forEach(d=>d.onclick=()=>{sel=d.dataset.go;draw();renderPanel()});
+    return;
+  }
+  const n=byKey(sel); if(!n){sel=null;return renderPanel()}
+  const l=S.links[n.key]||{areas:[],conectores:[]};
+  const hasFile=n.tipo!=="connector";
+  const color=n.tipo==="area"?n.color:n.tipo==="project"?areaColor(n.area):TYPE_HEX[n.tipo];
+  let html=`<span class="badge" style="background:${color}">${n.tipo==="project"?"Proyecto":TYPES[n.tipo].label}</span>
+    <h2>${esc(n.nombre)}</h2><div class="sub">${n.tipo==="connector"?"Origen: "+esc(n.origen):n.tipo==="project"?esc(n.ruta):esc(n.id)}</div>`;
+  if(hasFile){
+    html+=`<div class="tabs"><button class="tab ${tab==="info"?"on":""}" data-tab="info">Conexiones</button>
+      <button class="tab ${tab==="file"?"on":""}" data-tab="file">${n.tipo==="area"?"Contexto":n.tipo==="project"?"Nota":"Instrucciones"}</button>
+      ${n.tipo==="area"?`<button class="tab ${tab==="tasks"?"on":""}" data-tab="tasks">Pendientes</button>`:""}</div>`;
+  }
+  if(n.tipo==="project"&&tab!=="file"){
+    const chip=(k,txt,c)=>`<span class="ck" data-go="${k}"><span class="sw" style="background:${c}"></span>${esc(txt)}</span>`;
+    html+=`${n.estado?`<label class="f">Estado</label><div>${esc(n.estado)}</div>`:""}
+      ${n.descripcion?`<label class="f">Resumen</label><div style="font-size:14px;line-height:1.5">${esc(n.descripcion)}</div>`:""}
+      <label class="f">Áreas</label><div class="checks">${l.areas.map(a=>chip("area:"+a,(byKey("area:"+a)||{}).nombre||a,areaColor(a))+(a===n.area?' <span class="hint">principal</span>':"")).join("")}</div>
+      <label class="f">Conectores</label><div class="checks">${l.conectores.map(c=>chip("connector:"+c,(byKey("connector:"+c)||{}).nombre||c,TYPE_HEX.connector)).join("")||'<span class="hint">Ninguno.</span>'}</div>
+      <div class="hint" style="margin-top:14px">Las conexiones salen de la nota: su carpeta es el área principal y las propiedades <b>areas_relacionadas</b> y <b>conectores</b> añaden las demás.</div>`;
+    P.innerHTML=html; bindPanel(n,l); return;
+  }
+  if(!hasFile||tab==="info"){
+    if(n.tipo==="area"){
+      html+=`<label class="f">Nombre</label><input type="text" id="fNombre" value="${esc(n.nombre)}">
+        <label class="f">Descripción</label><textarea id="fDesc">${esc(n.descripcion)}</textarea>
+        <label class="f">Color</label><input type="color" id="fColor" value="${esc(n.color)}">`;
+      const users=[...(S.projects||[]),...S.skills,...S.agents,...S.connectors].filter(x=>(S.links[x.key]?.areas||[]).includes(n.id));
+      html+=`<label class="f">Conectado con (${users.length})</label><div class="checks">${users.map(u=>`<span class="ck" data-go="${u.key}"><span class="sw" style="background:${u.tipo==="project"?"#fff;border:2px solid "+areaColor(u.area):TYPE_HEX[u.tipo]};${u.tipo==="project"?"border-radius:50%":""}"></span>${esc(u.nombre)}</span>`).join("")||'<span class="hint">Nada conectado todavía.</span>'}</div>`;
+    } else {
+      if(n.tipo==="connector") html+=`<label class="f">Nombre</label><input type="text" id="fNombre" value="${esc(n.nombre)}">`;
+      html+=`<label class="f">Descripción ${n.tipo!=="connector"?"(cuándo lo usa Claude)":""}</label><textarea id="fDesc">${esc(n.descripcion)}</textarea>
+        <label class="f">Áreas que atiende</label>${checksHTML(S.areas,l.areas,"areas")}`;
+      if(n.tipo!=="connector") html+=`<label class="f">Conectores que usa</label>${checksHTML(S.connectors,l.conectores,"conectores")}`;
+      else {
+        const users=[...S.skills,...S.agents].filter(x=>(S.links[x.key]?.conectores||[]).includes(n.id));
+        html+=`<label class="f">Lo usan</label><div class="checks">${users.map(u=>`<span class="ck" data-go="${u.key}">${esc(u.nombre)}</span>`).join("")||'<span class="hint">Ningún skill lo usa todavía.</span>'}</div>`;
+        if(n.config) html+=`<label class="f">Configuración (.mcp.json)</label><textarea class="code" style="min-height:90px" readonly>${esc(JSON.stringify(n.config,null,2))}</textarea>`;
+        else html+=`<div class="hint" style="margin-top:12px">Los conectores de claude.ai se activan en tu cuenta. En Claude Code revisa su estado con <b>/mcp</b>.</div>`;
+      }
+    }
+    html+=`<div class="row"><button class="btn" id="save">Guardar cambios</button><button class="btn danger" id="del">Quitar</button></div>`;
+    if(n.tipo==="skill") html+=`<div class="hint" style="margin-top:14px">En Claude Code invócalo diciendo su nombre o con <b>/${esc(n.id)}</b>.</div>`;
+    if(n.tipo==="agent") html+=`<div class="hint" style="margin-top:14px">En Claude Code pide: "usa el agente ${esc(n.id)} para..."</div>`;
+  } else {
+    const fk = tab==="tasks"?"tasks:"+n.id:n.key;
+    html+=`<label class="f" id="fRuta">Cargando…</label><textarea class="code" id="fFile" spellcheck="false"></textarea>
+      <div class="row"><button class="btn" id="saveFile">Guardar archivo</button></div>`;
+    P.innerHTML=html; bindPanel(n,l);
+    api("/api/file?key="+encodeURIComponent(fk)).then(j=>{$("fRuta").textContent=j.ruta;$("fFile").value=j.contenido});
+    $("saveFile").onclick=async()=>{try{await api("/api/file",{key:fk,contenido:$("fFile").value});toast("Archivo guardado");load()}catch(e){toast(e.message)}};
+    return;
+  }
+  P.innerHTML=html; bindPanel(n,l);
+}
+function bindPanel(n,l){
+  const P=$("panel");
+  P.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{tab=b.dataset.tab;renderPanel()});
+  P.querySelectorAll("[data-go]").forEach(d=>d.onclick=()=>{sel=d.dataset.go;tab="info";draw();renderPanel()});
+  P.querySelectorAll(".ck[data-g]").forEach(c=>c.onclick=()=>c.classList.toggle("on"));
+  const save=$("save"); if(save) save.onclick=async()=>{
+    const body={key:n.key,descripcion:$("fDesc").value};
+    if($("fNombre")) body.nombre=$("fNombre").value;
+    if($("fColor")) body.color=$("fColor").value;
+    if(n.tipo!=="area"){
+      body.areas=[...P.querySelectorAll('.ck.on[data-g="areas"]')].map(x=>x.dataset.id);
+      if(n.tipo!=="connector") body.conectores=[...P.querySelectorAll('.ck.on[data-g="conectores"]')].map(x=>x.dataset.id);
+    }
+    try{await api("/api/update",body);toast("Cambios guardados");load()}catch(e){toast(e.message)}
+  };
+  const del=$("del"); if(del) del.onclick=async()=>{
+    if(!confirm(`¿Quitar "${n.nombre}"? Se moverá a la carpeta _papelera, así que puedes recuperarlo.`)) return;
+    try{await api("/api/delete",{key:n.key});sel=null;toast("Movido a _papelera");load()}catch(e){toast(e.message)}
+  };
+}
+
+// ---------- modal agregar ----------
+let mType="skill";
+function openModal(){
+  const M=$("modal");
+  const slug=(s)=>s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,48);
+  M.innerHTML=`<h3>Agregar al OS</h3><div class="hint">Elige qué quieres sumar. Se crean los archivos en tu carpeta al instante.</div>
+    <div class="types">${Object.entries(TYPES).map(([k,t])=>`<div class="type ${mType===k?"on":""}" data-t="${k}"><span class="ic" style="color:${t.color}">${t.ic}</span>${t.label}</div>`).join("")}</div>
+    <label class="f">Nombre</label><input type="text" id="mNombre" placeholder="${{area:"Ej. Inversiones",skill:"Ej. Resumen de clase",agent:"Ej. Editor de contenido",connector:"Ej. Notion"}[mType]}">
+    <label class="f">Id (carpeta / archivo)</label><input type="text" id="mId"><div class="hint">Minúsculas, números y guiones. Se rellena solo.</div>
+    <label class="f">Descripción</label><textarea id="mDesc" placeholder="${mType==="skill"?"Cuándo usarlo. Ej. Úsalo cuando diga 'resume la clase'.":mType==="agent"?"En qué es experto y cuándo delegar en él.":"Para qué sirve."}"></textarea>
+    ${mType==="area"?`<label class="f">Color</label><input type="color" id="mColor" value="#4E7D96">`:""}
+    ${mType==="skill"||mType==="agent"?`<label class="f">${mType==="skill"?"Pasos del skill":"Instrucciones del agente"} (opcional)</label><textarea id="mCont" placeholder="Puedes dejarlo vacío y Claude Code lo completa contigo después."></textarea>`:""}
+    ${mType!=="area"?`<label class="f">Áreas</label>${checksHTML(S.areas,[],"areas")}`:""}
+    ${mType==="skill"||mType==="agent"?`<label class="f">Conectores que usa</label>${checksHTML(S.connectors,[],"conectores")}`:""}
+    ${mType==="connector"?`<label class="f">Tipo</label><select id="mOrigen"><option value="claude.ai">Conector de claude.ai (Gmail, Drive, Notion…)</option><option value="local">Servidor MCP local o remoto (.mcp.json)</option></select>
+      <div id="mLocal" style="display:none"><label class="f">URL (servidor remoto)</label><input type="text" id="mUrl" placeholder="https://.../mcp">
+      <label class="f">o Comando (servidor local)</label><input type="text" id="mCmd" placeholder="npx -y paquete-mcp"></div>`:""}
+    <div class="row" style="justify-content:flex-end"><button class="btn ghost" id="mCancel">Cancelar</button><button class="btn" id="mOk">Crear</button></div>`;
+  M.querySelectorAll(".type").forEach(t=>t.onclick=()=>{mType=t.dataset.t;openModal()});
+  M.querySelectorAll(".ck[data-g]").forEach(c=>c.onclick=()=>c.classList.toggle("on"));
+  let touched=false;
+  $("mId").oninput=()=>touched=true;
+  $("mNombre").oninput=()=>{if(!touched)$("mId").value=slug($("mNombre").value).replace(/-/g,mType==="area"?"_":"-")};
+  if($("mOrigen")) $("mOrigen").onchange=()=>$("mLocal").style.display=$("mOrigen").value==="local"?"block":"none";
+  $("mCancel").onclick=()=>$("modalBg").classList.remove("show");
+  $("mOk").onclick=async()=>{
+    const b={tipo:mType,id:$("mId").value.trim(),nombre:$("mNombre").value.trim(),descripcion:$("mDesc").value.trim(),
+      areas:[...M.querySelectorAll('.ck.on[data-g="areas"]')].map(x=>x.dataset.id),
+      conectores:[...M.querySelectorAll('.ck.on[data-g="conectores"]')].map(x=>x.dataset.id)};
+    if($("mCont")) b.contenido=$("mCont").value.trim();
+    if($("mColor")) b.color=$("mColor").value;
+    if($("mOrigen")){b.origen=$("mOrigen").value;b.url=$("mUrl").value.trim();b.comando=$("mCmd").value.trim()}
+    try{const r=await api("/api/create",b);$("modalBg").classList.remove("show");sel=r.key;tab="info";toast(`${TYPES[mType].label} creado`);load()}catch(e){toast(e.message)}
+  };
+  $("modalBg").classList.add("show"); $("mNombre").focus();
+}
+$("addBtn").onclick=openModal;
+$("modalBg").onclick=(e)=>{if(e.target.id==="modalBg")$("modalBg").classList.remove("show")};
+$("reload").onclick=()=>load().then(()=>toast("Actualizado desde la carpeta"));
+window.onresize=()=>S&&draw();
+load(false).catch(e=>{$("panel").innerHTML=`<div class="empty"><h3>No se pudo cargar</h3>${esc(e.message)}</div>`});
+</script>
+</body>
+</html>
