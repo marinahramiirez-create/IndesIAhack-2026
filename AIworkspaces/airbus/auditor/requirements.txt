@@ -1,0 +1,7 @@
+anthropic==2.14.0
+pandas==3.1.1
+plotly==7.2.0
+pydantic==2.14.4
+pymupdf==2.1
+python-dotenv==1.2.4
+streamlit==1.67.0

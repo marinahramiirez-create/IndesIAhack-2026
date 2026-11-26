@@ -1,0 +1,10 @@
+# Claves: NUNCA a git
+.env
+# Entorno virtual (cada uno crea el suyo)
+.venv/
+# Caché del LLM y transcripciones: contienen texto del corpus (no se sube)
+cache/
+# Resultados generados (respuestas, traza, métricas, páginas del PDF): se regeneran
+salidas/
+__pycache__/
+*.pyc

@@ -1,0 +1,151 @@
+"""
+Auditor Airbus · una sola orden: entra una carpeta de PDF, sale respuestas.csv (guía §4 y §6.2).
+
+    .venv\\Scripts\\python auditar.py <carpeta_pdf> [--salida respuestas.csv] [--sin-llm] [--hilos 6]
+
+Fases:
+  1. Ingesta de todos los PDF (los escaneados se transcriben con visión; caché en disco).
+  2. Referencias una sola vez: Part-IS + STD-SEC-001 VIGENTE + LISTA-DOC.
+  3. Auditoría documento a documento, en paralelo y sin estado compartido:
+       reglas deterministas + agente LLM → verificación por código → deduplicación.
+- Un documento que falla no tumba la ejecución: se registra y se sigue.
+- El CSV se reescribe tras cada documento: si se acaba el tiempo, lo hecho ya está entregado.
+- traza.jsonl: cada propuesta con su origen y, si se descartó, el motivo (explicabilidad).
+"""
+import argparse
+import csv
+import json
+import sys
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
+
+from src import ingesta, referencias, reglas
+from src.modelo import COLUMNAS, EXTRA
+from src.verificar import ANCLA, verificar
+
+_lock = threading.Lock()
+
+
+def escribir(hallazgos, ruta: Path):
+    ruta.parent.mkdir(parents=True, exist_ok=True)
+    tmp = ruta.with_suffix(".tmp")
+    with open(tmp, "w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=COLUMNAS + EXTRA)
+        w.writeheader()
+        for h in sorted(hallazgos, key=lambda x: (x.documento, x.ubicacion)):
+            w.writerow(h.fila())
+    tmp.replace(ruta)
+
+
+def clave_defecto(h) -> tuple:
+    """Dos filas son el mismo defecto si comparten documento y primer identificador de la ubicación."""
+    a = ANCLA.findall(h.ubicacion)
+    return (h.documento, a[0] if a else h.ubicacion)
+
+
+def deduplicar(hallazgos):
+    mejor = {}
+    for h in hallazgos:
+        k = clave_defecto(h)
+        if k not in mejor or h.confianza > mejor[k].confianza:
+            mejor[k] = h
+    return list(mejor.values())
+
+
+def auditar_doc(doc, docs, bloque_ref, usar_llm):
+    propuestas = reglas.revisar(doc)
+    rel = referencias.relacionados(doc, docs)
+    if usar_llm:
+        from src import agente
+        llm_h, _ = agente.auditar(doc, bloque_ref, rel)
+        propuestas += llm_h
+        try:
+            propuestas += agente.auditar_figuras(doc, bloque_ref)   # diagramas: visión solo donde hay figuras
+        except Exception as e:                                        # un fallo de visión no tumba el documento
+            print(f"  aviso: figuras de {doc.codigo} no analizadas: {e!r}")
+    texto_rel = "\n".join(r.texto for r in rel)
+    aceptados, traza = [], []
+    for h in propuestas:
+        ok = verificar(h, doc.texto, texto_rel)
+        traza.append({"documento": h.documento, "ubicacion": h.ubicacion, "tipo": h.tipo, "clausula": h.clausula,
+                      "origen": h.origen, "confianza": h.confianza, "evidencia": h.evidencia,
+                      "justificacion": h.justificacion, "fuente": h.fuente, "aceptado": ok is not None,
+                      "descarte": h.descarte, "relacionados": [r.codigo for r in rel]})
+        if ok:
+            aceptados.append(ok)
+    return deduplicar(aceptados), traza
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("carpeta")
+    ap.add_argument("--salida", default="respuestas.csv")
+    ap.add_argument("--sin-llm", action="store_true", help="solo reglas deterministas")
+    ap.add_argument("--hilos", type=int, default=6)
+    ap.add_argument("--solo", default="", help="auditar solo los códigos indicados (coma), para pruebas")
+    a = ap.parse_args()
+    t0 = time.time()
+    salida = Path(a.salida)
+    salida.parent.mkdir(parents=True, exist_ok=True)     # en una copia nueva del repo, salidas/ aún no existe
+    ftraza = salida.with_name(salida.stem + "_traza.jsonl")
+
+    # 1. Ingesta
+    pdfs = sorted(Path(a.carpeta).rglob("*.pdf"))
+    if not pdfs:
+        sys.exit(f"No hay PDF en {a.carpeta}")
+    docs, errores = [], []
+
+    def leer(f):
+        return ingesta.leer(f, vision=not a.sin_llm)
+
+    with ThreadPoolExecutor(a.hilos) as ex:
+        fut = {ex.submit(leer, f): f for f in pdfs}
+        for fu in as_completed(fut):
+            try:
+                docs.append(fu.result())
+            except Exception as e:
+                errores.append((fut[fu].name, repr(e)))
+                print(f"ERROR leyendo {fut[fu].name}: {e!r}")
+    docs.sort(key=lambda d: d.ruta)
+    print(f"Ingesta: {len(docs)} documentos en {time.time() - t0:.0f} s")
+
+    # 2. Referencias (una vez)
+    bloque = referencias.bloque(docs)
+    std = referencias.estandar_vigente(docs)
+    print(f"Referencias: Part-IS + {std.codigo + ' v' + std.version if std else 'SIN ESTÁNDAR'} + LISTA-DOC")
+
+    # 3. Auditoría en paralelo
+    auditables = [d for d in docs if d.codigo and not d.codigo.startswith(referencias.CODIGOS_REFERENCIA)]
+    if a.solo:
+        auditables = [d for d in auditables if d.codigo in a.solo.split(",")]
+    todos = []
+    open(ftraza, "w", encoding="utf-8").close()
+    with ThreadPoolExecutor(a.hilos) as ex:
+        fut = {ex.submit(auditar_doc, d, docs, bloque, not a.sin_llm): d for d in auditables}
+        for i, fu in enumerate(as_completed(fut), 1):
+            d = fut[fu]
+            try:
+                hall, traza = fu.result()
+            except Exception as e:
+                errores.append((d.codigo, repr(e)))
+                print(f"[{i}/{len(auditables)}] ERROR en {d.codigo}: {e!r}")
+                continue
+            with _lock:
+                todos = deduplicar(todos + hall)
+                escribir(todos, salida)
+                with open(ftraza, "a", encoding="utf-8") as f:
+                    for t in traza:
+                        f.write(json.dumps(t, ensure_ascii=False) + "\n")
+            desc = sum(1 for t in traza if not t["aceptado"])
+            print(f"[{i}/{len(auditables)}] {d.codigo}: {len(hall)} hallazgos ({desc} descartados) "
+                  f"· {time.time() - t0:.0f} s")
+    escribir(todos, salida)
+    print(f"\n{len(todos)} hallazgos → {salida} · {len(errores)} errores · {time.time() - t0:.0f} s")
+    for e in errores:
+        print("  error:", e)
+
+
+if __name__ == "__main__":
+    main()

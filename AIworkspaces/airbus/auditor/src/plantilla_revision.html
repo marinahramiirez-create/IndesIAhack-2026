@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Revisión de hallazgos · Reto Airbus</title>
+<!-- Diseño: prototipo de Valentina (prototipo-revision-hallazgos.html). Datos: generados por generar_revision.py
+     a partir de respuestas.csv, la traza del verificador y los PDF del corpus. No editar a mano: se regenera. -->
+<style>
+:root{--bg:#f2f2f7;--card:#fff;--text:#1c1c1e;--sec:#6e6e73;--sep:#d1d1d6;--tint:#0a84ff;--ok:#34c759;--warn:#ff9f0a;--err:#ff3b30;--r:14px;font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",system-ui,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-size:15px;line-height:1.4}
+button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:9px 16px;background:var(--tint);color:#fff}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.ghost{background:#e5e5ea;color:var(--text)}
+button.ok{background:var(--ok)}
+button.warn{background:var(--warn)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:3px solid rgba(10,132,255,.45);outline-offset:2px}
+input,select,textarea{font:inherit;padding:9px 11px;border:1px solid var(--sep);border-radius:10px;background:#fff;color:var(--text)}
+input[type=checkbox]{width:18px;height:18px;padding:0;margin:0;flex:none;accent-color:var(--tint)}
+a{color:var(--tint)}
+.hidden{display:none!important}
+#login{min-height:100vh;display:flex;align-items:center;justify-content:center}
+.login-card{background:#fff;border-radius:20px;padding:36px;width:380px;box-shadow:0 8px 30px rgba(0,0,0,.08)}
+.login-card h1{font-size:22px;margin:0 0 4px}
+.login-card p{color:var(--sec);margin:0 0 20px}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.field label{font-size:13px;color:var(--sec)}
+.login-card button{width:100%;padding:12px}
+.topbar{position:sticky;top:0;height:56px;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--sep);display:flex;align-items:center;gap:14px;padding:0 20px;z-index:5}
+.burger{background:none;color:var(--text);padding:4px 8px;font-size:22px;line-height:1}
+.topbar .title{font-weight:600;font-size:17px}
+.drawer{position:fixed;top:0;bottom:0;left:0;width:290px;background:#fff;box-shadow:4px 0 24px rgba(0,0,0,.12);transform:translateX(-102%);transition:transform .25s;z-index:20;padding:20px;display:flex;flex-direction:column;gap:6px}
+.drawer.open{transform:none}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:18}
+.sidemodal{position:fixed;top:0;right:0;bottom:0;width:min(600px,100%);background:#fff;box-shadow:-8px 0 30px rgba(0,0,0,.15);z-index:30;padding:22px;overflow:auto}
+.dialog{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(520px,92vw);background:#fff;border-radius:16px;padding:22px;z-index:35;box-shadow:0 12px 40px rgba(0,0,0,.2)}
+.dialog input,.dialog textarea{width:100%}
+.user{padding:14px;border-radius:12px;background:var(--bg);margin-bottom:12px}
+.user b{display:block;font-size:16px}
+.user span{color:var(--sec);font-size:13px}
+.nav-item{text-align:left;background:none;color:var(--text);padding:11px 12px;border-radius:10px;font-size:15px}
+.nav-item:hover{background:#f0f0f5}
+.nav-item.active{background:#e5f1ff;color:var(--tint);font-weight:600}
+.nav-item.sub{padding-left:30px;font-size:14px}
+main{padding:18px 20px;max-width:1500px;margin:0 auto}
+.card{background:var(--card);border-radius:var(--r);padding:18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:1fr 1fr}
+.sp{flex:1}
+h2{font-size:22px;margin:0 0 4px}
+h3{margin:0 0 8px;font-size:16px}
+.sub{color:var(--sec);margin:0 0 14px}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--sep);font-size:14px;vertical-align:top}
+th{color:var(--sec);font-weight:500;font-size:13px}
+tr.clic{cursor:pointer}
+tr.clic:hover td{background:#f7f7fa}
+tr.hl td{background:#fff6cc}
+.small{font-size:13px;color:var(--sec)}
+.note{font-size:12px;color:var(--sec);background:#f7f7fa;border-radius:10px;padding:10px;margin-top:12px}
+.st{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--text);white-space:nowrap}
+.st i{width:8px;height:8px;border-radius:50%;background:var(--c)}
+.two{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:16px;align-items:start}
+.right{position:sticky;top:74px;max-height:calc(100vh - 150px);display:flex;flex-direction:column;overflow:hidden}
+.lista-scroll{max-height:min(190px,24vh);overflow:auto;flex:none}
+.motivo-scroll{margin-top:12px;flex:1 1 auto;min-height:90px;overflow:auto}
+.hrow{display:flex;align-items:center;gap:10px;padding:10px 8px;border-radius:8px;border-bottom:1px solid var(--sep)}
+.hrow.on{background:#e5f1ff}
+.hrow .nm{flex:1;text-align:left;background:none;color:var(--text);padding:0;font-weight:600;font-size:14px}
+.pnav{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.iconbtn{background:#e5e5ea;color:var(--text);padding:8px 10px;display:inline-flex;align-items:center}
+.pdfwrap{background:#e9e9ee;border-radius:10px;padding:18px}
+.sumrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--sep);font-size:14px}
+.rule{background:#f7f7fa;border-radius:10px;padding:12px;font-size:14px;margin:10px 0}
+.fbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.fbtns button{font-size:14px;padding:11px 8px}
+.log{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--sec);background:#f7f7fa;border-radius:10px;padding:12px;max-height:320px;overflow:auto}
+.chat{display:flex;flex-direction:column;height:520px}
+.msgs{flex:1;overflow:auto;display:flex;flex-direction:column;gap:10px;padding:8px 0}
+.m{padding:10px 13px;border-radius:14px;max-width:88%;font-size:14px}
+.m.u{align-self:flex-end;background:var(--tint);color:#fff}
+.m.a{align-self:flex-start;background:var(--bg)}
+.chatin{display:flex;gap:8px}
+.chatin input{flex:1}
+.tabs{display:flex;gap:6px;margin-bottom:16px}
+.tabs button{background:#e5e5ea;color:var(--text)}
+.tabs button.on{background:var(--tint);color:#fff}
+mark{background:#ffe27a;padding:0 2px;border-radius:3px}
+.cita{border-left:3px solid var(--warn);background:#fff8ec;padding:6px 10px;border-radius:0 8px 8px 0;margin:4px 0;font-size:13px;color:var(--text)}
+.hscroll{max-height:560px;overflow:auto}
+@media (max-width:1200px){.two{grid-template-columns:1fr}.right{position:static;max-height:none}.g2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div id="login">
+  <form class="login-card" id="loginForm">
+    <h1>Revisión de hallazgos</h1>
+    <p>Prototipo · Reto Airbus</p>
+    <div class="field"><label for="em">Correo corporativo</label><input id="em" value="" placeholder="nombre@airbus.example" autocomplete="username"></div>
+    <div class="field"><label for="pw">Contraseña</label><input id="pw" type="password" value="" autocomplete="current-password"></div>
+    <button type="submit">Entrar</button>
+  </form>
+</div>
+
+<div id="app" class="hidden">
+  <div class="topbar">
+    <button class="burger" data-act="drawer" aria-label="Abrir menú" aria-expanded="false">☰</button>
+    <div class="title" id="ttl">Inicio</div>
+    <span aria-label="Marca Airbus (texto provisional)" style="font-weight:700;letter-spacing:.12em;font-size:13px;color:var(--sec)">AIRBUS</span>
+    <div class="sp"></div>
+  </div>
+
+  <aside class="drawer" id="drawer" aria-label="Menú principal">
+    <div class="user"><b id="uN"></b><span id="uC"></span></div>
+    <button class="nav-item" data-act="nav" data-v="inicio">Inicio</button>
+    <button class="nav-item" data-act="nav" data-v="ia">Panel de control IA</button>
+    <button class="nav-item" data-act="nav" data-v="historico">Histórico</button>
+    <button class="nav-item" data-act="nav" data-v="reglas">Configuración</button>
+    <button class="nav-item sub" data-act="nav" data-v="reglas">Reglas</button>
+    <button class="nav-item sub" data-act="nav" data-v="usuarios">Usuarios y roles</button>
+    <div style="flex:1"></div>
+    <button class="ghost" data-act="logout">Cerrar sesión</button>
+  </aside>
+  <div class="scrim hidden" id="scrim" data-act="drawer"></div>
+
+  <main id="view"></main>
+</div>
+
+<script>
+// Datos reales: los inserta generar_revision.py (respuestas.csv + traza + corpus). Nada se calcula aquí con IA.
+const D=/*__DATOS__*/null;
+const RES=D.res, DOCS=D.docs, ETAPAS=D.etapas, MET=D.metricas, LOG=D.log;
+const EASA_URL=D.easa;
+const COLS=['documento','ubicacion','tipo','clausula','justificacion'];
+const TIPOS=['No cumple','Inconsistencia','Cobertura faltante','Trazabilidad incorrecta','No verificable'];
+const DECTXT={approved:'Aprobado',rejected:'Rechazado'};
+const FUENTES=[
+  {r:1,n:'Part-IS de EASA (IS.I.OR.200 a 260)',p:'Obligaciones y plazos legales. Muchos plazos no se repiten en los documentos internos.',url:EASA_URL},
+  {r:2,n:'STD-SEC-001 (estándar corporativo, versión vigente)',p:'Valores numéricos de NIMBUS (plazos, longitudes, periodos) y criterios de control operativo.',url:''},
+  {r:3,n:'LISTA-DOC (lista maestra)',p:'Documentos y versiones en vigor. Un documento sustituido no es referencia.',url:''},
+  {r:4,n:'Políticas, manual, procedimientos, especificaciones (SRS)',p:'Deben respetar lo anterior.',url:''},
+  {r:5,n:'Registros, informes, declaraciones, actas',p:'Demuestran si lo anterior se cumple en la práctica.',url:''}
+];
+
+const S={
+  user:{nombre:'',cargo:'Auditor · Calidad Part-IS'},
+  view:'inicio', doc:null, foco:0, pdfPag:1,
+  sel:{}, comment:'', q:'', tipo:'', uploads:[],
+  criteriosOpen:false, extraOpen:false, extraForm:{ref:'',txt:''},
+  iq:'', iest:'', itipo:'', agente:null, umbral:80,
+  dec:{}, extra:[], hl:[],
+  msgs:[{r:'a',t:'Busco en los hallazgos reales. Prueba con "cifrado", "MFA", "IS.I.OR.230", "no verificable" o un código como "SUP-SEC-ACME".'}]
+};
+const LS='rv_real_'+D.id;
+try{S.dec=JSON.parse(localStorage.getItem(LS+'_dec')||'{}');}catch(e){S.dec={};}
+try{S.extra=JSON.parse(localStorage.getItem(LS+'_extra')||'[]');}catch(e){S.extra=[];}
+
+function esc(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function st(k,label){
+  const col={ok:'var(--ok)',fail:'var(--err)',doubt:'var(--warn)',neutral:'var(--sec)'}[k];
+  return `<span class="st" style="--c:${col}"><i></i>${label}</span>`;
+}
+function sev(tipo){return tipo==='No verificable'?'doubt':'fail';}
+function key(r){return r.documento+'|'+r.ubicacion;}
+function decOf(r){return S.dec[key(r)]||null;}
+function R(){return RES.filter(r=>r.documento===S.doc);}          // hallazgos del documento abierto
+function pendientes(){return R().filter(r=>!decOf(r));}
+function persist(){
+  try{localStorage.setItem(LS+'_dec',JSON.stringify(S.dec));localStorage.setItem(LS+'_extra',JSON.stringify(S.extra));}catch(e){}
+}
+function nextPending(from){
+  const rs=R();
+  const n=rs.findIndex((x,i)=>i>from&&!decOf(x));
+  if(n>=0) return n;
+  return rs.findIndex(x=>!decOf(x));
+}
+function fmtFecha(iso){return new Date(iso).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});}
+function irA(i){const rs=R(); S.foco=i; if(rs[i]) S.pdfPag=rs[i].pagina; S.centrar=true;}
+// Tras dibujar, lleva la vista a la cita marcada del hallazgo activo.
+function centrarCita(){
+  if(!S.centrar) return; S.centrar=false;
+  const c=document.querySelector('[data-on="1"]');
+  if(c) setTimeout(()=>c.scrollIntoView({block:'center',behavior:'smooth'}),60);
+}
+
+function abrirRevision(doc){
+  S.doc=doc; S.view='revision'; S.sel={}; S.comment=''; S.extraOpen=false;
+  const p=R().findIndex(x=>!decOf(x));
+  irA(p>=0?p:0);
+}
+
+// Sobre qué se aplica la decisión: los seleccionados pendientes; si no hay ninguno, el hallazgo activo.
+function objetivosActuales(){
+  const rs=R();
+  const sel=rs.filter(r=>S.sel[key(r)]&&!decOf(r));
+  if(sel.length) return sel;
+  const f=rs[S.foco];
+  return !f||decOf(f)?[]:[f];
+}
+
+function aplicar(dec){
+  const comentario=(S.comment||'').trim();
+  const fecha=new Date().toISOString();
+  objetivosActuales().forEach(r=>{S.dec[key(r)]={dec,note:comentario,fecha,user:S.user.nombre};});
+  persist();
+  S.sel={}; S.comment='';
+  const n=nextPending(S.foco);
+  if(n>=0) irA(n);
+  render();
+}
+
+// Comentario sin hallazgo de la IA: lo que la IA no señaló. Va a feedback.csv para mejorar el auditor.
+function guardarExtra(){
+  const txt=(S.extraForm.txt||'').trim();
+  if(!txt) return;
+  S.extra.push({documento:S.doc,referencia:(S.extraForm.ref||'').trim(),comentario:txt,fecha:new Date().toISOString()});
+  persist();
+  S.extraForm={ref:'',txt:''}; S.extraOpen=false;
+  render();
+}
+
+function csvEsc(v){v=String(v??'');return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}
+function toCSV(rows,cols){return cols.join(',')+'\n'+rows.map(r=>cols.map(c=>csvEsc(r[c])).join(',')).join('\n')+'\n';}
+function baja(nombre,texto){
+  const blob=new Blob([texto],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download=nombre;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+// respuestas.csv: solo los hallazgos de la solución, nunca las decisiones del revisor.
+function exportRespuestas(){baja('respuestas.csv',toCSV(RES.map(r=>({documento:r.documento,ubicacion:r.ubicacion,tipo:r.tipo,clausula:r.clausula,justificacion:r.justificacion})),COLS));}
+// feedback.csv: decisiones del revisor y comentarios sin hallazgo, separados del CSV oficial.
+function feedbackRows(){
+  const dec=RES.filter(r=>decOf(r)).map(r=>{const d=decOf(r);return {
+    documento:r.documento,ubicacion:r.ubicacion,ia_tipo:r.tipo,ia_clausula:r.clausula,
+    decision:DECTXT[d.dec],nota:d.note,usuario:d.user||'',fecha:d.fecha};});
+  const sinHallazgo=S.extra.map(x=>({
+    documento:x.documento,ubicacion:x.referencia,ia_tipo:'(sin hallazgo de la IA)',ia_clausula:'',
+    decision:'Omitido por la IA',nota:x.comentario,usuario:S.user.nombre,fecha:x.fecha}));
+  return dec.concat(sinHallazgo);
+}
+function exportFeedback(){
+  baja('feedback.csv',toCSV(feedbackRows(),['documento','ubicacion','ia_tipo','ia_clausula','decision','nota','usuario','fecha']));
+}
+
+function vPdf(){
+  const info=DOCS[S.doc];
+  const pg=S.pdfPag;
+  const N=info.paginas;
+  const rs=R();
+  const total=rs.length, done=rs.filter(x=>decOf(x)).length;
+  // Cajas: posiciones reales de la cita y del identificador en el PDF (calculadas con pymupdf).
+  const cajas=rs.flatMap((r,i)=>(r.boxes||[]).filter(b=>b.p===pg).map(b=>({...b,t:r.ubicacion,on:i===S.foco})))
+    .map(b=>`<div ${b.on?'data-on="1"':''} title="${esc(b.t)}" style="position:absolute;left:${b.x*100}%;top:${b.y*100}%;width:${b.w*100}%;height:${b.h*100}%;background:${b.on?'rgba(255,159,10,.35)':'rgba(255,226,122,.25)'};border:2px solid ${b.on?'#ff9f0a':'rgba(255,159,10,.35)'};border-radius:3px"></div>`).join('');
+  const extras=S.extra.filter(x=>x.documento===S.doc);
+  const listaExtra=extras.length?`<div class="small" style="margin-top:12px">Comentarios sin hallazgo guardados: ${extras.length}</div>`+extras.map(x=>`<div class="sumrow"><span><b>${esc(x.referencia||'Sin referencia')}</b> · ${esc(x.comentario)}</span><span class="small">${fmtFecha(x.fecha)}</span></div>`).join(''):'';
+  const aviso=info.escaneado?'<p class="note">Documento escaneado: su texto se transcribió con visión, así que la cita no se puede marcar sobre la imagen.</p>':'';
+  return `<div class="card">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <span class="small" style="white-space:nowrap">Hallazgos revisados</span>
+      <div style="flex:1;height:8px;background:#e5e5ea;border-radius:999px;overflow:hidden"><div style="width:${total?done/total*100:0}%;height:100%;background:var(--ok);transition:width .3s"></div></div>
+      <b style="white-space:nowrap">${done}/${total}</b>
+    </div>
+    <div class="pnav">
+      <button class="ghost" data-act="pdfpag" data-d="-1" ${pg<=1?'disabled':''}>← Anterior</button>
+      <span class="small">Página ${pg} de ${N}</span>
+      <div class="sp"></div>
+      <button class="ghost" data-act="pdfpag" data-d="1" ${pg>=N?'disabled':''}>Siguiente →</button>
+    </div>
+    <div class="pdfwrap">
+      <div style="position:relative"><img src="${D.carpeta}/${info.slug}_${pg}.jpg" alt="Página ${pg} del documento" style="width:100%;display:block;border-radius:10px;background:#fff">${cajas}</div>
+    </div>
+    ${aviso}
+    ${listaExtra}
+  </div>`;
+}
+
+function contrastado(r){
+  const pis=r.clausula&&r.clausula!=='—'?`<a href="${esc(EASA_URL)}" target="_blank" rel="noopener noreferrer">Part-IS de EASA · ${esc(r.clausula)}</a>`:'';
+  return [pis,esc(r.base)].filter(Boolean).join(' · ')||'—';
+}
+function leido(r){return r.leido?`<div class="cita">«${esc(r.leido)}»</div>`:'<span>Sin cita literal (defecto por ausencia).</span>';}
+
+// Motivo de un hallazgo: estado, cláusula, justificación de la IA y, si ya decidiste, tu decisión y comentario.
+function vMotivo(r){
+  if(!r) return '';
+  const d=decOf(r);
+  const dec=d?`<div class="small" style="margin-top:8px">Tu decisión: <b style="color:var(--text)">${DECTXT[d.dec]}</b>${d.note?` · Comentario: ${esc(d.note)}`:''}</div>`:'';
+  return `<div class="card" style="padding:14px 16px;background:#fafafc;box-shadow:none;border:1px solid var(--sep)">
+    <div class="small">${esc(r.ubicacion)} · página ${r.pagina} · ${esc(r.origen)} · confianza ${Math.round(r.conf*100)}%</div>
+    <div style="margin-top:6px">${st(sev(r.tipo),esc(r.tipo))}</div>
+    <div class="small" style="margin-top:4px">Cláusula ${esc(r.clausula)}</div>
+    <div class="small" style="margin-top:8px"><b style="color:var(--text)">Documento revisado:</b> ${esc(r.documento)}</div>
+    <div class="small"><b style="color:var(--text)">Leído del documento:</b> ${leido(r)}</div>
+    <div class="small"><b style="color:var(--text)">Contrastado con:</b> ${contrastado(r)}</div>
+    <div class="rule" style="margin:8px 0 0"><b>Por qué:</b> ${esc(r.justificacion)}</div>
+    ${dec}
+  </div>`;
+}
+
+function vDecision(){
+  const rs=R();
+  const pend=pendientes();
+  if(!pend.length){
+    return `<div class="card right" style="overflow:auto">
+      <h2>Revisión completa</h2>
+      <p class="sub">Todos los hallazgos tienen decisión.</p>
+      ${rs.map(x=>vMotivo(x)).join('')}
+      <div class="fbtns">
+        <button class="ok" data-act="exfb">Exportar feedback.csv</button>
+        <button class="ghost" data-act="exres">Exportar respuestas.csv</button>
+      </div>
+      <button data-act="volver" style="width:100%;margin-top:10px">Volver al listado</button>
+      <p class="note">respuestas.csv sale tal cual de la solución. feedback.csv contiene tus decisiones y sirve para mejorar el auditor; no altera el CSV oficial.</p>
+    </div>`;
+  }
+  const puedes=objetivosActuales().length>0;
+  const todos=pend.every(x=>S.sel[key(x)]);
+  const filas=rs.map((x,i)=>{
+    const k=key(x), d=decOf(x);
+    const estado=d?st('neutral',DECTXT[d.dec]):st(sev(x.tipo),esc(x.tipo));
+    return `<div class="hrow ${i===S.foco?'on':''}">
+      <input type="checkbox" data-act="toggle" data-k="${esc(k)}" ${S.sel[k]?'checked':''} ${d?'disabled':''} aria-label="Seleccionar ${esc(x.ubicacion)}">
+      <button class="nm" data-act="goto" data-i="${i}">${esc(x.ubicacion)}</button>
+      ${estado}
+    </div>`;
+  }).join('');
+  return `<div class="card right">
+    <div class="hrow" style="border-bottom:1px solid var(--sep);flex:none">
+      <input type="checkbox" data-act="todos" ${todos?'checked':''} aria-label="Seleccionar todos">
+      <span class="small" style="font-weight:600;color:var(--text)">Seleccionar todos</span>
+    </div>
+    <div class="lista-scroll">${filas}</div>
+    <div class="motivo-scroll">${vMotivo(rs[S.foco])}</div>
+    <label class="small" for="fcom" style="display:block;margin-top:12px;flex:none">Comentario <span style="font-weight:400">· se guarda al pulsar Aprobar o Rechazar</span></label>
+    <textarea id="fcom" rows="2" style="width:100%;margin-top:6px;flex:none" placeholder="Explica tu criterio">${esc(S.comment)}</textarea>
+    <div class="fbtns" style="flex:none">
+      <button class="ok" data-act="aprobar" ${puedes?'':'disabled'}>Aprobar</button>
+      <button class="warn" data-act="rechazar" ${puedes?'':'disabled'}>Rechazar</button>
+    </div>
+  </div>`;
+}
+
+function vRevision(){
+  const info=DOCS[S.doc];
+  return `<div class="pnav" style="margin-bottom:14px">
+      <button class="ghost" data-act="volver">← Listado</button>
+      <h2 style="margin:0">${esc(S.doc)}</h2><span class="small">v${esc(info.version)} · ${esc(info.titulo)}</span>
+      <div class="sp"></div>
+      <button class="ghost iconbtn" data-act="toggleExtra" aria-label="Comentario sin hallazgo de la IA" title="Comentario sin hallazgo de la IA">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </button>
+      <button class="ghost" data-act="criterios">Criterios</button>
+    </div>
+    <div class="two">
+      <div>${vPdf()}</div>
+      ${vDecision()}
+    </div>`;
+}
+
+// Contenido del modal lateral de criterios: jerarquía, y por cada hallazgo qué se leyó, contra qué se contrastó y por qué.
+function criteriosBody(){
+  return `<p class="sub">Contra qué se valida cada documento. Cuando dos fuentes discrepan, manda la de mayor rango.</p>
+    <div class="card"><h3>Jerarquía normativa</h3>
+      <table><thead><tr><th>Rango</th><th>Fuente</th><th>Qué aporta</th></tr></thead>
+      <tbody>${FUENTES.map(f=>`<tr><td>${f.r}</td><td><b>${esc(f.n)}</b>${f.url?` · <a href="${esc(f.url)}" target="_blank" rel="noopener noreferrer">enlace oficial</a>`:''}</td><td>${esc(f.p)}</td></tr>`).join('')}</tbody></table>
+    </div>
+    <div class="card" style="margin-top:16px"><h3>Hallazgos contrastados</h3>
+      ${R().map(r=>`<div style="border-top:1px solid var(--sep);padding:12px 0">
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b>${esc(r.ubicacion)}</b><span style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:flex-end">${st(sev(r.tipo),esc(r.tipo))}${decOf(r)?st('neutral','Tu decisión: '+DECTXT[decOf(r).dec]):st('neutral','Pendiente')}</span></div>
+        <div class="small" style="margin-top:6px"><b style="color:var(--text)">Documento revisado:</b> ${esc(r.documento)}</div>
+        <div class="small"><b style="color:var(--text)">Leído del documento:</b> ${leido(r)}</div>
+        <div class="small"><b style="color:var(--text)">Contrastado con:</b> ${contrastado(r)}</div>
+        <div class="small"><b style="color:var(--text)">Por qué:</b> ${esc(r.justificacion)}</div>
+        ${decOf(r)?`<div class="rule" style="margin:8px 0 0"><b>Tu decisión: ${DECTXT[decOf(r).dec]}</b>${decOf(r).user?` · ${esc(decOf(r).user)}`:''} · ${fmtFecha(decOf(r).fecha)}<br><b>Tu comentario:</b> ${decOf(r).note?esc(decOf(r).note):'<span class="small">(sin comentario)</span>'}</div>`:''}
+      </div>`).join('')}
+      <p class="note">Cada cita literal ha sido comprobada por código en el PDF antes de entrar en respuestas.csv.</p>
+    </div>`;
+}
+
+function estadoDoc(rs){
+  const pend=rs.filter(r=>!decOf(r)).length;
+  return !rs.length?'Sin hallazgos':pend===0?'Completado':pend===rs.length?'Pendiente':'En revisión';
+}
+
+function vInicio(){
+  const docs=Object.keys(DOCS).map(c=>{
+    const info=DOCS[c], rs=RES.filter(r=>r.documento===c);
+    const pend=rs.filter(r=>!decOf(r)).length;
+    return {nombre:c,titulo:info.titulo,tipo:info.familia,hall:rs.length,pend,resp:rs.length?S.user.nombre:'—',est:estadoDoc(rs),fecha:null,abrir:rs.length>0};
+  }).sort((a,b)=>(b.pend-a.pend)||(b.hall-a.hall)||a.nombre.localeCompare(b.nombre));
+  S.uploads.forEach(u=>docs.push({nombre:u.nombre,titulo:'',tipo:'Archivo manual',hall:'—',pend:'—',resp:'Sin asignar',est:'Cargado · sin procesar',fecha:u.fecha,abrir:false}));
+  const q=(S.iq||'').trim().toLowerCase();
+  const vis=docs.filter(d=>(!q||(d.nombre+' '+d.titulo+' '+d.tipo+' '+d.resp).toLowerCase().includes(q))&&(!S.itipo||d.tipo===S.itipo)&&(!S.iest||d.est===S.iest));
+  const kind={'Completado':'ok','Sin hallazgos':'ok','En revisión':'doubt','Pendiente':'neutral','Cargado · sin procesar':'doubt'};
+  const tipos=[...new Set(docs.map(d=>d.tipo))].sort();
+  const ests=[...new Set(docs.map(d=>d.est))];
+  const filas=vis.map(d=>`<tr class="${d.abrir?'clic':''}" ${d.abrir?`data-act="abrir" data-doc="${esc(d.nombre)}"`:''}><td><b>${esc(d.nombre)}</b><div class="small">${esc(d.titulo)}</div></td><td>${esc(d.tipo)}</td><td>${d.hall||'—'}</td><td>${d.hall?d.pend:'—'}</td><td>${esc(d.resp)}</td><td>${st(kind[d.est]||'neutral',esc(d.est))}${d.fecha?` <span class="small">${fmtFecha(d.fecha)}</span>`:''}</td></tr>`);
+  return `<h2>Inicio</h2>
+    <p class="sub">Documentos auditados. Pulsa una fila con hallazgos para abrirla.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center">
+      <input id="iq" type="search" placeholder="Buscar documento, título, familia o responsable" value="${esc(S.iq||'')}" aria-label="Buscar documentos" style="flex:1;min-width:220px">
+      <select id="itipo" aria-label="Filtrar por familia"><option value="">Todas las familias</option>${tipos.map(t=>`<option ${S.itipo===t?'selected':''}>${esc(t)}</option>`).join('')}</select>
+      <select id="iest" aria-label="Filtrar por estado"><option value="">Todos los estados</option>${ests.map(t=>`<option ${S.iest===t?'selected':''}>${esc(t)}</option>`).join('')}</select>
+      <label style="cursor:pointer;padding:9px 16px;border-radius:10px;background:#e5e5ea;font-size:14px">Cargar archivo<input id="archivo" type="file" accept=".pdf,.docx,.csv,.xlsx" style="display:none"></label>
+    </div>
+    <div class="small" style="margin-bottom:8px">${vis.length} de ${docs.length} documentos · ${RES.length} hallazgos</div>
+    <div class="card"><table><thead><tr><th>Documento</th><th>Familia</th><th>Hallazgos</th><th>Por revisar</th><th>Responsable</th><th>Estado</th></tr></thead><tbody>${filas.join('')||'<tr><td colspan="6" class="small">Ningún documento coincide con el filtro.</td></tr>'}</tbody></table></div>
+    <p class="note">Al cargar un archivo, esta pantalla solo lo registra. La auditoría la hace la solución: <b>python auditar.py &lt;carpeta_pdf&gt;</b> genera respuestas.csv sin intervención manual.</p>`;
+}
+
+// Actividades y métricas reales de cada agente, mostradas al pulsarlo.
+function panelAgente(){
+  if(S.agente===null||S.agente===undefined) return '';
+  const i=S.agente, e=ETAPAS[i];
+  return `<div class="card" style="margin-bottom:16px;border:2px solid var(--tint)">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><h3 style="margin:0">Agente ${i+1} · ${esc(e.n)}</h3><button class="ghost" data-act="agente" data-i="${i}">Cerrar</button></div>
+    <p class="small" style="margin:6px 0 12px">${esc(e.d)}</p>
+    <div style="display:grid;grid-template-columns:repeat(${Math.min(e.met.length,4)},1fr);gap:10px;margin-bottom:12px">${e.met.map(m=>`<div style="background:var(--bg);border-radius:10px;padding:10px"><div class="small">${esc(m[0])}</div><b style="font-size:17px">${esc(m[1])}</b></div>`).join('')}</div>
+    <h3>Actividades</h3>
+    <ul style="margin:0;padding-left:18px;font-size:14px">${e.act.map(a=>`<li style="margin-bottom:4px">${esc(a)}</li>`).join('')}</ul>
+    <p class="note">Cifras de la última ejecución de la solución (${esc(D.fichero)}).</p>
+  </div>`;
+}
+
+function vIA(){
+  const pct=ETAPAS.map(()=>100);
+  const flujo=ETAPAS.map((e,i)=>`<div role="button" tabindex="0" data-act="agente" data-i="${i}" aria-expanded="${S.agente===i}" style="cursor:pointer;flex:1;min-width:150px;background:#fff;border:2px solid ${S.agente===i?'var(--tint)':'var(--sep)'};border-radius:12px;padding:12px">
+      <div class="small">Agente ${i+1}</div><b style="font-size:14px">${esc(e.n)}</b>
+      <div style="height:6px;background:#e5e5ea;border-radius:999px;overflow:hidden;margin-top:10px"><div style="width:${pct[i]}%;height:100%;background:var(--ok)"></div></div>
+      <div class="small" style="margin-top:4px">${esc(e.met[0][0])}: ${esc(e.met[0][1])}</div></div>${i<ETAPAS.length-1?'<div aria-hidden="true" style="align-self:center;color:var(--sec);font-size:20px">→</div>':''}`).join('');
+  const detalle=ETAPAS.map((e,i)=>`<div style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--sep)">
+      <div><b>${i+1}. ${esc(e.n)}</b><div class="small">${esc(e.d)}</div></div>
+      <div style="text-align:right">${st('ok','Completado')}<div class="small">100%</div></div></div>`).join('');
+  const m=MET;
+  const metricas=m?`<div class="card" style="margin-bottom:16px">
+    <h3>Resultado frente a la clave (puntuador oficial)</h3>
+    <p class="small" style="margin:0 0 12px">${esc(m.alcance)}</p>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:12px">${[['F1',m.f1],['Precisión',m.precision],['Recall',m.recall],['Cláusula correcta',m.clausula],['Defectos encontrados',m.encontrados]].map(x=>`<div style="background:var(--bg);border-radius:10px;padding:10px"><div class="small">${x[0]}</div><b style="font-size:20px">${esc(x[1])}</b></div>`).join('')}</div>
+    <h3>Defectos encontrados por familia</h3>
+    ${m.familias.map(f=>`<div style="display:grid;grid-template-columns:200px 1fr 60px;gap:10px;align-items:center;padding:5px 0"><span class="small" style="color:var(--text)">${esc(f.n)}</span><div style="height:8px;background:#e5e5ea;border-radius:999px;overflow:hidden"><div style="width:${f.ok/f.total*100}%;height:100%;background:${f.ok===f.total?'var(--ok)':'var(--tint)'}"></div></div><span class="small" style="text-align:right">${f.ok}/${f.total}</span></div>`).join('')}
+  </div>`:'';
+  return `<h2>Panel de control IA</h2>
+  <p class="sub">Flujo de agentes de la solución y lo que hizo cada uno en la última ejecución. Avance total: <b style="color:var(--text)">100%</b>.</p>
+  <div class="card" style="margin-bottom:16px">
+    <h3>Flujo</h3>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:stretch">${flujo}</div>
+    <p class="note">Pulsa un agente para ver sus actividades y métricas.</p>
+  </div>
+  ${panelAgente()}
+  ${metricas}
+  <div class="card">
+    <h3>Qué hace cada agente</h3>
+    ${detalle}
+  </div>
+  <div class="card" style="margin-top:16px"><h3>Registro de ejecución</h3>
+    <p class="small" style="margin:0 0 10px">Propuestas que el verificador de código descartó y por qué: nada entra en respuestas.csv sin pasar por él.</p>
+    <div class="log">${LOG.length?LOG.map(l=>esc(l)).join('<br>'):'Sin registros todavía.'}</div></div>`;
+}
+
+function answer(q){
+  const s=q.toLowerCase().trim();
+  let hits=RES;
+  const cl=s.match(/(?:is\.i\.or\.)?(2\d\d)\b/);
+  const cod=RES.find(r=>s.includes(r.documento.toLowerCase()));
+  if(/no verificable/.test(s)) hits=RES.filter(r=>r.tipo==='No verificable');
+  else if(/inconsist/.test(s)) hits=RES.filter(r=>r.tipo==='Inconsistencia');
+  else if(/no cumple/.test(s)) hits=RES.filter(r=>r.tipo==='No cumple');
+  else if(/cobertura/.test(s)) hits=RES.filter(r=>r.tipo==='Cobertura faltante');
+  else if(/trazabilidad/.test(s)) hits=RES.filter(r=>r.tipo==='Trazabilidad incorrecta');
+  else if(cod) hits=RES.filter(r=>r.documento===cod.documento);
+  else if(cl) hits=RES.filter(r=>r.clausula==='IS.I.OR.'+cl[1]);
+  else {
+    const words=s.split(/\s+/).filter(w=>w.length>2);
+    hits=RES.filter(r=>{const t=(r.documento+' '+r.ubicacion+' '+r.justificacion+' '+r.tipo+' '+r.leido).toLowerCase();return words.some(w=>t.includes(w));});
+  }
+  S.hl=hits.map(key);
+  const text=hits.length
+    ? `Encontré ${hits.length} hallazgo${hits.length>1?'s':''}: ${hits.slice(0,10).map(h=>`<mark>${esc(h.documento)} · ${esc(h.ubicacion)}</mark>`).join(', ')}${hits.length>10?'…':''}. Están resaltados en el Histórico.`
+    : 'No encuentro hallazgos con esos términos.';
+  return {text,hits:S.hl};
+}
+
+function sendChat(q){
+  if(!q||!q.trim()) return;
+  S.msgs.push({r:'u',t:esc(q.trim())});
+  const a=answer(q);
+  S.msgs.push({r:'a',t:a.text});
+  render();
+  const m=document.getElementById('msgs'); if(m) m.scrollTop=m.scrollHeight;
+}
+
+function vHist(){
+  let rows=RES.filter(r=>(!S.tipo||r.tipo===S.tipo)&&(!S.q||(r.documento+' '+r.ubicacion+' '+r.justificacion).toLowerCase().includes(S.q.toLowerCase())));
+  if(S.hl.length){const h=new Set(S.hl); rows=rows.filter(r=>h.has(key(r))).concat(rows.filter(r=>!h.has(key(r))));}
+  const MAX=300, mas=rows.length>MAX?`<tr><td colspan="4" class="small">… y ${rows.length-MAX} más. Filtra para acotar.</td></tr>`:'';
+  return `<h2>Histórico</h2>
+  <p class="sub">Hallazgos de la solución y tus decisiones. Filtra o pregunta al asistente para resaltar lo que encuentre.</p>
+  <div class="grid" style="grid-template-columns:1.5fr 1fr;align-items:start">
+    <div class="card">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <input id="flt" placeholder="Buscar documento, ubicación o texto" value="${esc(S.q)}" aria-label="Buscar hallazgos" style="flex:1;min-width:180px">
+        <select id="ftipo" aria-label="Filtrar por tipo"><option value="">Todos los tipos</option>${TIPOS.map(t=>`<option ${S.tipo===t?'selected':''}>${t}</option>`).join('')}</select>
+      </div>
+      <div class="small" style="margin-bottom:6px">${rows.length} de ${RES.length} hallazgos</div>
+      <div class="hscroll"><table><thead><tr><th>Ubicación</th><th>Tipo</th><th>Cláusula</th><th>Tu decisión</th></tr></thead>
+      <tbody>${rows.slice(0,MAX).map(r=>{const d=decOf(r);return `<tr class="${S.hl.includes(key(r))?'hl':''} clic" data-act="abrirH" data-doc="${esc(r.documento)}" data-u="${esc(r.ubicacion)}"><td><span class="small">${esc(r.documento)}</span><br><b>${esc(r.ubicacion)}</b><div class="small">${esc(r.justificacion)}</div></td><td>${esc(r.tipo)}</td><td>${esc(r.clausula)}</td><td>${d?st('neutral',DECTXT[d.dec]):'<span class="small">Pendiente</span>'}</td></tr>`;}).join('') || '<tr><td colspan="4" class="small">Sin resultados</td></tr>'}${mas}</tbody></table></div>
+      <div class="fbtns" style="margin-top:16px">
+        <button class="ghost" data-act="exres">Exportar respuestas.csv</button>
+        <button class="ok" data-act="exfb">Exportar feedback.csv</button>
+      </div>
+    </div>
+    <div class="card chat">
+      <h3>Asistente de hallazgos</h3>
+      <div class="small" style="margin-bottom:8px">Busca por tipo, cláusula, documento o texto. Solo responde con hallazgos ya calculados.</div>
+      <div class="msgs" id="msgs">${S.msgs.map(m=>`<div class="m ${m.r}">${m.t}</div>`).join('')}</div>
+      <form id="chatForm" class="chatin">
+        <input id="cq" placeholder="Escribe tu pregunta" aria-label="Pregunta para el asistente" autocomplete="off">
+        <button type="submit">Enviar</button>
+      </form>
+    </div>
+  </div>`;
+}
+
+// Criterio de aceptación: umbral sobre los hallazgos ya decididos. Define cuándo un documento se aprueba o se rechaza.
+function criterioCard(){
+  const dec=RES.filter(x=>decOf(x));
+  const pend=RES.length-dec.length;
+  const ap=dec.filter(x=>decOf(x).dec==='approved').length;
+  const pct=dec.length?Math.round(ap/dec.length*100):null;
+  const u=S.umbral;
+  const cuenta={Aprobado:0,Rechazado:0,'En revisión':0};
+  Object.keys(DOCS).forEach(c=>{
+    const rs=RES.filter(r=>r.documento===c); if(!rs.length) return;
+    const ds=rs.filter(r=>decOf(r));
+    if(ds.length<rs.length){cuenta['En revisión']++;return;}
+    const p=ds.filter(r=>decOf(r).dec==='approved').length/ds.length*100;
+    cuenta[p>=u?'Aprobado':'Rechazado']++;
+  });
+  return `<div class="card" style="margin-bottom:16px"><h3>Criterio de aceptación</h3>
+    <p class="small">Un documento se aprueba cuando el porcentaje de hallazgos aprobados por el auditor es igual o mayor que el umbral y no quedan hallazgos pendientes. En otro caso queda en revisión o rechazado.</p>
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:14px 0">
+      <label class="small" for="umbral">Umbral de aceptación (%)</label>
+      <input id="umbral" type="number" min="0" max="100" value="${u}" style="width:100px">
+    </div>
+    <div class="sumrow"><span>Aceptación actual</span><b>${pct===null?'—':pct+'%'}</b></div>
+    <div class="sumrow"><span>Hallazgos pendientes</span><b>${pend}</b></div>
+    <div class="sumrow"><span>Documentos aprobados</span>${st('ok',cuenta.Aprobado)}</div>
+    <div class="sumrow"><span>Documentos rechazados</span>${st('fail',cuenta.Rechazado)}</div>
+    <div class="sumrow"><span>Documentos en revisión</span>${st('doubt',cuenta['En revisión'])}</div>
+    <p class="note">La aceptación se calcula sobre los hallazgos ya decididos. Cambiar el umbral afecta a los documentos que aún no se han cerrado.</p>
+  </div>`;
+}
+
+function vCfg(){
+  const tab=S.view;
+  let body='';
+  if(tab==='reglas'){
+    body=`${criterioCard()}<div class="card"><table><thead><tr><th>Referencia</th><th>Descripción</th></tr></thead><tbody>
+      <tr><td>Part-IS</td><td>Anexo II, puntos IS.I.OR.200 a IS.I.OR.260 (texto oficial de EASA)</td></tr>
+      <tr><td>STD-SEC-001</td><td>Estándar corporativo vigente: valores numéricos y criterios de control operativo</td></tr>
+      <tr><td>LISTA-DOC</td><td>Lista maestra: documentos y versiones en vigor</td></tr>
+      </tbody></table>
+      <h3 style="margin-top:18px">Reglas del verificador (código, no IA)</h3>
+      <table><thead><tr><th>Regla</th><th>Qué comprueba</th></tr></thead><tbody>
+      <tr><td>V1</td><td>Tipo y cláusula con el formato oficial (IS.I.OR.210(a) → IS.I.OR.210)</td></tr>
+      <tr><td>V2</td><td>La ubicación contiene un identificador que existe en el documento</td></tr>
+      <tr><td>V3</td><td>La cita aparece literalmente en el documento auditado</td></tr>
+      <tr><td>V4</td><td>El plazo, recalculado con código a partir de las fechas, incumple de verdad</td></tr>
+      <tr><td>V5</td><td>La confianza declarada supera el umbral</td></tr>
+      </tbody></table>
+      <p class="note">Las reglas se cargan desde la solución. Cambiarlas requiere aprobación de Calidad; esta pantalla no las modifica.</p></div>`;
+  } else {
+    body=`<div class="grid g2">
+      <div class="card"><h3>Roles</h3>
+        <p class="small"><b>Auditor:</b> revisa hallazgos, decide sobre los resultados de la IA y da retroalimentación.</p>
+        <p class="small"><b>Consulta:</b> lee documentos y usa el asistente, sin decidir.</p>
+        <p class="small"><b>Administrador:</b> gestiona reglas, usuarios y roles.</p>
+      </div>
+      <div class="card"><h3>Usuarios</h3><p class="small">La lista de usuarios llegará con la autenticación real (Entra ID). En este prototipo no hay inicio de sesión verdadero.</p></div>
+    </div>`;
+  }
+  return `<div class="tabs" role="tablist">
+    <button role="tab" class="${tab==='reglas'?'on':''}" data-act="nav" data-v="reglas">Reglas</button>
+    <button role="tab" class="${tab==='usuarios'?'on':''}" data-act="nav" data-v="usuarios">Usuarios y roles</button>
+  </div>${body}`;
+}
+
+const VIEWS={inicio:vInicio,revision:vRevision,ia:vIA,historico:vHist,reglas:vCfg,usuarios:vCfg};
+const TITLES={inicio:'Inicio',revision:'Revisión',ia:'Panel de control IA',historico:'Histórico',reglas:'Configuración · Reglas',usuarios:'Configuración · Usuarios y roles'};
+
+function render(){
+  document.getElementById('uN').textContent=S.user.nombre;
+  document.getElementById('uC').textContent=S.user.cargo;
+  document.getElementById('ttl').textContent=TITLES[S.view];
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.v===S.view));
+  const criterios=S.criteriosOpen?`<div class="scrim" data-act="cerrarCriterios"></div>
+    <aside class="sidemodal" role="dialog" aria-label="Criterios de validación">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <h2 style="margin:0">Criterios de validación</h2>
+        <button class="ghost" data-act="cerrarCriterios">Cerrar</button>
+      </div>
+      ${criteriosBody()}
+    </aside>`:'';
+  const comentario=S.extraOpen?`<div class="scrim" data-act="toggleExtra"></div>
+    <div class="dialog" role="dialog" aria-label="Comentario sin hallazgo de la IA">
+      <h2 style="margin:0 0 6px">Comentario sin hallazgo</h2>
+      <p class="small" style="margin:0 0 14px">Algo que la IA no señaló. Se guarda como retroalimentación para mejorar el auditor.</p>
+      <label class="small" for="xref">Referencia (ubicación o texto del documento)</label>
+      <input id="xref" value="${esc(S.extraForm.ref)}" style="margin:6px 0 12px">
+      <label class="small" for="xtxt">Qué debería haber señalado la IA</label>
+      <textarea id="xtxt" rows="4" style="margin-top:6px">${esc(S.extraForm.txt)}</textarea>
+      <div class="fbtns">
+        <button class="ghost" data-act="toggleExtra">Cancelar</button>
+        <button class="ok" data-act="guardarExtra">Guardar comentario</button>
+      </div>
+    </div>`:'';
+  document.getElementById('view').innerHTML=VIEWS[S.view]()+criterios+comentario;
+  if(S.view==='revision') centrarCita();
+}
+
+function toggleDrawer(force){
+  const d=document.getElementById('drawer');
+  const open=typeof force==='boolean'?force:!d.classList.contains('open');
+  d.classList.toggle('open',open);
+  document.getElementById('scrim').classList.toggle('hidden',!open);
+  document.querySelector('.burger').setAttribute('aria-expanded',String(open));
+}
+
+document.addEventListener('click',e=>{
+  const el=e.target.closest('[data-act]');
+  if(!el||el.disabled) return;
+  const a=el.dataset.act;
+  if(a==='drawer') toggleDrawer();
+  else if(a==='nav'){S.view=el.dataset.v; toggleDrawer(false); render(); window.scrollTo(0,0);}
+  else if(a==='abrir'){abrirRevision(el.dataset.doc); render(); window.scrollTo(0,0);}
+  else if(a==='abrirH'){abrirRevision(el.dataset.doc); const i=R().findIndex(r=>r.ubicacion===el.dataset.u); if(i>=0) irA(i); render(); window.scrollTo(0,0);}
+  else if(a==='volver'){S.view='inicio'; S.sel={}; S.comment=''; render(); window.scrollTo(0,0);}
+  else if(a==='criterios'){S.criteriosOpen=true; render();}
+  else if(a==='cerrarCriterios'){S.criteriosOpen=false; render();}
+  else if(a==='toggleExtra'){S.extraOpen=!S.extraOpen; render();}
+  else if(a==='guardarExtra') guardarExtra();
+  else if(a==='goto'){irA(Number(el.dataset.i)); render();}
+  else if(a==='toggle'){const k=el.dataset.k; S.sel[k]=!S.sel[k]; render();}
+  else if(a==='todos'){
+    const pend=pendientes();
+    const todos=pend.every(x=>S.sel[key(x)]);
+    S.sel={};
+    if(!todos) pend.forEach(x=>{S.sel[key(x)]=true;});
+    render();
+  }
+  else if(a==='aprobar') aplicar('approved');
+  else if(a==='rechazar') aplicar('rejected');
+  else if(a==='pdfpag'){
+    const n=S.pdfPag+Number(el.dataset.d);
+    if(n<1||n>DOCS[S.doc].paginas) return;
+    S.pdfPag=n; render();
+  }
+  else if(a==='agente'){const i=Number(el.dataset.i); S.agente=S.agente===i?null:i; render();}
+  else if(a==='exres') exportRespuestas();
+  else if(a==='exfb') exportFeedback();
+  else if(a==='logout'){S.view='inicio'; document.getElementById('app').classList.add('hidden'); document.getElementById('login').classList.remove('hidden'); toggleDrawer(false);}
+});
+
+document.addEventListener('input',e=>{
+  if(e.target.id==='flt'){S.q=e.target.value; render(); const f=document.getElementById('flt'); if(f){f.focus(); f.setSelectionRange(f.value.length,f.value.length);}}
+  if(e.target.id==='iq'){S.iq=e.target.value; render(); const f=document.getElementById('iq'); if(f){f.focus(); f.setSelectionRange(f.value.length,f.value.length);}}
+  if(e.target.id==='fcom'){S.comment=e.target.value;}
+  if(e.target.id==='xref'){S.extraForm.ref=e.target.value;}
+  if(e.target.id==='xtxt'){S.extraForm.txt=e.target.value;}
+});
+
+document.addEventListener('change',e=>{
+  if(e.target.id==='ftipo'){S.tipo=e.target.value; render();}
+  if(e.target.id==='itipo'){S.itipo=e.target.value; render();}
+  if(e.target.id==='iest'){S.iest=e.target.value; render();}
+  if(e.target.id==='umbral'){S.umbral=Math.min(100,Math.max(0,Number(e.target.value)||0)); render();}
+  if(e.target.id==='archivo'){
+    const f=e.target.files&&e.target.files[0];
+    if(f){S.uploads.push({nombre:f.name,fecha:new Date().toISOString()}); render();}
+  }
+});
+
+document.addEventListener('submit',e=>{
+  e.preventDefault();
+  if(e.target.id==='loginForm'){
+    const em=(document.getElementById('em').value||'revisor').trim();
+    S.user.nombre=em.split('@')[0].split(/[._-]+/).filter(Boolean).map(w=>w[0].toUpperCase()+w.slice(1)).join(' ')||'Revisor';
+    document.getElementById('login').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    render();
+  } else if(e.target.id==='chatForm'){
+    sendChat(document.getElementById('cq').value);
+  }
+});
+
+render();
+</script>
+</body>
+</html>
