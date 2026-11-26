@@ -21,7 +21,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from src import auth, db, llm, normativa, normativa_es, textos
+from src import auth, cartera, db, llm, normativa, normativa_es, textos
 
 st.set_page_config(page_title="Part-IS audit", page_icon="🛡️", layout="wide")
 
@@ -63,8 +63,15 @@ st.markdown(f"""
   .kpi {{ background: {FONDO}; border: 1px solid {BORDE}; border-radius: 12px; padding: 14px 18px;
          display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 2px rgba(20,40,75,.06); }}
   .kpi .dot {{ width: 20px; height: 20px; border-radius: 50%; flex: none; }}
-  .kpi .num {{ font-size: 2.35rem; font-weight: 800; line-height: 1; }}
+  .kpi .num {{ font-size: 2.35rem; font-weight: 800; line-height: 1; white-space: nowrap; }}
   .kpi .lbl {{ font-weight: 600; color: {MARINO}; line-height: 1.15; }}
+  .kpi .ksub {{ font-weight: 400; color: {GRIS}; font-size: .78rem; }}
+  .cn {{ display: flex; gap: 14px; padding: 9px 0; border-bottom: 1px solid {BORDE}; }}
+  .cn-f {{ color: {GRIS}; font-size: .85rem; min-width: 84px; padding-top: 1px; }}
+  .cn-t {{ font-size: .92rem; color: #1B2333; line-height: 1.35; }}
+  .cn-af {{ display: inline-block; margin-top: 4px; background: #FFF4E0; color: #6B4700; border: 1px solid #E8C98A;
+           border-radius: 999px; padding: 0 10px; font-size: .78rem; font-weight: 700; }}
+  .cn-ok {{ display: inline-block; margin-top: 4px; color: #1F7A45; font-size: .78rem; font-weight: 600; }}
   .met {{ background: {MARINO}; color: #fff; border-radius: 12px; padding: 14px 18px; }}
   .met .v {{ font-size: 2rem; font-weight: 800; line-height: 1.1; }}
   .met .t {{ color: #C9D6EA; font-size: .85rem; }}
@@ -212,7 +219,97 @@ if aviso := st.session_state.pop("aviso", None):
 st.write("")
 # --------------------------------------------------------------------------- 1 · métricas
 if pagina == "metricas":
-    seccion(1, T["s0"])
+    # ------------------------------------------------------------- vista gerencial de la cartera de auditorías
+    seccion(1, T["g_titulo"])
+    st.markdown(f"<div class='nota'>{T['g_nota']}</div>", unsafe_allow_html=True)
+    st.write("")
+    # Colores de estado validados para daltonismo en ESTE orden (Completa → Pendiente → No asegurada)
+    C_EST = {"Completa": "#2E9E5B", "Pendiente": "#0077B0", "No asegurada": "#B07400"}
+    todas_dec = db.leer_df("SELECT * FROM decisiones") if db.existe_tabla("decisiones") else pd.DataFrame()
+    cart = cartera.cargar(h, dec, LANG)
+    abiertas = cart[cart.estado != "Completa"]
+    n_est = cart.estado.value_counts()
+
+    def tile(col, punto, valor, etiqueta, sub=""):
+        dot = f"<span class='dot' style='background:{punto}'></span>" if punto else ""
+        col.markdown(f"<div class='kpi'>{dot}<span class='num' style='color:{MARINO}'>{valor}</span>"
+                     f"<span class='lbl'>{etiqueta}<br><span class='ksub'>{sub}</span></span></div>",
+                     unsafe_allow_html=True)
+
+    k1, k2, k3, k4 = st.columns(4)
+    for col, est in zip([k1, k2, k3], ["Pendiente", "No asegurada", "Completa"]):
+        tile(col, C_EST[est], int(n_est.get(est, 0)), T["g_estados"][est], f"{T['g_de']} {len(cart)} {T['g_auditorias']}")
+    tile(k4, None, f"{abiertas.dias.mean():.0f} d" if len(abiertas) else "0 d", T["g_tiempo"],
+         T["g_fuera"].format(n=int(cart.fuera_sla.sum()), d=cartera.SLA_DIAS))
+    st.caption(T["g_def"])
+
+    def estilo(fig, alto=300):
+        fig.update_layout(height=alto, margin=dict(l=0, r=8, t=8, b=0), plot_bgcolor="#fff", paper_bgcolor="#fff",
+                          font=dict(color=MARINO, size=13), barmode="stack", bargap=0.35, hoverlabel=dict(bgcolor="#fff"),
+                          legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0, title=None, traceorder="normal"))
+        fig.update_xaxes(gridcolor="#E3EAF3", zeroline=False, linecolor=BORDE)
+        fig.update_yaxes(gridcolor="#E3EAF3", zeroline=False, linecolor=BORDE)
+        return fig
+
+    g1, g2 = st.columns(2, gap="large")
+    with g1:   # estados combinados por norma: barras apiladas horizontales
+        st.markdown(f"**{T['g_por_norma']}**")
+        tabla_n = pd.crosstab(cart.norma, cart.estado).reindex(columns=cartera.ESTADOS, fill_value=0)
+        tabla_n = tabla_n.loc[tabla_n.sum(axis=1).sort_values().index]
+        fig = go.Figure([go.Bar(y=tabla_n.index, x=tabla_n[e], name=T["g_estado1"][e], orientation="h",
+                                marker=dict(color=C_EST[e], line=dict(color="#fff", width=2), cornerradius=4),
+                                text=tabla_n[e].where(tabla_n[e] > 0, ""), textposition="inside",
+                                insidetextfont=dict(color="#fff"),
+                                hovertemplate="%{y}<br>" + T["g_estado1"][e] + ": %{x}<extra></extra>")
+                         for e in cartera.ESTADOS])
+        st.plotly_chart(estilo(fig).update_xaxes(title=T["g_n"], dtick=1), width="stretch", config={"displayModeBar": False})
+    with g2:   # antigüedad de las abiertas, con el tramo fuera de plazo marcado
+        st.markdown(f"**{T['g_antig']}**")
+        tr = cartera.tramos_antiguedad(cart, LANG)
+        fig = go.Figure([go.Bar(x=tr.index.astype(str), y=tr[e], name=T["g_estado1"][e],
+                                marker=dict(color=C_EST[e], line=dict(color="#fff", width=2), cornerradius=4),
+                                hovertemplate="%{x}<br>" + T["g_estado1"][e] + ": %{y}<extra></extra>")
+                         for e in tr.columns])
+        fig.add_vrect(x0=2.5, x1=3.5, fillcolor="#FFF1F1", line_width=0, layer="below",
+                      annotation_text=T["g_plazo"], annotation_position="top", annotation_font_color="#8A1F1F")
+        st.plotly_chart(estilo(fig).update_yaxes(title=T["g_n"], dtick=1, range=[0, tr.sum(axis=1).max() * 1.25 + 0.5]),
+                        width="stretch", config={"displayModeBar": False})
+        st.caption(T["g_antig_ayuda"].format(d=cartera.SLA_DIAS))
+
+    g3, g4 = st.columns(2, gap="large")
+    with g3:   # validaciones humanas: tendencia semanal + acuerdo con la IA
+        st.markdown(f"**{T['g_valid']}**")
+        st.caption(T["g_valid_ayuda"])
+        vs = cartera.validaciones_semana(cart, todas_dec)
+        vs = vs[vs.semana + pd.Timedelta(days=7) <= pd.Timestamp.today().normalize()]   # solo semanas completas
+        fig = go.Figure(go.Scatter(x=vs.semana, y=vs.validaciones, mode="lines+markers", line=dict(color=CIAN_TXT, width=2),
+                                   marker=dict(size=8, color=CIAN_TXT, line=dict(color="#fff", width=2)),
+                                   hovertemplate=T["g_semana"] + " %{x|%d/%m}<br>%{y}<extra></extra>"))
+        st.plotly_chart(estilo(fig, 230).update_layout(showlegend=False).update_yaxes(rangemode="tozero")
+                        .update_xaxes(tickformat="%d/%m"), width="stretch", config={"displayModeBar": False})
+        acuerdo = cart.aprobados.sum() / cart.validados.sum() if cart.validados.sum() else 0
+        cobertura_v = cart.validados.sum() / cart.requisitos.sum() if cart.requisitos.sum() else 0
+        v1, v2 = st.columns(2)
+        for col, titulo, val, ayuda in [(v1, T["g_acuerdo"], acuerdo, T["g_acuerdo_ayuda"]),
+                                        (v2, T["g_cobval"], cobertura_v, T["g_cobval_ayuda"])]:
+            col.markdown(f"<div style='font-weight:600;color:{MARINO}'>{titulo} · {val:.0%}</div>"
+                         f"<div class='bar'><div style='width:{val * 100:.0f}%'></div></div>"
+                         f"<div style='color:{GRIS};font-size:.8rem;margin-top:4px'>{ayuda}</div>", unsafe_allow_html=True)
+    with g4:   # cambios de norma e impacto en la cartera
+        st.markdown(f"**{T['g_cambios']}**")
+        cn = cartera.cambios_norma(cart, LANG)
+        filas_cn = ""
+        for x in cn.itertuples():
+            insignia = (f"<span class='cn-af'>{x.afectadas} {T['g_c_afect'].lower()}</span>" if x.afectadas
+                        else f"<span class='cn-ok'>✓ 0 {T['g_c_afect'].lower()}</span>")
+            filas_cn += (f"<div class='cn'><div class='cn-f'>{x.fecha:%d/%m/%Y}</div><div class='cn-t'>"
+                         f"<b>{html.escape(x.norma)}</b> · {html.escape(x.cambio)}<br>{insignia}</div></div>")
+        st.markdown(f"<div>{filas_cn}</div>", unsafe_allow_html=True)
+        st.caption(T["g_cambios_ayuda"])
+
+    # ------------------------------------------------------------- métricas técnicas de la auditoría actual
+    st.write("")
+    st.markdown(f"<div class='sec'>{T['g_actual']}</div>", unsafe_allow_html=True)
     for col, v in zip(st.columns(4), ["Cumple", "No cumple", "Revisar", "No aplica"]):
         etiqueta = T["requiere_revision"] if v == "Revisar" else V(v)
         col.markdown(f"<div class='kpi'><span class='dot' style='background:{COLOR[v]}'></span>"
