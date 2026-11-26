@@ -125,6 +125,26 @@ mark{background:#ffe27a;padding:0 2px;border-radius:3px}
 .noti-x{position:absolute;top:-7px;left:-7px;width:22px;height:22px;border-radius:50%;padding:0;background:#e5e5ea;color:#3a3a3c;font-size:14px;line-height:22px;box-shadow:0 1px 3px rgba(0,0,0,.2);opacity:0;transition:opacity .15s}
 .noti:hover .noti-x,.noti-x:focus-visible{opacity:1}
 @media (hover:none){.noti-x{opacity:1}}
+/* Montón (como macOS): con 2+ notificaciones del mismo chat asoman 1 o 2 tarjetas por debajo */
+.noti.pila{margin-bottom:8px}
+.noti.pila.p3{margin-bottom:13px}
+.noti.pila::after,.noti.pila.p3::before{content:'';position:absolute;z-index:-1;border-radius:0 0 16px 16px;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.noti.pila::after{left:9px;right:9px;bottom:-7px;height:14px;background:rgba(255,255,255,.8)}
+.noti.pila.p3::before{left:19px;right:19px;bottom:-13px;height:14px;background:rgba(255,255,255,.6)}
+.noti-cuerpo{all:unset;display:block;flex:1;min-width:0;cursor:pointer;border-radius:8px}
+.noti-cuerpo:focus-visible{outline:2px solid var(--tint);outline-offset:3px}
+.noti-cuerpo>span{display:block}
+.noti.abierta{flex-wrap:wrap}
+.noti-lista{flex-basis:100%;border-top:1px solid var(--sep);margin-top:4px;padding-top:6px;max-height:260px;overflow:auto}
+.noti-item{display:flex;gap:8px;padding:6px 2px;font-size:13px}
+.noti-item.menc{background:#eaf3ff;border-radius:8px;padding:6px}
+.noti-item .av{width:24px!important;height:24px!important;font-size:10px;flex:none}
+.noti-menos{background:none;color:var(--tint);font-size:12px;font-weight:600;padding:4px 2px}
+/* «Visto» en el chat (solo en tus mensajes): ✓ enviado · ✓✓ azul visto */
+.visto{font-size:11px;color:var(--sec);margin-top:2px}
+.visto .tk{letter-spacing:-3px;margin-right:5px}
+.visto.si .tk{color:var(--tint)}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .cnt{display:inline-flex;align-items:center;justify-content:center;background:var(--err);color:#fff;font-size:11px;font-weight:700;border-radius:999px;min-width:18px;height:18px;padding:0 5px;margin-left:6px;vertical-align:middle}
 /* Lista propia para «Nuevo privado»: siempre se despliega hacia abajo */
 .desplegable{margin-top:6px;border:1px solid var(--sep);border-radius:10px;overflow:hidden;background:#fff}
@@ -265,7 +285,7 @@ try{S.lang=localStorage.getItem('rv_lang')||'es';}catch(e){S.lang='es';}
 // comparten; abierta con doble clic (file://) todo sigue funcionando solo en este navegador.
 const SRV=location.protocol.startsWith('http');
 Object.assign(S,{coms:[],avisos:[],pres:{},ccom:'',cq:'',avisosOpen:false,online:null,
-  mensajes:[],canales:['general'],canal:'general',ctx:'',chatAbajo:true});
+  mensajes:[],canales:['general'],canal:'general',ctx:'',chatAbajo:true,expAviso:new Set()});
 let _firma='';
 // Equipo: con servidor llega de colaboracion.json (gestionable en Configuración → Usuarios y roles); sin él, esta lista
 const ROLES={Administrador:'Gestiona el equipo y los chats; decide sobre los hallazgos.',
@@ -360,9 +380,12 @@ function vChat(){
   if(!SRV) return `<h2>Chat</h2><div class="card"><p class="sub" style="margin:0">El chat del equipo necesita la revisión en equipo: en la carpeta del auditor ejecuta <b>python servidor.py</b> y abre la dirección que muestra.</p></div>`;
   const actual=S.chats.find(c=>c.id===S.canal)||S.chats[0];
   const canal=actual.id;
-  const lista=(S.mensajes||[]).filter(m=>m.canal===canal).map(m=>`<div class="mens">${av(m.user)}<div style="min-width:0;flex:1">
+  const msgs=(S.mensajes||[]).filter(m=>m.canal===canal);
+  const ultMio=msgs.map(m=>m.user).lastIndexOf(S.user.nombre);
+  const lista=msgs.map((m,i)=>`<div class="mens">${av(m.user)}<div style="min-width:0;flex:1">
       <div><b>${esc(m.user)}</b> <span class="small">${hace(m.fecha)}</span></div>
-      <div style="white-space:pre-wrap;overflow-wrap:anywhere">${textoChat(m.texto)}</div></div></div>`).join('');
+      <div style="white-space:pre-wrap;overflow-wrap:anywhere">${textoChat(m.texto)}</div>
+      ${m.user===S.user.nombre?vVisto(m,actual,i===ultMio):''}</div></div>`).join('');
   const gestiona=c=>c.tipo==='canal'?esAdmin():c.tipo==='grupo'?c.miembros[S.user.nombre]==='admin':false;
   const nl=id=>{const n=noLeidos(id); return n?`<span class="cnt" aria-label="${n} sin leer">${n}</span>`:'';};
   const fila=(c,icono)=>`<div class="fcanal">
@@ -463,6 +486,32 @@ function vEquipo(){
     <div class="card" style="margin-top:16px"><h3>Roles</h3><div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
       ${Object.entries(ROLES).map(([r,d])=>`<div><b>${r}</b><div class="small">${d}</div></div>`).join('')}</div></div>`;
 }
+// «Visto» de un mensaje tuyo: ✓ nadie lo ha visto · ✓✓ gris lo han visto algunos · ✓✓ azul lo han visto todos.
+// El texto con nombres solo va en tu último mensaje del chat (como en las apps de mensajería); en los demás, al pasar el ratón.
+function vVisto(m,chat,ultimo){
+  if(!m.id) return '<div class="visto"><span class="tk">✓</span>Enviando…</div>';
+  const para=chat.tipo==='canal'?S.equipo.map(x=>x.n):Object.keys(chat.miembros||{});
+  const otros=para.filter(n=>n!==S.user.nombre), v=Object.keys(m.vistos||{}).filter(n=>n!==S.user.nombre);
+  const todos=otros.length>0&&otros.every(n=>v.includes(n));
+  let txt;
+  if(!v.length) txt='Enviado';
+  else if(chat.tipo==='privado') txt=`Visto ${hace(m.vistos[v[0]])}`;
+  else if(todos) txt='Visto por todos';
+  else txt=`Visto por ${v.length>3?v.slice(0,3).join(', ')+` y ${v.length-3} más`:v.join(', ')}`;
+  const titulo=v.length?v.map(n=>`${n} · ${fmtFecha(m.vistos[n])}`).join('\n'):'Todavía no lo ha visto nadie';
+  return `<div class="visto ${todos?'si':''}" title="${esc(titulo)}"><span class="tk" aria-hidden="true">${v.length?'✓✓':'✓'}</span>${ultimo?esc(txt):`<span class="sr-only">${esc(txt)}</span>`}</div>`;
+}
+// Marca como vistos los mensajes de otros del chat abierto, solo si la pestaña está a la vista
+function marcarVistos(){
+  if(!SRV||!S.user.nombre||S.view!=='chat'||document.visibilityState!=='visible') return;
+  const yo=S.user.nombre, canal=S.canal||'general';
+  const nuevos=(S.mensajes||[]).filter(m=>m.canal===canal&&m.id&&m.user!==yo&&!(m.vistos||{})[yo]);
+  if(!nuevos.length) return;
+  const ahora=new Date().toISOString();
+  nuevos.forEach(m=>{m.vistos={...(m.vistos||{}),[yo]:ahora};});    // así no se repite la petición en el siguiente sondeo
+  api('/api/visto',{chat:canal,ids:nuevos.map(m=>m.id)});
+}
+document.addEventListener('visibilitychange',marcarVistos);
 async function enviarMensaje(){
   const t=(S.ctx||'').trim(); if(!t) return;
   const canal=S.canal||'general';
@@ -531,15 +580,22 @@ function vAvisos(){
       const [doc,u]=k.split('|'); titulo=`${doc} · ${u}`; icono='<span class="ico">📄</span>';
     }
     const partes=[nuevos?`${nuevos} ${nuevos===1?'nuevo':'nuevos'}`:'leídos', menc&&k.startsWith('chat:')?`${menc} ${menc===1?'mención':'menciones'}`:''].filter(Boolean);
-    return {fecha:ult.fecha,nuevos,html:`<div class="noti ${nuevos?'':'leida'}">
+    // Cerrada: montón con el último mensaje. Abierta: todos los mensajes del grupo (desplegar NO los marca como leídos)
+    const abierta=S.expAviso.has(k), n=as.length;
+    const pila=!abierta&&n>1?`pila${n>2?' p3':''}`:'';
+    const lista=abierta?`<div class="noti-lista">${as.slice().reverse().map(a=>`<div class="noti-item ${a.mencion?'menc':''}">${av(a.de,24)}
+        <div style="min-width:0;flex:1"><div><b>${esc(a.de)}</b> <span class="small">${hace(a.fecha)}</span>${a.leido?'':' <span class="cnt" style="height:8px;min-width:8px;padding:0" aria-label="sin leer"></span>'}</div>
+        <div style="white-space:pre-wrap;overflow-wrap:anywhere">${menciones(esc(a.texto))}</div></div></div>`).join('')}
+        <button class="noti-menos" data-act="expAviso" data-k="${esc(k)}">Mostrar menos</button></div>`:'';
+    return {fecha:ult.fecha,nuevos,html:`<div class="noti ${nuevos?'':'leida'} ${pila} ${abierta?'abierta':''}">
       <button class="noti-x" data-act="borrarAviso" data-k="${esc(k)}" aria-label="Eliminar las notificaciones de ${esc(titulo)}" title="Eliminar">×</button>
       ${icono}
-      <div style="flex:1;min-width:0">
-        <div style="display:flex;gap:8px;align-items:baseline"><b class="noti-t">${esc(titulo)}</b><span class="small" style="margin-left:auto;white-space:nowrap">${hace(ult.fecha)}</span></div>
-        <div class="small" style="color:var(--text)">${partes.join(' · ')}</div>
-        <div class="small noti-m"><b>${esc(ult.de)}:</b> ${menciones(esc(ult.texto))}</div>
-      </div>
-      <button class="noti-ver" data-act="irAviso" data-k="${esc(k)}">Ver</button></div>`};
+      <button class="noti-cuerpo" data-act="expAviso" data-k="${esc(k)}" aria-expanded="${abierta}" title="${abierta?'Mostrar menos':'Ver los mensajes aquí'}">
+        <span style="display:flex;gap:8px;align-items:baseline"><b class="noti-t">${esc(titulo)}</b><span class="small" style="margin-left:auto;white-space:nowrap">${hace(ult.fecha)}</span></span>
+        <span class="small" style="color:var(--text)">${partes.join(' · ')}</span>
+        ${abierta?'':`<span class="small noti-m"><b>${esc(ult.de)}:</b> ${menciones(esc(ult.texto))}</span>`}
+      </button>
+      <button class="noti-ver" data-act="irAviso" data-k="${esc(k)}">Ver</button>${lista}</div>`};
   }).sort((a,b)=>(b.nuevos>0)-(a.nuevos>0)||(a.fecha<b.fecha?1:-1));
   return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><h3 style="margin:0">Notificaciones</h3>
       <div style="display:flex;gap:6px">${tarjetas.length?'<button class="ghost" data-act="borrarAviso" data-k="" style="font-size:12px;padding:5px 10px">Borrar todas</button>':''}
@@ -588,6 +644,7 @@ const EN={'Inicio':'Home','Revisión':'Review','Panel de control IA':'AI control
  '+ Nuevo privado con…':'+ New direct message with…','Todavía no tienes conversaciones privadas.':'You have no direct messages yet.',
  'Añadir o quitar integrantes':'Add or remove members','Admin del grupo':'Group admin',
  'Notificaciones':'Notifications','Borrar todas':'Clear all','Ver':'Show','No tienes notificaciones.':'No notifications.','leídos':'read',
+ 'Mostrar menos':'Show less','Enviado':'Sent','Enviando…':'Sending…','Visto por todos':'Seen by everyone',
  '+ Nuevo canal público':'+ New public channel','+ Nuevo privado ▾':'+ New direct message ▾','+ Nuevo privado ▴':'+ New direct message ▴',
  'Para hablar en privado con alguien que no está aquí, ábrelo desde':'To message someone who is not here, open it from',
  'Solo las personas del grupo ven sus mensajes. Los administradores del grupo pueden renombrarlo, añadir o quitar gente y cambiar sus papeles.':'Only group members see its messages. Group admins can rename it, add or remove people and change their roles.',
@@ -607,7 +664,9 @@ const EN_RE=[[/^(\d+) de (\d+) revisados$/,'$1 of $2 reviewed'],[/^Página (\d+)
  [/^te ha mencionado en (.+)$/,'mentioned you in $1'],[/^hace (\d+) min$/,'$1 min ago'],[/^hace (\d+) h$/,'$1 h ago'],
  [/^(\d+) de (\d+) en línea$/,'$1 of $2 online'],[/^Mensaje para (.+)$/,'Message for $1'],[/^Chat · (.+) · (.+)$/,'Chat · $1 · $2'],
  [/^(\d+) personas: (.+)$/,'$1 people: $2'],[/^Miembros de (.+)$/,'Members of $1'],[/^(\d+) integrantes · (\d+) en línea$/,'$1 members · $2 online'],
- [/^(\d+) nuevos? · (\d+) menci(?:ón|ones)$/,'$1 new · $2 mentions'],[/^(\d+) nuevos?$/,'$1 new'],[/^leídos · (\d+) menci(?:ón|ones)$/,'read · $1 mentions'],[/^Agente (\d+)$/,'Agent $1'],[/^En línea: (.+)$/,'Online: $1'],
+ [/^(\d+) nuevos? · (\d+) menci(?:ón|ones)$/,'$1 new · $2 mentions'],[/^(\d+) nuevos?$/,'$1 new'],[/^leídos · (\d+) menci(?:ón|ones)$/,'read · $1 mentions'],[/^Agente (\d+)$/,'Agent $1'],
+ [/^Visto por (.+) y (\d+) más$/,'Seen by $1 and $2 more'],[/^Visto por (.+)$/,'Seen by $1'],[/^Visto hace (\d+) min$/,'Seen $1 min ago'],
+ [/^Visto hace (\d+) h$/,'Seen $1 h ago'],[/^Visto ahora$/,'Seen just now'],[/^Visto (.+)$/,'Seen $1'],[/^En línea: (.+)$/,'Online: $1'],
  [/^(.+) · (\d+)$/,(m,a,b)=>(EN[a]||a)+' · '+b],[/^(.+) · v([\d.]+)$/,(m,a,b)=>(EN[a]||a)+' · v'+b]];
 function tr(s){
   const t=s.trim(); if(!t) return null;
@@ -1120,6 +1179,7 @@ function render(){
     if(S.chatAbajo||n!==S._nMsg) cl.scrollTop=cl.scrollHeight; else cl.scrollTop=S._yChat||0;
     S._nMsg=n; S.chatAbajo=false;
     cl.onscroll=()=>{S._yChat=cl.scrollTop;};
+    marcarVistos();
   }
   if(actId){const el=document.getElementById(actId); if(el&&el!==document.activeElement&&'value' in el){el.focus(); try{el.setSelectionRange(pos,pos);}catch(e){}}}
   pintarBarra();
@@ -1148,8 +1208,15 @@ document.addEventListener('click',e=>{
     pintarBarra(); aplicarIdioma(); api('/api/avisos/borrar',k?{key:k}:{});
     return;
   }
-  if(a==='irAviso'){                                          // «Ver»: abre el chat o el hallazgo y lo marca como leído
-    S.avisos.forEach(x=>{if(x.key===el.dataset.k) x.leido=true;}); api('/api/leido',{key:el.dataset.k});
+  if(a==='expAviso'){                                         // desplegar / plegar el montón (no marca nada como leído)
+    const k=el.dataset.k; S.expAviso.has(k)?S.expAviso.delete(k):S.expAviso.add(k);
+    pintarBarra(); aplicarIdioma();
+    const b=[...document.querySelectorAll('#avisos .noti-cuerpo')].find(x=>x.dataset.k===k); if(b) b.focus();
+    return;
+  }
+  if(a==='irAviso'){                                          // «Ver»: abre el chat o el hallazgo y borra ese grupo de la campanita
+    const k=el.dataset.k;
+    S.avisos=(S.avisos||[]).filter(x=>x.key!==k); S.expAviso.delete(k); api('/api/avisos/borrar',{key:k});
   }
   if(a==='irAviso'&&el.dataset.k.startsWith('chat:')){
     S.avisosOpen=false; S.view='chat'; S.canal=el.dataset.k.slice(5); S.chatAbajo=true; render(); window.scrollTo(0,0); return;

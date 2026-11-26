@@ -87,7 +87,12 @@ La consola muestra dos direcciones: `http://localhost:8765` para ti y `http://<t
 **conectados a la misma Wi-Fi** (si Windows pregunta por el Firewall, pulsa «Permitir»). Con el servidor:
 - las decisiones (aprobar / rechazar) son compartidas: si alguien aprueba, lo veis todos en unos segundos;
 - cada hallazgo tiene un **debate** con comentarios; escribe `@nombre` para avisar a alguien;
-- la **campanita** agrupa las notificaciones por chat o hallazgo («2 nuevos · 1 mención»), con «Ver» y × para borrarlas;
+- la **campanita** agrupa las notificaciones por chat o hallazgo («2 nuevos · 1 mención») en un **montón** como el de macOS.
+  Pulsando la tarjeta se despliegan los mensajes del grupo para leerlos sin salir (no los marca como leídos);
+  «Ver» abre el chat y **borra** ese grupo de la campanita; × lo borra sin abrirlo;
+- **«Visto»** en el chat, debajo de tus mensajes: ✓ enviado · ✓✓ gris lo han visto algunos · ✓✓ azul lo han visto todos.
+  En tu último mensaje se lee «Visto por Marina, Sergio» (o «Visto hace 2 min» en un privado); al pasar el ratón, quién y cuándo.
+  Cuenta como visto cuando la otra persona tiene ese chat abierto y la pestaña a la vista;
 - «*Marina también está en este hallazgo*»: quién está mirando lo mismo que tú;
 - **Chat** con tres tipos: **canales públicos** (los crea o borra un administrador del equipo), **grupos** (los crea
   cualquiera; su creador los administra: nombre, integrantes y papeles) y **privados** entre dos personas. Cada uno

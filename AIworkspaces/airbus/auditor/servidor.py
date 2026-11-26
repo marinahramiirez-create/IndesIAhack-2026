@@ -208,8 +208,10 @@ class Manejador(SimpleHTTPRequestHandler):
                 c = _chat(str(d.get("chat") or d.get("canal") or "general"))
                 if not texto or not c or not _ve(user, c):
                     return self._json({"error": "mensaje vacío o chat no disponible"}, 400)
-                mid = len(_estado["mensajes"]) + 1
-                _estado["mensajes"].append({"id": mid, "canal": c["id"], "user": user, "texto": texto, "fecha": _ahora()})
+                # id único aunque se hayan borrado chats (len()+1 podía repetir el id de un mensaje existente)
+                mid = max((m.get("id", 0) for m in _estado["mensajes"]), default=0) + 1
+                _estado["mensajes"].append({"id": mid, "canal": c["id"], "user": user, "texto": texto, "fecha": _ahora(),
+                                            "vistos": {}})
                 mencion = _mencionados(texto, user)
                 # Canal público: solo avisa a quien mencionas. Grupo o privado: avisa a todos los que están dentro
                 # (como un chat de mensajería); quien está mencionado lo ve marcado como mención.
@@ -306,6 +308,19 @@ class Manejador(SimpleHTTPRequestHandler):
                     for m in eq:
                         if m["n"] == n:
                             m["rol"] = rol
+            elif u == "/api/visto":                         # «Visto»: este usuario ha visto en pantalla esos mensajes
+                c = _chat(str(d.get("chat", "")))
+                if not c or not _ve(user, c):
+                    return self._json({"error": "chat no disponible"}, 400)
+                ids = {i for i in d.get("ids", [])[:800] if isinstance(i, int)}
+                cambio = False
+                for m in _estado["mensajes"]:
+                    if m["canal"] == c["id"] and m.get("id") in ids and m["user"] != user \
+                            and user not in m.setdefault("vistos", {}):
+                        m["vistos"][user] = _ahora()
+                        cambio = True
+                if not cambio:                              # nada nuevo: no se reescribe el archivo ni se avisa a nadie
+                    return self._json({"ok": True, "seq": _estado["seq"]})
             elif u == "/api/leido":                         # marca como leídos los avisos (de un chat o todos)
                 k = d.get("key")
                 for a in _estado["avisos"]:
