@@ -29,6 +29,7 @@ from datetime import datetime
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
+from urllib.request import Request, urlopen
 
 RAIZ = Path(__file__).resolve().parent
 WEB = RAIZ / "salidas" / "revision"
@@ -37,6 +38,9 @@ PRESENCIA_S = 20          # segundos sin señal para dejar de mostrar a alguien 
 MAX_TEXTO = 2000
 ADJUNTOS = RAIZ / "salidas" / "adjuntos"      # archivos enviados en el chat (solo se sirven a quien ve ese chat)
 MAX_ADJUNTO = 25 * 1024 * 1024                # 25 MB por archivo
+# Asistente IA con RAG local (AIworkspaces/_rag/servidor_rag.py: ChromaDB + Llama en Ollama). Si no está encendido,
+# el botón «Asistente IA» sigue funcionando con su búsqueda dentro de la app.
+ASISTENTE_URL = "http://127.0.0.1:8766/preguntar"
 TIPOS_EN_LINEA = ("image/", "video/", "audio/", "application/pdf", "text/plain")
 
 # Equipo inicial (después se gestiona desde Configuración → Usuarios y roles; se guarda en colaboracion.json).
@@ -224,6 +228,17 @@ class Manejador(SimpleHTTPRequestHandler):
             _guardar()
         return self._json({"ok": True, "id": aid, "nombre": nombre, "tipo": tipo, "tam": n})
 
+    def _asistente(self, d):
+        """Reenvía la pregunta al servicio RAG local y devuelve {respuesta, fuentes} (o un error legible)."""
+        cuerpo = json.dumps({"pregunta": str(d.get("pregunta", ""))[:2000], "datos_app": str(d.get("datos_app", ""))[:6000],
+                             "historial": d.get("historial") or []}, ensure_ascii=False).encode()
+        try:
+            with urlopen(Request(ASISTENTE_URL, data=cuerpo, headers={"Content-Type": "application/json"}), timeout=180) as r:
+                return self._json(json.loads(r.read()))
+        except Exception as e:
+            return self._json({"error": "El asistente con IA no está encendido (ejecuta _rag/servidor_rag.py y abre Ollama). "
+                                        f"Detalle: {type(e).__name__}"}, 503)
+
     def do_GET(self):
         u = urlparse(self.path)
         if u.path == "/api/adjunto":
@@ -260,6 +275,8 @@ class Manejador(SimpleHTTPRequestHandler):
         if u == "/api/subir":
             return self._subir()
         d = self._cuerpo(MAX_VERSION if u == "/api/version/guardar" else 20000)
+        if u == "/api/asistente":
+            return self._asistente(d)
         user = str(d.get("user", ""))[:80].strip()
         if not user:
             return self._json({"error": "falta el usuario"}, 400)

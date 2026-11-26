@@ -121,6 +121,30 @@ de Radmin y se abre `http://<IP de Radmin del ordenador con el servidor>:8765`. 
 Todo se guarda en `salidas/colaboracion.json` (y las versiones de los PDF en `salidas/versiones/`), en el ordenador que
 ejecuta el servidor; nada sale fuera.
 
+### Asistente IA con modelo (RAG local con Llama)
+
+El botón **Asistente IA** responde al momento con lo que encuentra en la app (con botones «Ver…»). Con el servidor de
+equipo encendido, **además** lee los documentos y contesta con un modelo, citando las fuentes. El modelo es Llama en
+Ollama, 100 % local. Busca en el corpus NIMBUS (los PDF) y en el código y la documentación de `airbus/`, y recibe los
+hallazgos y métricas que ya calculó la app (no calcula ni inventa). Sus juicios son propuestas para revisar.
+
+Una vez (desde `AIworkspaces`, ver `AIworkspaces/README.md`): instalar Ollama, `ollama pull llama3.2`,
+`ollama pull nomic-embed-text`, crear `_rag/.venv` con **Python 3.13** e indexar con `rag.py ingest`
+(indexa también `03_corpus_trabajo_NIMBUS` de la raíz del repo; el índice se queda en local, no va a git).
+
+Cada vez, con la app Ollama abierta, en dos terminales:
+
+```bash
+# Terminal 1 (desde AIworkspaces): el servicio del asistente, en http://127.0.0.1:8766
+_rag/.venv/bin/python _rag/servidor_rag.py           # Windows: _rag\.venv\Scripts\python _rag\servidor_rag.py
+# Terminal 2 (desde airbus/auditor): la app
+.venv/bin/python servidor.py                         # Windows: .\.venv\Scripts\python servidor.py
+```
+
+Si el servicio del asistente está apagado, el botón sigue funcionando con la búsqueda en la app y avisa de que la IA no responde.
+En qué carpetas busca se cambia en `AIworkspaces/_rag/config.py` (`ASISTENTE_CARPETAS`). Si cambias el puerto
+(`ASISTENTE_PUERTO`), cámbialo también en `ASISTENTE_URL` de `servidor.py`.
+
 Alternativa en Streamlit: `.\.venv\Scripts\python -m streamlit run app.py` (`app_clasica.py` es la primera versión).
 
 ## Reglas del equipo
