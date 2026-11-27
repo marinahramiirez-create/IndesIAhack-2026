@@ -568,7 +568,8 @@ class Manejador(SimpleHTTPRequestHandler):
                         "editables": _editables(user), "config": _estado["config"],
                         "docs_meta": _estado.get("docs_meta", {}) if ve else {},
                         "compartidos": [x for x in _estado.get("compartidos", []) if ve and (user == x["de"] or user in x["para"])],
-                        "cargados": [{"id": k, **v} for k, v in _estado.get("cargados", {}).items() if ve and v.get("confirmado")]})
+                        "cargados": [{"id": k, **v} for k, v in _estado.get("cargados", {}).items() if ve and v.get("confirmado")],
+                        "reglas": _estado["reglas"] if ve_cfg or ve else []})
 
     def do_POST(self):
         if not self._origen_ok():
@@ -759,6 +760,12 @@ class Manejador(SimpleHTTPRequestHandler):
                     _avisar_escalado(doc, user, "quitado")
                 for t in [t for t, x in _tokens.items() if x == n]:   # sus sesiones dejan de valer
                     _tokens.pop(t)
+            elif u == "/api/regla/crear":
+                extra["id"] = P.crear_regla(_estado, user, d)
+            elif u == "/api/regla/editar":
+                P.editar_regla(_estado, user, d)
+            elif u == "/api/regla/borrar":
+                P.borrar_regla(_estado, user, str(d.get("id", "")))
             elif u == "/api/config/plazo":
                 P.cambiar_plazo(_estado, user, d)
             elif u == "/api/rol/crear":

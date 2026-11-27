@@ -121,6 +121,7 @@ def main():
                          "      .\\.venv\\Scripts\\python auditar.py\n"
                          "  → Después vuelve a ejecutar: .\\.venv\\Scripts\\python generar_revision.py\n")
     from src.rutas import ayuda_corpus, buscar_corpus
+    from src.estructura import pagina_html
     corpus = buscar_corpus()
     if not corpus:
         raise SystemExit(ayuda_corpus())
@@ -166,6 +167,12 @@ def main():
             if not (txt_f.exists() and texto_al_dia):
                 txt = texto_legible(pag) or (d.paginas[n - 1] if n - 1 < len(d.paginas) else "")
                 txt_f.write_text(txt or "", encoding="utf-8")
+            # Estructura (títulos, párrafos y tablas) para el editor; se reutiliza si ya existe (find_tables es lento)
+            estr = destino / "paginas" / f"{slug}_{n}.html"
+            if not estr.exists():
+                html = pagina_html(pag)
+                if html:
+                    estr.write_text(html, encoding="utf-8")
         info_docs[cod] = {"slug": slug, "titulo": re.sub(r"\s*Documento$", "", d.titulo.strip()), "version": d.version, "familia": familia(f.parent.name),
                           "paginas": pdf.page_count, "escaneado": d.escaneado}
         for r in df[df.documento == cod].to_dict("records"):
