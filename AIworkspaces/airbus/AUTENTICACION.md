@@ -24,7 +24,9 @@ python -m src.auth listar
 python -m src.auth password --login sergio                              # cambiar contraseña
 python -m streamlit run app.py                                          # aparece el login
 ```
-- Roles: `revisor` · `auditor` · `admin` (de momento solo se muestran; los permisos por rol están en la lista de tareas).
+- Roles: `revisor` · `auditor` · `admin`. Permisos (`src/permisos.py`): todos aprueban la propuesta de la IA; solo
+  `auditor` y `admin` cambian el veredicto. Se aplican cuando el inicio de sesión comprueba quién entra
+  (`AUTH_PROTOTIPO=false`); en modo prototipo o sin login no se restringe, porque el rol aún no demuestra nada.
 - Demo rápida sin login: `AUTH_ACTIVADA=false` en `.env`.
 - Cada decisión (aprobar / corregir) queda guardada con el `usuario_id` de quien la tomó.
 

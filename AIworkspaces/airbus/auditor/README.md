@@ -119,10 +119,20 @@ Arriba a la derecha, **ES / EN** cambia el idioma de la interfaz (los hallazgos 
 ### Revisión en equipo, en vivo
 
 ```powershell
-.\.venv\Scripts\python servidor.py      # después de generar_revision.py
+.\.venv\Scripts\python servidor.py            # después de generar_revision.py · solo este ordenador
+.\.venv\Scripts\python servidor.py --lan      # además, para los compañeros de la misma red
 ```
-La consola muestra dos direcciones: `http://localhost:8765` para ti y `http://<tu-IP>:8765` para los compañeros
-**conectados a la misma Wi-Fi** (si Windows pregunta por el Firewall, pulsa «Permitir»). Con el servidor:
+Por seguridad, sin `--lan` la app solo se abre en este ordenador (`http://localhost:8765`). Con `--lan` la consola
+muestra también `http://<tu-IP>:8765` para los compañeros **conectados a la misma Wi-Fi** (si Windows pregunta por el
+Firewall, pulsa «Permitir»). Úsalo solo en una red de confianza: el inicio de sesión es de prototipo.
+
+Protecciones de red del servidor (detalle en la cabecera de `servidor.py`; pruebas en `tests/test_seguridad.py`):
+- solo atiende las direcciones que muestra al arrancar; si entras por otro nombre (un proxy, un nombre de equipo),
+  añádelo con `--host-permitido NOMBRE`. Las peticiones que llegan desde otra web se rechazan;
+- los adjuntos del chat solo se muestran en el navegador si son imagen, PDF, texto, audio o vídeo de verdad (se mira
+  el archivo, no su nombre); el resto, SVG y HTML incluidos, se descarga.
+
+Con el servidor:
 - las decisiones (aprobar / rechazar) son compartidas: si alguien aprueba, lo veis todos en unos segundos;
 - cada hallazgo tiene un **debate** con comentarios; escribe `@nombre` para avisar a alguien;
 - la **campanita** agrupa las notificaciones por chat o hallazgo («2 nuevos · 1 mención») en un **montón** como el de macOS.

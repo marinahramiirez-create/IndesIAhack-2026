@@ -9,3 +9,9 @@ font = "sans serif"
 
 [client]
 toolbarMode = "minimal"
+
+# Seguridad: la app solo se abre desde este ordenador. Sin esto, Streamlit la ofrece a toda la red (también la
+# Wi-Fi del evento) y por HTTP sin cifrar, con el inicio de sesión de prototipo. Para enseñarla desde otro equipo,
+# ponla detrás de un proxy con HTTPS en vez de quitar esta línea.
+[server]
+address = "127.0.0.1"
