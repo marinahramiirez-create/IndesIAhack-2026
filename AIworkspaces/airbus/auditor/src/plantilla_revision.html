@@ -437,6 +437,14 @@ button.adj-img:focus-visible{outline:2px solid var(--tint);outline-offset:2px}
 #metTip{position:fixed;z-index:95;display:none;background:#fff;border:1px solid rgba(11,11,11,.1);border-radius:8px;padding:7px 10px;box-shadow:0 8px 24px rgba(0,0,0,.14);font-size:12px;color:#52514e;pointer-events:none;max-width:260px}
 #metTip b{display:block;color:#0b0b0b;font-size:14px}
 @media (max-width:700px){.mkpi.hero{grid-column:auto}.mgrid{grid-template-columns:1fr}}
+/* Mi cuenta → Claves de API */
+.cla-card{grid-column:span 2}
+.cla-form{display:flex;flex-direction:column;gap:4px}.cla-form input:not([type=checkbox]){width:100%}.cla-alc .fchk{white-space:nowrap}
+.cla-fila{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px}.cla-alc{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.cla-f{display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--sep)}.cla-f.off{opacity:.6}
+.cla-nueva{background:#eef7ee;border:1px solid #a7d8a7;border-radius:10px;padding:10px 12px;margin-bottom:10px;display:flex;flex-direction:column;gap:6px}
+.cla-copia{display:flex;gap:8px;align-items:center}.cla-copia code{flex:1;min-width:0;overflow-wrap:anywhere;background:#fff;border:1px solid var(--sep);border-radius:6px;padding:6px 8px;font-size:12px}
+@media (max-width:1100px){.cla-card{grid-column:1/-1}}
 /* Mi cuenta */
 .cta-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}
 .cuenta-card h3{margin:0 0 10px}
@@ -698,7 +706,7 @@ async function sondear(){
                      mensajes:d.mensajes||[],chats:d.chats||S.chats,ediciones:d.ediciones||{},versiones:d.versiones||{},
                      sesiones:d.sesiones||[],roles:d.roles||S.roles,modulos:d.modulos||[],permisos:d.permisos||null,
                      escalados:d.escalados||{},escHist:d.escalados_hist||[],editables:d.editables||{},cargado:true,config:d.config||S.config,
-                     docs_meta:d.docs_meta||{},compartidos:d.compartidos||[],cargados:d.cargados||[]});
+                     docs_meta:d.docs_meta||{},compartidos:d.compartidos||[],cargados:d.cargados||[],claves_api:d.claves_api||[]});
     if(d.equipo&&d.equipo.length) S.equipo=d.equipo;
     const yo=S.equipo.find(m=>m.n===S.user.nombre); if(yo) S.user.cargo=`${nombreRol(yo.rol)} · Calidad Part-IS`;   // si te cambian el rol
     fusionarCargados();                                               // documentos cargados → DOCS (se abren como los demás)
@@ -1306,6 +1314,11 @@ const EN={'Inicio':'Home','Auditorías':'Audits','Ver documentos en Auditorías'
  'Documento cargado: ya puedes abrirlo':'Document uploaded: you can open it now',
  'Un documento cargado se puede abrir, comentar, compartir y versionar enseguida. Sus hallazgos llegan al auditarlo con la solución:':'An uploaded document can be opened, commented on, shared and versioned right away. Its findings arrive when it is audited with the solution:',
  'El auditor no encontró defectos en este documento.':'The auditor found no defects in this document.',
+ 'Claves de API':'API keys','Cómo usar la API':'How to use the API','Crear clave':'Create key','Caduca en':'Expires in','Puede leer':'Can read',
+ 'Documentos':'Documents','Hallazgos':'Findings','Tus claves':'Your keys','Claves del equipo':'Team keys','(eres Admin)':'(you are Admin)','Revocar':'Revoke',
+ 'Revocada':'Revoked','Caducada':'Expired','Copiar':'Copy','Ya la he guardado':'I have saved it','Clave copiada':'Key copied','Clave revocada':'Key revoked',
+ 'Copia tu clave ahora: no se volverá a mostrar.':'Copy your key now: it will not be shown again.',
+ 'Guárdala como una contraseña. Si la pierdes, revócala y crea otra.':'Keep it like a password. If you lose it, revoke it and create another.',
  'Métricas':'Metrics','Resumen':'Summary','Cumplimiento':'Compliance','Equipo':'Team','Calidad de la IA':'AI quality','Periodo':'Period',
  'Desde el inicio':'Since the start','Últimos 7 días':'Last 7 days','Últimos 30 días':'Last 30 days','Últimos 90 días':'Last 90 days',
  'Hallazgos revisados':'Findings reviewed','Documentos por revisar':'Documents to review','Vencidos':'Overdue','han pasado el plazo':'past the deadline',
@@ -1384,7 +1397,7 @@ const EN_RE=[[/^(\d+) de (\d+) revisados$/,'$1 of $2 reviewed'],[/^Página (\d+)
  [/^(\d+) de (\d+) en línea$/,'$1 of $2 online'],[/^Mensaje para (.+)$/,'Message for $1'],[/^Chat · (.+) · (.+)$/,'Chat · $1 · $2'],
  [/^(\d+) personas: (.+)$/,'$1 people: $2'],[/^Miembros de (.+)$/,'Members of $1'],[/^(\d+) integrantes · (\d+) en línea$/,'$1 members · $2 online'],
  [/^(\d+) nuevos? · (\d+) menci(?:ón|ones)$/,'$1 new · $2 mentions'],[/^(\d+) nuevos?$/,'$1 new'],[/^leídos · (\d+) menci(?:ón|ones)$/,'read · $1 mentions'],[/^Agente (\d+)$/,'Agent $1'],
- [/^Vencido hace (\d+) d$/,'Overdue by $1 d'],[/^de (\d+)$/,'of $1'],[/^(\d+) de (\d+)$/,'$1 of $2'],[/^Datos a (.+)$/,'Data as of $1'],[/^Confianza (.+)$/,'Confidence $1'],
+ [/^Vencido hace (\d+) d$/,'Overdue by $1 d'],[/^(\d+) días$/,'$1 days'],[/^de (\d+)$/,'of $1'],[/^(\d+) de (\d+)$/,'$1 of $2'],[/^Datos a (.+)$/,'Data as of $1'],[/^Confianza (.+)$/,'Confidence $1'],
  [/^(\d+) aceptadas · (\d+) rechazadas$/,'$1 accepted · $2 rejected'],[/^(\d+) corregidas?$/,'$1 corrected'],[/^Lleva (\d+) d · vence en (\d+) d$/,'Waiting $1 d · due in $2 d'],[/^Entró hoy · vence en (\d+) d$/,'Arrived today · due in $1 d'],
  [/^Vencidos \((\d+)\)$/,'Overdue ($1)'],[/^Cargado por (.+)$/,'Uploaded by $1'],[/^Compartido por ti con (.+)$/,'Shared by you with $1'],
  [/^Te lo compartió (.+)$/,'Shared with you by $1'],[/^Trabajado con (.+)$/,'Worked on with $1'],[/^(\d+) versi(?:ón|ones)$/,'$1 versions'],
@@ -1845,6 +1858,42 @@ function navegadorDe(ua){
   const so=/iPhone|iPad/.test(ua)?'iOS':/Android/.test(ua)?'Android':/Mac OS X|Macintosh/.test(ua)?'macOS':/Windows/.test(ua)?'Windows':/Linux/.test(ua)?'Linux':'';
   return so?`${nav} (${so})`:nav;
 }
+// ---------- Mi cuenta → Claves de API: para leer métricas, documentos y hallazgos desde Power BI, Excel o scripts.
+// La clave se enseña UNA vez (S.claveNueva) y el servidor solo guarda su huella. Un Admin ve las de todo el equipo.
+Object.assign(S,{claveForm:{nombre:'',dias:'90',alcances:{metricas:true,documentos:true,hallazgos:true}},claveNueva:null});
+function vClavesApi(){
+  if(!SRV) return '';
+  const propias=(S.claves_api||[]).filter(c=>c.user===S.user.nombre), otras=(S.claves_api||[]).filter(c=>c.user!==S.user.nombre);
+  const puedeUsar=puede('api','usar');
+  if(!puedeUsar&&!propias.length&&!otras.length) return '';
+  const f=S.claveForm, ALC=[['metricas','Métricas',['metricas','consultar']],['documentos','Documentos',['revisiones','consultar']],['hallazgos','Hallazgos',['revisiones','consultar']]];
+  const fila=(c,dueno)=>`<div class="cla-f ${c.estado!=='activa'?'off':''}"><div style="flex:1;min-width:0">
+      <div><b>${esc(c.nombre)}</b> <code class="small">${esc(c.prefijo)}…</code> ${c.estado==='activa'?'':`<span class="rolpill cta-pronto">${c.estado==='revocada'?'Revocada':'Caducada'}</span>`}</div>
+      <div class="small">${dueno?`${esc(c.user)} · `:''}${esc(c.alcances.map(a=>({metricas:'métricas',documentos:'documentos',hallazgos:'hallazgos'})[a]||a).join(', '))} · caduca ${fmtFecha(c.caduca).split(',')[0]} · ${c.usos?`${fmtN(c.usos)} ${c.usos===1?'uso':'usos'}, último ${hace(c.ultimo_uso)}`:'sin usar'}</div></div>
+      ${c.estado==='activa'?`<button class="ghost" data-act="claveRevocar" data-v="${esc(c.id)}" style="font-size:12px;padding:5px 10px">Revocar</button>`:''}</div>`;
+  const nueva=S.claveNueva?`<div class="cla-nueva" role="alert"><b>Copia tu clave ahora: no se volverá a mostrar.</b>
+      <div class="cla-copia"><code id="claveTxt">${esc(S.claveNueva)}</code><button class="ok" data-act="claveCopiar" style="font-size:13px;padding:6px 12px">Copiar</button></div>
+      <div class="small">Guárdala como una contraseña. Si la pierdes, revócala y crea otra.</div>
+      <button class="enlace" data-act="claveOcultar">Ya la he guardado</button></div>`:'';
+  const form=puedeUsar?`<div class="cla-form">
+      <label class="small" for="claNom">Nombre</label><input id="claNom" placeholder="Por ejemplo, «Power BI de calidad»" value="${esc(f.nombre)}" maxlength="60">
+      <div class="cla-fila"><div><label class="small" for="claDias">Caduca en</label><select id="claDias">${['30','90','365'].map(d=>`<option value="${d}" ${f.dias===d?'selected':''}>${d} días</option>`).join('')}</select></div>
+        <div><span class="small">Puede leer</span><div class="cla-alc">${ALC.map(([k,l,pm])=>`<label class="fchk"><input type="checkbox" data-clalc="${k}" ${f.alcances[k]&&puede(pm[0],pm[1])?'checked':''} ${puede(pm[0],pm[1])?'':'disabled'}><span>${l}</span></label>`).join('')}</div></div></div>
+      <button class="ok" data-act="claveCrear" style="width:100%;margin-top:8px">Crear clave</button></div>`
+    :`<p class="note">${esc(sinPermiso('api','usar'))}</p>`;
+  return `<div class="card cuenta-card cla-card"><h3>Claves de API</h3>
+    <p class="small">Para leer métricas, documentos y hallazgos desde Power BI, Excel o scripts, sin nombres de personas.
+      <a href="/api/v1/docs" target="_blank" rel="noopener">Cómo usar la API</a>.</p>
+    <p class="note" style="margin:6px 0 10px">Este servidor usa <b>http</b> sin cifrar: usa la clave en este ordenador o en una red de confianza, nunca desde internet.</p>
+    ${nueva}${form}
+    ${propias.length?`<div class="small" style="margin-top:12px"><b>Tus claves</b></div>${propias.map(c=>fila(c,false)).join('')}`:''}
+    ${otras.length?`<div class="small" style="margin-top:12px"><b>Claves del equipo</b> (eres Admin)</div>${otras.map(c=>fila(c,true)).join('')}`:''}</div>`;
+}
+async function crearClave(){
+  const f=S.claveForm, alcances=Object.entries(f.alcances).filter(([k,v])=>v&&!document.querySelector(`[data-clalc="${k}"]`)?.disabled).map(([k])=>k);
+  const r=await api('/api/claves/crear',{nombre:f.nombre,dias:Number(f.dias),alcances});
+  if(r.ok){S.claveNueva=r.clave; S.claveForm={...f,nombre:''}; await sondear(); render(); document.getElementById('claveTxt')?.scrollIntoView({block:'center'});}
+}
 function vCuenta(){
   const yo=S.equipo.find(x=>x.n===S.user.nombre);
   const fila=(k,v)=>`<div class="cta-f"><span>${k}</span><b>${v}</b></div>`;
@@ -1868,6 +1917,7 @@ function vCuenta(){
       ${pronto('Llaves de acceso','Servirán como segundo paso y para entrar sin contraseña. Llegarán con el inicio de sesión de Microsoft (Entra ID).','Añadir una llave de acceso')}
       ${pronto('App de autenticación','Códigos de 6 dígitos con Microsoft Authenticator. Los pedirá Entra ID al entrar, no esta app.','Configurar')}
       ${pronto('Códigos de recuperación','Para entrar si pierdes el segundo paso. Llegarán junto con la verificación en dos pasos.','Generar códigos nuevos')}
+      ${vClavesApi()}
       <div class="card cuenta-card"><h3>Sesiones abiertas</h3><p class="small">Dónde has entrado ahora mismo. «Cerrar sesión» quita esta de la lista.</p>${ses}</div>
       <div class="card cuenta-card"><h3>Política de acceso</h3>
         <p class="small" style="margin-bottom:4px"><b style="color:var(--text)">Hoy, en este prototipo:</b></p>
@@ -3302,6 +3352,14 @@ document.addEventListener('click',e=>{
   if(a==='metCsv'){csvMet(el.dataset.v); return;}
   if(a==='metLimpiar'){S.metF={periodo:'todo',familia:'',prioridad:'',tipo:'',clausula:''}; cargarMetricas(); return;}
   if(a==='metIr'){try{metIr(JSON.parse(el.dataset.f||'{}'));}catch(err){} return;}
+  if(a==='claveCrear'){crearClave(); return;}
+  if(a==='claveCopiar'){const t=S.claveNueva||''; (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>aviso('Clave copiada'),()=>{const r=document.createRange(); const c=document.getElementById('claveTxt'); if(c){r.selectNodeContents(c); const s=getSelection(); s.removeAllRanges(); s.addRange(r);} aviso('Selecciónala y cópiala con Cmd/Ctrl + C');}); return;}
+  if(a==='claveOcultar'){S.claveNueva=null; render(); return;}
+  if(a==='claveRevocar'){
+    const c=(S.claves_api||[]).find(x=>x.id===el.dataset.v); if(!c) return;
+    if(!confirm(`¿Revocar «${c.nombre}»? Lo que la use dejará de funcionar al momento. No se puede deshacer.`)) return;
+    api('/api/claves/revocar',{id:c.id}).then(r=>{if(r.ok){aviso('Clave revocada'); sondear();}}); return;
+  }
   if(a==='irPestana'){if(el.dataset.doc!==S.doc){abrirRevision(el.dataset.doc); render();} return;}
   if(a==='cerrarPestana'){cerrarPestana(el.dataset.doc); render(); window.scrollTo(0,0); return;}
   if(a==='cerrarPrev'){cerrarPrev(); return;}
@@ -3524,6 +3582,7 @@ document.addEventListener('input',e=>{
   }
   if(e.target.id==='edNota'&&S.ed){S.ed.nota=e.target.value;}
   if(e.target.id==='edNombre'&&S.ed){S.ed.nombre=e.target.value;}
+  if(e.target.id==='claNom'){S.claveForm.nombre=e.target.value;}
   if(e.target.id==='compNota'&&S.comp){S.comp.nota=e.target.value;}
   if(e.target.id==='cgTit'&&S.carga){S.carga.titulo=e.target.value;}
   if(e.target.id==='cgFamOtra'&&S.carga){S.carga.familiaOtra=e.target.value;}
@@ -3555,6 +3614,8 @@ document.addEventListener('change',e=>{
   if(['hmios','hnuevos','hcoms','hequipo','hesc'].includes(e.target.id)){S[e.target.id]=e.target.checked; render();}
   if(['iprio','iant'].includes(e.target.id)){S[e.target.id]=e.target.value; render();}
   if(e.target.id==='hdecSel'){S.hdec=e.target.value; render();}
+  if(e.target.id==='claDias'){S.claveForm.dias=e.target.value;}
+  if(e.target.dataset&&e.target.dataset.clalc){S.claveForm.alcances[e.target.dataset.clalc]=e.target.checked;}
   const mf={mPeriodo:'periodo',mFamilia:'familia',mPrioridad:'prioridad',mTipo:'tipo',mClausula:'clausula'}[e.target.id];
   if(mf){S.metF[mf]=e.target.value; cargarMetricas();}
   if(e.target.id==='iest'){S.iest=e.target.value; render();}
