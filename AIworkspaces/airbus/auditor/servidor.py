@@ -44,6 +44,8 @@ from urllib.parse import parse_qs, quote, urlparse
 from urllib.request import Request, urlopen
 
 from src import permisos as P
+from src import api_v1 as A
+from src import claves_api as CA
 
 RAIZ = Path(__file__).resolve().parent
 WEB = RAIZ / "salidas" / "revision"
@@ -148,7 +150,13 @@ def _editables(user: str) -> dict:
     return {doc: P.motivo_no_editar(_estado, user, doc, _HALL.get(doc, [])) for doc in _estado["escalados"]}
 
 
+API_RITMO = (60, 60.0)                   # API externa: como mucho 60 peticiones cada 60 s por clave
+_ritmo_api: dict[str, list[float]] = {}
+_guardado_api = [0.0]                    # el uso de la API se guarda como mucho cada 30 s (no en cada petición)
+
+
 def _guardar():
+    _guardado_api[0] = time.time()
     tmp = DATOS.with_suffix(".tmp")
     tmp.write_text(json.dumps(_estado, ensure_ascii=False, indent=1), encoding="utf-8")
     tmp.replace(DATOS)
@@ -437,6 +445,65 @@ class Manejador(SimpleHTTPRequestHandler):
             _guardar()
         return self._json({"ok": True, "id": aid, "nombre": nombre, "tipo": tipo, "tam": n})
 
+    def _api_v1(self, u):
+        """API externa de solo lectura (src/api_v1.py). Pide una clave de API personal, no la sesión de la página."""
+        from datetime import date
+        q = parse_qs(u.query)
+        if u.path == "/api/v1/openapi.json":
+            return self._json(A.OPENAPI)
+        if u.path == "/api/v1/docs":
+            cuerpo = A.pagina_docs("http://" + self.headers.get("Host", "localhost")).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(cuerpo)))
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            return self.wfile.write(cuerpo)
+        auth = self.headers.get("Authorization", "")
+        clave = auth[7:].strip() if auth[:7].lower() == "bearer " else self.headers.get("X-API-Key", "")
+        alcance = A.alcance_de(u.path)
+        ahora = datetime.now()
+        with _lock:
+            if not alcance:
+                code, cuerpo, tipo = (*A.error(404, "no_encontrado", "Ruta desconocida. Mira /api/v1/docs."), "json")
+                reg = None
+            else:
+                try:
+                    reg = CA.verificar(_estado, clave, alcance, ahora)
+                except P.Denegado as e:
+                    CA.registrar_uso(_estado, None, u.path, e.code, ahora)
+                    return self._json({"error": {"codigo": "no_autorizado" if e.code == 401 else "sin_permiso", "mensaje": str(e)}}, e.code)
+                marcas = [t for t in _ritmo_api.get(reg["id"], []) if time.time() - t < API_RITMO[1]]
+                if len(marcas) >= API_RITMO[0]:
+                    espera = int(API_RITMO[1] - (time.time() - marcas[0])) + 1
+                    _ritmo_api[reg["id"]] = marcas
+                    CA.registrar_uso(_estado, reg, u.path, 429, ahora)
+                    self.send_response(429)
+                    cuerpo = json.dumps({"error": {"codigo": "demasiadas_peticiones",
+                                                   "mensaje": f"Como mucho {API_RITMO[0]} peticiones por minuto: espera {espera} s."}},
+                                        ensure_ascii=False).encode("utf-8")
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
+                    self.send_header("Retry-After", str(espera))
+                    self.send_header("Content-Length", str(len(cuerpo)))
+                    self.end_headers()
+                    return self.wfile.write(cuerpo)
+                _ritmo_api[reg["id"]] = marcas + [time.time()]
+                cargados = [c for c in _estado.get("cargados", {}).values() if c.get("confirmado")]
+                code, cuerpo, tipo = A.responder(u.path, q, _DATOS["res"], _DATOS["docs"], _estado, cargados, date.today(), _DATOS["metricas"])
+            CA.registrar_uso(_estado, reg, u.path, code, ahora)
+            if time.time() - _guardado_api[0] > 30:
+                _guardar()
+        if tipo == "json":
+            return self._json(cuerpo, code)
+        datos = cuerpo.encode("utf-8")
+        self.send_response(code)
+        self.send_header("Content-Type", "text/csv; charset=utf-8")
+        self.send_header("Content-Disposition", f'inline; filename="{u.path.rsplit("/", 1)[1]}.csv"')
+        self.send_header("Content-Length", str(len(datos)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(datos)
+
     def _metricas(self, q):
         """Resumen, cumplimiento, equipo (de conjunto) y calidad de la IA, con los filtros de la petición."""
         from datetime import date
@@ -516,6 +583,8 @@ class Manejador(SimpleHTTPRequestHandler):
         if not self._origen_ok():
             return self._rechazar_origen()
         u = urlparse(self.path)
+        if u.path.startswith("/api/v1/"):
+            return self._api_v1(u)
         if u.path == "/api/adjunto":
             return self._adjunto(parse_qs(u.query))
         if u.path == "/api/metricas":                 # pestaña Métricas: todas las cifras salen de src/metricas.py
@@ -569,6 +638,7 @@ class Manejador(SimpleHTTPRequestHandler):
                         "docs_meta": _estado.get("docs_meta", {}) if ve else {},
                         "compartidos": [x for x in _estado.get("compartidos", []) if ve and (user == x["de"] or user in x["para"])],
                         "cargados": [{"id": k, **v} for k, v in _estado.get("cargados", {}).items() if ve and v.get("confirmado")],
+                        "claves_api": CA.listar(_estado, user, datetime.now()),
                         "reglas": _estado["reglas"] if ve_cfg or ve else []})
 
     def do_POST(self):
@@ -813,6 +883,11 @@ class Manejador(SimpleHTTPRequestHandler):
                     _estado["avisos"].append({"para": avisar, "de": user, "key": f"{doc}|escalado", "fecha": _ahora(),
                                               "texto": f"{user} ha guardado los cambios de {doc} (v{n}): ya se puede decidir.",
                                               "leido": False})
+            elif u == "/api/claves/crear":                 # clave de API personal: se devuelve en claro SOLO esta vez
+                clave, pub = CA.crear(_estado, user, d.get("nombre"), d.get("dias"), d.get("alcances"), datetime.now())
+                extra.update(clave=clave, registro=pub)
+            elif u == "/api/claves/revocar":
+                CA.revocar(_estado, user, str(d.get("id", "")), datetime.now())
             elif u == "/api/doc/prioridad":                # prioridad de un documento (permiso «Cambiar la prioridad»)
                 P.exigir(_estado, user, "revisiones", "prioridad")
                 doc, valor = str(d.get("doc", "")), d.get("prioridad")

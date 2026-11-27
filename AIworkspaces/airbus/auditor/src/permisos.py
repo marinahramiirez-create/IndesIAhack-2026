@@ -49,6 +49,9 @@ MODULOS = [
     ("metricas", "Métricas", [
         ("consultar", "Ver métricas", "Resumen, cumplimiento, equipo (sin nombres) y calidad de la IA, con sus filtros"),
     ]),
+    ("api", "API", [
+        ("usar", "Usar la API", "Crear claves personales para leer métricas, documentos y hallazgos desde Power BI, Excel o scripts"),
+    ]),
     ("historico", "Descarga de histórico", [
         ("descargar_respuestas", "Descargar respuestas del auditor", "La salida oficial en CSV, Excel, JSON, Word o PDF"),
         ("descargar_revision", "Descargar revisión del equipo", "Decisiones, comentarios y ediciones del equipo"),
@@ -75,6 +78,8 @@ _REV_COMUN = ["consultar", "aprobar", "rechazar", "comentar", "editar_hallazgos"
 # «este rol ya puede revisar» (aprobar o rechazar); el resto de acciones nuevas sigue empezando desactivado.
 ACCIONES_DE_REVISION = ("cargar", "compartir", "prioridad", "marcar_revisado")
 NUEVAS_PARA_QUIEN_REVISA = [("revisiones", a) for a in ACCIONES_DE_REVISION] + [("metricas", "consultar")]
+# Acciones nuevas cuyo valor inicial, en un rol guardado sin ellas, depende del rol (el resto: desactivadas)
+NUEVAS_POR_ROL = {("api", "usar"): {"aprobador"}}
 ROLES_INICIALES = [
     {"id": ADMIN, "nombre": "Admin", "sistema": True,
      "descripcion": "Administra la estructura de roles y el equipo; decide sobre los hallazgos.",
@@ -82,7 +87,7 @@ ROLES_INICIALES = [
     {"id": "aprobador", "nombre": "Aprobador", "sistema": False,
      "descripcion": "Decide y firma las decisiones de los demás.",
      "permisos": _perm(revisiones=_REV_COMUN, configuracion=["consultar", "gestionar_reglas", "editar_plazo"],
-                       historico=["descargar_respuestas", "descargar_revision"], metricas=["consultar"])},
+                       historico=["descargar_respuestas", "descargar_revision"], metricas=["consultar"], api=["usar"])},
     {"id": "revisor", "nombre": "Revisor", "sistema": False,
      "descripcion": "Aprueba o rechaza hallazgos y comenta.",
      "permisos": _perm(revisiones=_REV_COMUN, configuracion=["consultar"],
@@ -219,6 +224,10 @@ def migrar(estado: dict) -> None:
                 mod = perms.setdefault(m, {})
                 if isinstance(mod, dict):
                     mod.setdefault(a, revisa)
+            for (m, a), roles in NUEVAS_POR_ROL.items():
+                mod = perms.setdefault(m, {})
+                if isinstance(mod, dict):
+                    mod.setdefault(a, r.get("id") in roles)
         conf = (r.get("permisos") or {}).get("configuracion") or {}
         if "editar_umbral" in conf:                 # el umbral local pasó a ser «Gestionar reglas de aceptación»:
             antes = conf.pop("editar_umbral")       # los roles de fábrica toman su valor por defecto; los creados
