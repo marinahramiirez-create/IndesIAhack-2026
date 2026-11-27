@@ -479,6 +479,16 @@ button.adj-img:focus-visible{outline:2px solid var(--tint);outline-offset:2px}
 @media (max-width:700px){.mkpi.hero{grid-column:auto}.mgrid{grid-template-columns:1fr}}
 /* Mi cuenta → Claves de API */
 .cla-card .cla-form,.cla-card .note{max-width:720px}
+.act-cab{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}.act-bot{display:flex;gap:8px;flex-wrap:wrap}
+.act-fil .fcampo input[type=date]{height:36px;padding:6px 8px;font-size:14px}
+.act-tabla{overflow-x:auto}.act-tabla table{width:100%;border-collapse:collapse;font-size:13.5px}
+.act-tabla th{text-align:left;font-weight:600;color:var(--sec);font-size:12px;padding:6px 8px;border-bottom:1px solid var(--sep)}
+.act-tabla td{padding:8px;border-bottom:1px solid var(--sep);vertical-align:top}.act-tabla tr:last-child td{border-bottom:none}
+.act-fecha{white-space:nowrap;color:var(--sec)}.act-cambios{margin-top:2px;overflow-wrap:anywhere}
+.act-tipo{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;background:#eef1f5;color:#2b3a4e;white-space:nowrap}
+.act-int{border-radius:10px;padding:10px 12px;margin:0 0 12px}.act-bien{background:#eef7ee;border:1px solid #a7d8a7}.act-mal{background:#fdeceb;border:1px solid #f0aaa5}
+.act-pag{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:10px}
+.act-doc{margin-top:14px}.act-doc summary{cursor:pointer;list-style-position:inside}.act-doc[open] summary{margin-bottom:8px}
 .cla-form{display:flex;flex-direction:column;gap:4px}.cla-form input:not([type=checkbox]){width:100%}.cla-alc .fchk{white-space:nowrap}
 .cla-fila{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px}.cla-alc{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
 .cla-f{display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--sep)}.cla-f.off{opacity:.6}
@@ -636,6 +646,7 @@ button.adj-img:focus-visible{outline:2px solid var(--tint);outline-offset:2px}
     <button class="nav-item" data-act="nav" data-v="ia"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="13" width="3.5" height="7" rx="1"/><rect x="10.25" y="8" width="3.5" height="12" rx="1"/><rect x="16.5" y="4" width="3.5" height="16" rx="1"/></svg>Panel de control IA</button>
     <button class="nav-item" data-act="nav" data-v="metricas"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 6-6"/></svg>Métricas</button>
     <button class="nav-item" data-act="nav" data-v="historico"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>Histórico</button>
+    <button class="nav-item" data-act="nav" data-v="actividad"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6M9 4a1 1 0 0 0-1 1v1h8V5a1 1 0 0 0-1-1M8 6H6a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1h-2"/><path d="M9 12h6M9 16h4"/></svg>Actividad</button>
     <button class="nav-item" data-act="nav" data-v="chat"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Chat</button>
     <button class="nav-item" data-act="navCfg" aria-expanded="false" id="navCfg"><span style="display:flex;align-items:center;gap:12px"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>Configuración</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
     <button class="nav-item sub" data-act="nav" data-v="reglas"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>Reglas</button>
@@ -776,6 +787,11 @@ async function sondear(){
       S.avisos.forEach(x=>{if(x.key===kAbierto) x.leido=true;}); api('/api/leido',{key:kAbierto});
     }
     if(S.view==='metricas'&&S.met&&d.seq!==S._metSeq&&!S.metCargando) cargarMetricas();   // Métricas: solo si hubo novedades
+    if(d.seq!==S._metSeq){                                            // Actividad: se recarga solo si hubo novedades
+      if(S.view==='actividad'&&S.act.datos&&!S.act.cargando) cargarAct();
+      if(S.view==='cuenta'&&S.miAct) cargarMiAct();
+      if(S.view==='revision'&&S.actDoc&&S.actDoc.doc===S.doc) cargarActDoc(S.doc);
+    }
     S._metSeq=d.seq;
     const firma=d.seq+'|'+JSON.stringify(d.presencia);
     const cambio=firma!==_firma||S.online!==true;      // solo se redibuja si hay novedades
@@ -1373,6 +1389,14 @@ const EN={'Inicio':'Home','Auditorías':'Audits','Ver documentos en Auditorías'
  'Documento cargado: ya puedes abrirlo':'Document uploaded: you can open it now',
  'Un documento cargado se puede abrir, comentar, compartir y versionar enseguida. Sus hallazgos llegan al auditarlo con la solución:':'An uploaded document can be opened, commented on, shared and versioned right away. Its findings arrive when it is audited with the solution:',
  'El auditor no encontró defectos en este documento.':'The auditor found no defects in this document.',
+ 'Actividad':'Activity','Actividad de este documento':'Activity on this document','Mi actividad':'My activity','Comprobar integridad':'Check integrity','Descargar CSV':'Download CSV',
+ 'Quién hizo qué, cuándo y sobre qué documento. Nadie puede editarlo ni borrarlo desde la app.':'Who did what, when and on which document. Nobody can edit or delete it from the app.',
+ 'Persona':'Person','Todas':'All','Todos':'All','Desde':'From','Hasta':'To','Buscar':'Search','Quitar filtros':'Clear filters','Fecha':'Date','Qué pasó':'What happened','Documento':'Document','Tipo':'Type',
+ 'Escalados':'Escalations','Seguridad':'Security','Anterior':'Previous','Siguiente':'Next','Lo último que has hecho en la app.':'The latest things you did in the app.','Ver todo en Actividad':'See all in Activity',
+ 'Todavía no hay actividad registrada.':'No activity recorded yet.','No hay actividad con estos filtros.':'No activity with these filters.','Todavía no hay actividad tuya registrada.':'No activity of yours recorded yet.','Todavía no hay actividad registrada en este documento.':'No activity recorded on this document yet.','Íntegro.':'Intact.',
+ 'No se guarda el texto del chat ni de los comentarios: solo que hubo un comentario en un hallazgo.':'Chat and comment text is not stored: only that a finding was commented on.','El registro se ha modificado fuera de la app.':'The log was modified outside the app.',
+ 'Entró en la aplicación':'Signed in','Cerró sesión':'Signed out','Cambió el plazo de respuesta':'Changed the response deadline',
+ 'Hallazgo, regla, persona…':'Finding, rule, person…','se ha modificado su contenido.':'its content was changed.','no encaja con la línea anterior.':'it does not match the previous line.','falta o sobra una línea.':'a line is missing or was added.','la línea no se puede leer.':'the line cannot be read.','La anterior está bien.':'The one before is fine.','Comprobando…':'Checking…','Cargando la actividad…':'Loading activity…',
  'Claves de API':'API keys','Cómo usar la API':'How to use the API','Crear clave':'Create key','Caduca en':'Expires in','Puede leer':'Can read',
  'Documentos':'Documents','Hallazgos':'Findings','Tus claves':'Your keys','Claves del equipo':'Team keys','(eres Admin)':'(you are Admin)','Revocar':'Revoke',
  'Revocada':'Revoked','Caducada':'Expired','Copiar':'Copy','Ya la he guardado':'I have saved it','Clave copiada':'Key copied','Clave revocada':'Key revoked',
@@ -1449,7 +1473,12 @@ const EN={'Inicio':'Home','Auditorías':'Audits','Ver documentos en Auditorías'
  'Escribe #número para enlazar un hallazgo y @nombre para avisar a alguien.':'Type #number to link a finding and @name to notify someone.',
  'Buscar documento, título, familia o revisor':'Search document, title, family or reviewer','Explica tu criterio':'Explain your reasoning',
  'Comenta; usa @nombre para avisar':'Comment; use @name to notify','Escribe tu pregunta':'Type your question','Buscar documento, ubicación o texto':'Search document, location or text'};
-const EN_RE=[[/^(\d+) de (\d+) revisados$/,'$1 of $2 reviewed'],[/^Página (\d+) de (\d+)$/,'Page $1 of $2'],[/^(\d+) de (\d+) documentos$/,'$1 of $2 documents'],
+const EN_RE=[[/^La cadena se rompe en la línea (\d+):$/,'The chain breaks at line $1:'],[/^Las (\d+) anteriores están bien\.$/,'The $1 before it are fine.'],[/^(\d+) entradas? comprobadas?: ninguna se ha modificado, borrado ni añadido a mano\.$/,'$1 entries checked: none was changed, deleted or added by hand.'],[/^Página (\d+) de (\d+)$/,'Page $1 of $2'],[/^(\d+) entradas? · lo más reciente primero$/,'$1 entries · newest first'],[/^Aceptó el hallazgo (.+) de (.+)$/,'Accepted finding $1 of $2'],[/^Rechazó el hallazgo (.+) de (.+)$/,'Rejected finding $1 of $2'],
+ [/^Aceptó (\d+) hallazgos de (.+)$/,'Accepted $1 findings of $2'],[/^Rechazó (\d+) hallazgos de (.+)$/,'Rejected $1 findings of $2'],[/^Comentó en el hallazgo (.+) de (.+)$/,'Commented on finding $1 of $2'],
+ [/^Editó el hallazgo (.+) de (.+)$/,'Edited finding $1 of $2'],[/^Cambió la prioridad de (.+): (.+) → (.+)$/,'Changed the priority of $1: $2 → $3'],[/^Escaló (.+) a (.+)$/,'Escalated $1 to $2'],
+ [/^Compartió (.+) con (.+)$/,'Shared $1 with $2'],[/^Marcó (.+) como revisado$/,'Marked $1 as reviewed'],[/^Guardó la versión (v\d+) de (.+)$/,'Saved version $1 of $2'],
+ [/^Creó la clave de API (.+)$/,'Created API key $1'],[/^Revocó la clave de API (.+)$/,'Revoked API key $1'],[/^Dio de alta a (.+)$/,'Added user $1'],[/^Dio de baja a (.+)$/,'Removed user $1'],
+ [/^Editó el usuario (.+)$/,'Edited user $1'],[/^Editó el rol (.+)$/,'Edited role $1'],[/^Editó la regla (.+)$/,'Edited rule $1'],[/^Ver las (\d+) en Actividad$/,'See all $1 in Activity'],[/^(\d+) de (\d+) revisados$/,'$1 of $2 reviewed'],[/^Página (\d+) de (\d+)$/,'Page $1 of $2'],[/^(\d+) de (\d+) documentos$/,'$1 of $2 documents'],
  [/^(\d+) documentos · (\d+) hallazgos$/,'$1 documents · $2 findings'],[/^(\d+) de (\d+) hallazgos$/,'$1 of $2 findings'],[/^Revisado por (.+)$/,'Reviewed by $1'],
  [/^(.+) también (?:está|están) en este hallazgo$/,'$1 also on this finding'],[/^Cláusula (.+)$/,'Clause $1'],
  [/^te ha mencionado en (.+)$/,'mentioned you in $1'],[/^hace (\d+) min$/,'$1 min ago'],[/^hace (\d+) h$/,'$1 h ago'],
@@ -2054,6 +2083,7 @@ function vCuenta(){
     ${seccion('Seguridad','Llegarán con el inicio de sesión de Microsoft (Entra ID).',
       pronto('Llaves de acceso','Segundo paso y entrar sin contraseña.')+pronto('App de autenticación','Códigos de 6 dígitos con Microsoft Authenticator.')+pronto('Códigos de recuperación','Para entrar si pierdes el segundo paso.'))}
     ${vClavesApi()}
+    ${vMiActividad(seccion)}
     ${seccion('Sesiones abiertas','Dónde has entrado ahora mismo. «Cerrar sesión» quita esta de la lista.',ses)}
     ${seccion('Política de acceso','Hoy, en este prototipo:',lista([
       'Solo entra quien está dado de alta. El servidor te da una sesión y comprueba el permiso de tu rol en cada operación; el inicio de sesión todavía no pide contraseña.',
@@ -2614,7 +2644,8 @@ function vRevision(){
     <div class="two ${hist?'solo':''}">
       <div>${info.cargado&&info.cargado.vista!=='pdf'?vCargadoContenido(info):vPdf()}</div>
       ${hist?'':R().length?vDecision():vSinHallazgos()}
-    </div>`;
+    </div>
+    ${vActDoc(S.doc)}`;
 }
 
 // ---------- Escalamiento: un documento se asigna a UNA persona con rol Dueño de Proceso, que es la única que puede
@@ -3410,11 +3441,101 @@ function vCfg(){
   </div>${t==='roles'?vRoles():vUsuarios()}`;
 }
 
-const VIEWS={inicio:vInicio,revision:vRevision,ia:vIA,metricas:vMetricas,historico:vHist,chat:vChat,reglas:vCfg,usuarios:vCfg,cuenta:vCuenta};
-const TITLES={inicio:'Nimbus Audit Studio',revision:'Revisión',ia:'Panel de control IA',metricas:'Métricas',historico:'Histórico',chat:'Chat',reglas:'Reglas',usuarios:'Usuarios',cuenta:'Mi cuenta'};
+// ---------- Registro de actividad: quién hizo qué, cuándo y sobre qué documento (src/actividad.py, GET /api/actividad).
+// Solo lectura: nadie lo edita ni lo borra desde la app. «Comprobar integridad» relee el archivo y verifica la cadena.
+const ACT_TIPOS=[['revision','Revisión'],['documentos','Documentos'],['escalados','Escalados'],['configuracion','Configuración'],['seguridad','Seguridad']];
+const ACT_F0={persona:'',tipo:'',doc:'',desde:'',hasta:'',q:''};
+Object.assign(S,{act:{f:{...ACT_F0},pagina:1,datos:null,cargando:false},actInt:null,miAct:null,actDoc:null});
+async function pedirAct(q){
+  const r=await fetch('/api/actividad?'+new URLSearchParams(Object.entries(q).filter(([,v])=>v!==''&&v!==null&&v!==undefined)),{cache:'no-store',headers:{'X-Sesion':S.token||''}});
+  const j=await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.error||('Error '+r.status)); return j;
+}
+async function cargarAct(){
+  if(!SRV){S.act.datos={error:'El registro de actividad necesita la revisión en equipo: python servidor.py'}; render(); return;}
+  S.act.cargando=true;
+  try{S.act.datos=await pedirAct({...S.act.f,pagina:S.act.pagina,limite:50});}catch(e){S.act.datos={error:e.message||'Sin conexión con el servidor'};}
+  S.act.cargando=false; if(S.view==='actividad') render();
+}
+async function cargarMiAct(){try{S.miAct=await pedirAct({limite:8});}catch(e){S.miAct={error:e.message};} if(S.view==='cuenta') render();}
+async function cargarActDoc(doc){try{const j=await pedirAct({doc,limite:30}); S.actDoc={doc,...j};}catch(e){S.actDoc={doc,error:e.message};} if(S.view==='revision'&&S.doc===doc) render();}
+const actTipo=t=>(ACT_TIPOS.find(x=>x[0]===t)||[t,t])[1];
+function actFila(e,conDoc=true,conPersona=true){
+  return `<tr><td class="act-fecha">${esc(fmtFecha(e.fecha))}</td>${conPersona?`<td>${esc(e.user)}</td>`:''}<td><span class="act-tipo act-${esc(e.tipo)}">${esc(actTipo(e.tipo))}</span></td>
+    <td><div>${esc(e.texto)}</div>${e.cambios?`<div class="small act-cambios">${esc(e.cambios)}</div>`:''}</td>
+    ${conDoc?`<td>${e.doc&&DOCS[e.doc]?`<button class="enlace" data-act="abrir" data-doc="${esc(e.doc)}">${esc(e.doc)}</button>`:esc(e.doc||'—')}</td>`:''}</tr>`;
+}
+function vActividad(){
+  const A=S.act, j=A.datos;
+  if(!j){if(!A.cargando) setTimeout(cargarAct); return `<h2>Actividad</h2><div class="card small" aria-busy="true">Cargando la actividad…</div>`;}
+  if(j.error) return `<h2>Actividad</h2><div class="card"><p class="sub" style="margin:0">${esc(j.error)}</p></div>`;
+  const f=A.f, sel=(id,t,ops,v)=>`<div class="fcampo"><label class="ftit" for="${id}">${t}</label><select id="${id}">${ops.map(([k,l])=>`<option value="${esc(k)}" ${k===v?'selected':''}>${esc(l)}</option>`).join('')}</select></div>`;
+  const docs=Object.keys(DOCS).sort();
+  const filtros=`<div class="ffil act-fil">
+      ${sel('actPersona','Persona',[['','Todas'],...(j.personas||[]).map(p=>[p,p])],f.persona)}
+      ${sel('actTipo','Tipo',[['','Todos'],...ACT_TIPOS],f.tipo)}
+      ${sel('actDocSel','Documento',[['','Todos'],...docs.map(d=>[d,d])],f.doc)}
+      <div class="fcampo"><label class="ftit" for="actDesde">Desde</label><input type="date" id="actDesde" value="${esc(f.desde)}"></div>
+      <div class="fcampo"><label class="ftit" for="actHasta">Hasta</label><input type="date" id="actHasta" value="${esc(f.hasta)}"></div>
+      <div class="fcampo fbus"><label class="ftit" for="actQ">Buscar</label><input type="search" id="actQ" placeholder="Hallazgo, regla, persona…" value="${esc(f.q)}"></div>
+      ${Object.values(f).some(Boolean)?'<button class="enlace" data-act="actLimpiar" style="align-self:center">Quitar filtros</button>':''}
+    </div>`;
+  const I=S.actInt;
+  const integ=I?(I.cargando?`<div class="act-int small" aria-busy="true">Comprobando…</div>`
+      :I.error?`<div class="act-int act-mal small" role="alert">${esc(I.error)}</div>`
+      :I.ok?`<div class="act-int act-bien small" role="status"><b>Íntegro.</b> <span>${fmtN(I.total)} ${I.total===1?'entrada comprobada':'entradas comprobadas'}: ninguna se ha modificado, borrado ni añadido a mano.</span></div>`
+      :`<div class="act-int act-mal small" role="alert"><b>El registro se ha modificado fuera de la app.</b> <span>La cadena se rompe en la línea ${fmtN(I.linea)}:</span> <span>${esc(I.motivo)}.</span> <span>${I.total===1?'La anterior está bien.':`Las ${fmtN(I.total)} anteriores están bien.`}</span></div>`):'';
+  const filas=j.datos.length?`<div class="act-tabla"><table><thead><tr><th>Fecha</th><th>Persona</th><th>Tipo</th><th>Qué pasó</th><th>Documento</th></tr></thead>
+      <tbody>${j.datos.map(e=>actFila(e)).join('')}</tbody></table></div>`
+    :`<p class="small" style="margin:8px 0">${Object.values(f).some(Boolean)?'No hay actividad con estos filtros.':'Todavía no hay actividad registrada.'}</p>`;
+  const pag=j.paginas>1?`<div class="act-pag"><button class="ghost" data-act="actPag" data-v="${j.pagina-1}" ${j.pagina<=1?'disabled':''}>Anterior</button>
+      <span class="small">Página ${j.pagina} de ${j.paginas}</span><button class="ghost" data-act="actPag" data-v="${j.pagina+1}" ${j.pagina>=j.paginas?'disabled':''}>Siguiente</button></div>`:'';
+  return `<div class="act ${A.cargando?'met-cargando':''}">
+    <div class="act-cab"><div><h2 style="margin-bottom:2px">Actividad</h2>
+      <p class="sub">Quién hizo qué, cuándo y sobre qué documento. Nadie puede editarlo ni borrarlo desde la app.</p></div>
+      <div class="act-bot"><button class="ghost" data-act="actIntegridad">Comprobar integridad</button><button class="ghost" data-act="actCsv">Descargar CSV</button></div></div>
+    ${integ}${filtros}
+    <div class="card"><div class="small" style="margin-bottom:6px">${fmtN(j.total)} ${j.total===1?'entrada':'entradas'} · lo más reciente primero</div>${filas}${pag}</div>
+    <p class="small" style="margin-top:10px">No se guarda el texto del chat ni de los comentarios: solo que hubo un comentario en un hallazgo.</p></div>`;
+}
+function vActDoc(doc){
+  if(!SRV||!puede('actividad','consultar')) return '';
+  let a=S.actDoc&&S.actDoc.doc===doc?S.actDoc:null;
+  if(!a){a=S.actDoc={doc,pend:true}; setTimeout(()=>cargarActDoc(doc));}
+  const cuerpo=a.pend?'<p class="small" aria-busy="true">Cargando…</p>':a.error?`<p class="small">${esc(a.error)}</p>`
+    :a.datos.length?`<div class="act-tabla"><table><tbody>${a.datos.map(e=>actFila(e,false)).join('')}</tbody></table></div>
+        ${a.total>a.datos.length?`<button class="enlace" data-act="actVerDoc" data-doc="${esc(doc)}">Ver las ${fmtN(a.total)} en Actividad</button>`:''}`
+    :'<p class="small">Todavía no hay actividad registrada en este documento.</p>';
+  return `<details class="card act-doc" ${S.actDocAbierto?'open':''}><summary><b>Actividad de este documento</b>${!a.pend&&!a.error?` <span class="small">· ${fmtN(a.total)}</span>`:''}</summary>${cuerpo}</details>`;
+}
+function vMiActividad(seccion){
+  if(!SRV) return '';
+  let m=S.miAct; if(!m){m=S.miAct={pend:true}; setTimeout(cargarMiAct);}
+  const cuerpo=m.pend?'<div class="lc-fila"><span class="small">Cargando…</span></div>':m.error?`<div class="lc-fila"><span class="small">${esc(m.error)}</span></div>`
+    :m.datos.filter(e=>e.user===S.user.nombre).map(e=>`<div class="lc-fila"><span class="lc-k">${esc(e.texto)}${e.cambios?`<span class="small lc-sub">${esc(e.cambios)}</span>`:''}</span><span class="lc-v small">${esc(fmtFecha(e.fecha))}</span></div>`).join('')
+      ||'<div class="lc-fila"><span class="small">Todavía no hay actividad tuya registrada.</span></div>';
+  const ver=puede('actividad','consultar')?' <button class="enlace" data-act="actMia">Ver todo en Actividad</button>':'';
+  return seccion('Mi actividad',`Lo último que has hecho en la app.${ver}`,cuerpo);
+}
+document.addEventListener('toggle',e=>{if(e.target.classList&&e.target.classList.contains('act-doc')) S.actDocAbierto=e.target.open;},true);
+async function actIntegridad(){
+  S.actInt={cargando:true}; render();
+  try{const r=await fetch('/api/actividad/integridad',{cache:'no-store',headers:{'X-Sesion':S.token||''}}); const j=await r.json(); S.actInt=r.ok?j:{error:j.error||('Error '+r.status)};}
+  catch(e){S.actInt={error:'Sin conexión con el servidor'};}
+  render();
+}
+async function actCsv(){
+  try{
+    const r=await fetch('/api/actividad/csv?'+new URLSearchParams(Object.entries(S.act.f).filter(([,v])=>v)),{cache:'no-store',headers:{'X-Sesion':S.token||''}});
+    if(!r.ok) throw new Error('Error '+r.status);
+    const a=document.createElement('a'); a.href=URL.createObjectURL(await r.blob()); a.download=`actividad_${new Date().toISOString().slice(0,10)}.csv`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  }catch(e){aviso('No se pudo descargar: '+(e.message||e));}
+}
+
+const VIEWS={inicio:vInicio,revision:vRevision,ia:vIA,metricas:vMetricas,historico:vHist,actividad:vActividad,chat:vChat,reglas:vCfg,usuarios:vCfg,cuenta:vCuenta};
+const TITLES={inicio:'Nimbus Audit Studio',revision:'Revisión',ia:'Panel de control IA',metricas:'Métricas',historico:'Histórico',actividad:'Actividad',chat:'Chat',reglas:'Reglas',usuarios:'Usuarios',cuenta:'Mi cuenta'};
 
 // Cada sección pide el permiso de consultar su módulo (sin permiso, el servidor tampoco envía sus datos)
-const VISTA_PERM={metricas:['metricas','consultar'],inicio:['revisiones','consultar'],revision:['revisiones','consultar'],historico:['revisiones','consultar'],
+const VISTA_PERM={metricas:['metricas','consultar'],actividad:['actividad','consultar'],inicio:['revisiones','consultar'],revision:['revisiones','consultar'],historico:['revisiones','consultar'],
   versiones:['revisiones','consultar'],reglas:['configuracion','consultar'],usuarios:['configuracion','consultar']};
 function vista(v){
   const p=VISTA_PERM[v];
@@ -3560,6 +3681,12 @@ document.addEventListener('click',e=>{
   if(a==='metCsv'){csvMet(el.dataset.v); return;}
   if(a==='metLimpiar'){S.metF={periodo:'todo',familia:'',prioridad:'',tipo:'',clausula:''}; cargarMetricas(); return;}
   if(a==='metIr'){try{metIr(JSON.parse(el.dataset.f||'{}'));}catch(err){} return;}
+  if(a==='actLimpiar'){S.act.f={...ACT_F0}; S.act.pagina=1; cargarAct(); return;}
+  if(a==='actPag'){S.act.pagina=Number(el.dataset.v)||1; cargarAct(); window.scrollTo(0,0); return;}
+  if(a==='actIntegridad'){actIntegridad(); return;}
+  if(a==='actCsv'){actCsv(); return;}
+  if(a==='actMia'){S.act.f={...ACT_F0,persona:S.user.nombre}; S.act.pagina=1; S.act.datos=null; S.view='actividad'; render(); window.scrollTo(0,0); return;}
+  if(a==='actVerDoc'){S.act.f={...ACT_F0,doc:el.dataset.doc}; S.act.pagina=1; S.act.datos=null; S.view='actividad'; render(); window.scrollTo(0,0); return;}
   if(a==='claveCrear'){crearClave(); return;}
   if(a==='claveCopiar'){const t=S.claveNueva||''; (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>aviso('Clave copiada'),()=>{const r=document.createRange(); const c=document.getElementById('claveTxt'); if(c){r.selectNodeContents(c); const s=getSelection(); s.removeAllRanges(); s.addRange(r);} aviso('Selecciónala y cópiala con Cmd/Ctrl + C');}); return;}
   if(a==='claveOcultar'){S.claveNueva=null; render(); return;}
@@ -3843,6 +3970,8 @@ document.addEventListener('change',e=>{
   if(e.target.dataset&&e.target.dataset.clalc){S.claveForm.alcances[e.target.dataset.clalc]=e.target.checked;}
   const mf={mPeriodo:'periodo',mFamilia:'familia',mPrioridad:'prioridad',mTipo:'tipo',mClausula:'clausula'}[e.target.id];
   if(mf){S.metF[mf]=e.target.value; cargarMetricas();}
+  const af={actPersona:'persona',actTipo:'tipo',actDocSel:'doc',actDesde:'desde',actHasta:'hasta',actQ:'q'}[e.target.id];
+  if(af){S.act.f[af]=e.target.value; S.act.pagina=1; cargarAct();}
   if(e.target.id==='iest'){S.iest=e.target.value; render();}
   // Ventana de regla: se guarda en S para no perderla al redibujar
   if(S.reglaForm&&e.target.name==='rgTipo'){const t=tipoRegla(e.target.value); S.reglaForm.tipo=t.id; S.reglaForm.params=Object.fromEntries(t.params.map(([k,,ty,,,def])=>[k,(S.reglaForm.params||{})[k]??(ty==='num'?def:'')])); render();}
