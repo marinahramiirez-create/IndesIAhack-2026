@@ -102,6 +102,7 @@ tr.hl td{background:#fff6cc}
 .st{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--text);white-space:nowrap}
 .st i{width:8px;height:8px;border-radius:50%;background:var(--c)}
 .two{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:16px;align-items:start}
+.two.solo{grid-template-columns:minmax(0,1fr)}   /* consulta histórica: solo el documento */
 .right{position:sticky;top:74px;max-height:calc(100vh - 150px);display:flex;flex-direction:column;overflow:hidden}
 .lista-scroll{max-height:min(190px,24vh);overflow:auto;flex:none}
 .motivo-scroll{margin-top:12px;flex:1 1 auto;min-height:90px;overflow:auto}
@@ -677,6 +678,7 @@ S.roles=[{id:'admin',nombre:'Admin',descripcion:'Administra la estructura de rol
   {id:'aprobador',nombre:'Aprobador',descripcion:'Decide y firma las decisiones de los demás.'},
   {id:'revisor',nombre:'Revisor',descripcion:'Aprueba o rechaza hallazgos y comenta.'},
   {id:'dueno_proceso',nombre:'Dueño de Proceso',descripcion:'Corrige los documentos que se le escalan.'}];
+S.histDocs=new Set();   // documentos abiertos desde Histórico: solo consulta, sin la columna de hallazgos y decisiones
 Object.assign(S,{modulos:[],permisos:null,escalados:{},escHist:[],editables:{},token:'',cargado:false,
   rolForm:null,rolPanel:null,usrTab:'roles',usrEdit:null,usrVals:{},usrNuevo:false,escOpen:false,escVals:{}});
 S.equipo=[{n:'Sergio',c:'sergio@airbus.es',rol:'admin'},{n:'Marina',c:'marina@airbus.es',rol:'aprobador'},
@@ -2527,15 +2529,16 @@ function vDecision(){
 }
 
 function vRevision(){
-  const info=DOCS[S.doc], d=S.doc, nv=versionesDe(d).length, prio=prioridadDe(d), pm=metaDoc(d).prioridad;
+  const info=DOCS[S.doc], d=S.doc, nv=versionesDe(d).length, prio=prioridadDe(d), pm=metaDoc(d).prioridad, hist=S.histDocs.has(d);
   const icono=p=>`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
   return `${vPestanas()}<div class="pnav pnav-rev rev-barra" style="margin-bottom:14px">
       <button class="ghost iconbtn" data-act="volver" aria-label="Volver al listado" title="Volver al listado">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
-      <div class="pnav-tit"><h2 style="margin:0">${esc(d)}</h2><span class="small" title="${esc(info.titulo)}">${info.version?'v'+esc(info.version)+' · ':''}${esc(info.titulo)}</span></div>
+      <div class="pnav-tit"><h2 style="margin:0">${esc(d)}</h2>${hist?'<span class="rolpill" style="margin:0;flex:none">Consulta histórica</span>':''}<span class="small" title="${esc(info.titulo)}">${info.version?'v'+esc(info.version)+' · ':''}${esc(info.titulo)}</span></div>
       <label class="rev-prio" title="${!puede('revisiones','prioridad')?esc(sinPermiso('revisiones','prioridad')):pm?`Cambiada por ${esc(pm.user)} · ${fmtFecha(pm.fecha)}`:'Sugerida según los hallazgos'}"><span class="small">Prioridad</span>
         <select id="docPrio" aria-label="Prioridad del documento" ${SRV&&puede('revisiones','prioridad')?'':'disabled'}>${['Alta','Media','Baja'].map(p=>`<option ${p===prio?'selected':''}>${p}</option>`).join('')}</select></label>
-      <button class="ghost iconbtn" data-act="toggleExtra" aria-label="Comentario sin hallazgo de la IA" ${puede('revisiones','comentar')?'title="Comentario sin hallazgo de la IA"':`disabled title="${esc(sinPermiso('revisiones','comentar'))}"`}>
+      ${hist?`<button class="ghost" data-act="revisarDoc" title="Abrir con los hallazgos, comentarios y decisiones">Revisar</button>`:''}
+      <button class="ghost iconbtn ${hist?'hidden':''}" data-act="toggleExtra" aria-label="Comentario sin hallazgo de la IA" ${puede('revisiones','comentar')?'title="Comentario sin hallazgo de la IA"':`disabled title="${esc(sinPermiso('revisiones','comentar'))}"`}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
       </button>
       ${SRV&&puede('revisiones','escalar')?`<button class="ghost" data-act="escAbrir" aria-expanded="${!!S.escOpen}">${(S.escalados||{})[S.doc]?'Cambiar escalamiento':'Escalar'}</button>`:''}
@@ -2546,9 +2549,9 @@ function vRevision(){
       <button class="ghost pnav-fijo" data-act="criterios">Criterios</button>
     </div>
     ${vEscalado(S.doc)}
-    <div class="two">
+    <div class="two ${hist?'solo':''}">
       <div>${info.cargado&&info.cargado.vista!=='pdf'?vCargadoContenido(info):vPdf()}</div>
-      ${R().length?vDecision():vSinHallazgos()}
+      ${hist?'':R().length?vDecision():vSinHallazgos()}
     </div>`;
 }
 
@@ -3267,8 +3270,6 @@ function pillVeredicto(ev){
 }
 function vReglasAcept(){
   const ok=puede('configuracion','gestionar_reglas'), reglas=S.reglas||[];
-  const cuenta={Aprobado:0,Rechazado:0,'Revisión manual':0,'En revisión':0};
-  Object.keys(DOCS).forEach(d=>{const v=evaluarDoc(d).v; if(v in cuenta) cuenta[v]++;});
   const fams=[...new Set(Object.values(DOCS).map(d=>d.familia))];
   const filas=reglas.map(r=>`<tr class="${r.activa?'':'off'}">
       <td><b>${esc(r.nombre)}</b>${r.descripcion?`<div class="small">${esc(r.descripcion)}</div>`:''}</td>
@@ -3282,7 +3283,6 @@ function vReglasAcept(){
     <div style="display:flex;align-items:flex-start;gap:12px"><div style="flex:1"><h3 style="margin:0 0 4px">Reglas de aceptación</h3>
       <p class="small" style="margin:0">Cuando todos los hallazgos de un documento tienen decisión, el sistema aplica las reglas activas: si alguna no se cumple, el documento se rechaza o pasa a revisión manual; si las cumple todas, se aprueba.</p></div>
       ${ok?'<button class="btn-principal" data-act="reglaNueva" style="border:0">Crear regla</button>':''}</div>
-    <div class="reg-res">${[['Aprobado','Aprobados'],['Rechazado','Rechazados'],['Revisión manual','Revisión manual'],['En revisión','Pendientes de decidir']].map(([k,l])=>`<div><span class="small">${l}</span><b style="color:${(VCOL[k]||['#00205b'])[0]}">${cuenta[k]}</b></div>`).join('')}</div>
     ${reglas.length?`<table class="treg"><thead><tr><th>Regla</th><th>Condición</th><th>Aplica a</th><th>Si no se cumple</th><th>Activa</th><th></th></tr></thead><tbody>${filas}</tbody></table>`
       :`<div class="vacio">Todavía no hay reglas: todos los documentos decididos se aprobarían.${ok?' Pulsa «Crear regla» para añadir la primera.':''}</div>`}
     ${ok?'':`<p class="note">${esc(sinPermiso('configuracion','gestionar_reglas'))}</p>`}
@@ -3498,6 +3498,7 @@ document.addEventListener('click',e=>{
   if(a==='metCsv'){csvMet(el.dataset.v); return;}
   if(a==='metLimpiar'){S.metF={periodo:'todo',familia:'',prioridad:'',tipo:'',clausula:''}; cargarMetricas(); return;}
   if(a==='metIr'){try{metIr(JSON.parse(el.dataset.f||'{}'));}catch(err){} return;}
+  if(a==='revisarDoc'){S.histDocs.delete(S.doc); render(); return;}
   if(a==='irPestana'){if(el.dataset.doc!==S.doc){abrirRevision(el.dataset.doc); render();} return;}
   if(a==='cerrarPestana'){cerrarPestana(el.dataset.doc); render(); window.scrollTo(0,0); return;}
   if(a==='cerrarPrev'){cerrarPrev(); return;}
@@ -3666,11 +3667,11 @@ document.addEventListener('click',e=>{
   if(a==='navCfg'){const d=document.getElementById('drawer'), o=!d.classList.contains('cfg-open'); d.classList.toggle('cfg-open',o); el.setAttribute('aria-expanded',String(o)); return;}
   if(a==='drawer') toggleDrawer();
   else if(a==='nav'){S.view=el.dataset.v; toggleDrawer(false); render(); window.scrollTo(0,0);}
-  else if(a==='abrir'){abrirRevision(el.dataset.doc); render(); window.scrollTo(0,0);}
+  else if(a==='abrir'){S.histDocs.delete(el.dataset.doc); abrirRevision(el.dataset.doc); render(); window.scrollTo(0,0);}
   else if(a==='iest'){S.iest=el.dataset.v; render();}
   else if(a==='hdec'){S.hdec=el.dataset.v; render();}
   else if(a==='limpiarFiltros'){Object.assign(S,{iq:'',itipo:'',iest:'',asigOpen:false,hdec:'',htipo:'',hclau:'',hmios:false,hnuevos:false,hcoms:false,hequipo:false,hesc:false,iprio:'',iant:''}); render();}
-  else if(a==='abrirH'){abrirRevision(el.dataset.doc); const i=R().findIndex(r=>r.ubicacion===el.dataset.u); if(i>=0) irA(i); render(); window.scrollTo(0,0);}
+  else if(a==='abrirH'){S.histDocs.add(el.dataset.doc); abrirRevision(el.dataset.doc); const i=R().findIndex(r=>r.ubicacion===el.dataset.u); if(i>=0) irA(i); render(); window.scrollTo(0,0);}
   else if(a==='volver'){S.view='inicio'; S.sel={}; S.comment=''; render(); window.scrollTo(0,0);}
   else if(a==='criterios'){S.criteriosOpen=true; render();}
   else if(a==='cerrarCriterios'){S.criteriosOpen=false; render();}
