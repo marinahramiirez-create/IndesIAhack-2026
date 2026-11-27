@@ -104,7 +104,10 @@ tr.hl td{background:#fff6cc}
 .two{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:16px;align-items:start}
 .two.solo{grid-template-columns:minmax(0,1fr)}   /* consulta histórica: solo el documento */
 .right{position:sticky;top:74px;max-height:calc(100vh - 150px);display:flex;flex-direction:column;overflow:hidden}
-.lista-scroll{max-height:min(190px,24vh);overflow:auto;flex:none}
+/* Lista de hallazgos del detalle: se ven 2,5 filas (la media fila indica que hay más) y el resto con scroll */
+.lista-scroll{--hfila:42px;max-height:calc(var(--hfila) * 2.5);overflow:auto;flex:none}
+.lista-scroll .hrow{height:var(--hfila);box-sizing:border-box;padding-top:0;padding-bottom:0}
+.lista-scroll .hrow .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .motivo-scroll{margin-top:12px;flex:1 1 auto;min-height:90px;overflow:auto}
 .hrow{display:flex;align-items:center;gap:10px;padding:10px 8px;border-radius:8px;border-bottom:1px solid var(--sep)}
 .hrow.on{background:#e5f1ff}
@@ -388,6 +391,20 @@ button.adj-img:focus-visible{outline:2px solid var(--tint);outline-offset:2px}
 .eqchips .av{box-shadow:0 0 0 2px #fff;font-size:9px}
 /* Auditorías: columna Prioridad entre Estado y Días para responder */
 .dcab,.drow{grid-template-columns:240px minmax(0,1fr) 170px 96px 160px}
+/* Histórico: mismas tarjetas que Auditorías, con sus 4 columnas */
+.hcab,.drow.hrowc{grid-template-columns:240px minmax(0,1fr) 150px 170px}
+.drow.hrowc .hjust{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.drow.hrowc.hl{box-shadow:0 0 0 2px var(--tint)}
+@media (max-width:900px){.drow.hrowc{grid-template-columns:1fr}}
+.dec-tit{margin:0 0 8px;flex:none}
+/* Chat → Compartidos conmigo */
+.comp-it{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;background:none;color:var(--text);text-align:left;padding:8px 6px;border-radius:8px;border-bottom:1px solid var(--sep)}
+.comp-it:hover:not(:disabled){background:#f2f4f8}
+.comp-it:disabled{opacity:.5}
+.comp-cod{display:flex;align-items:center;gap:6px;font-weight:600;color:#00205b;font-size:14px}
+.comp-tit{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.comp-nota{font-style:normal;color:var(--text)}
+.sel-todos{color:var(--sec);font-weight:400}
 .drow .prio{justify-self:start}
 @media (max-width:900px){.dcab{display:none}.drow{grid-template-columns:1fr}.drow .prio,.drow .dias{justify-self:start}}
 /* Revisión: barra del documento */
@@ -713,14 +730,15 @@ S.roles=[{id:'admin',nombre:'Admin',descripcion:'Administra la estructura de rol
   {id:'aprobador',nombre:'Aprobador',descripcion:'Decide y firma las decisiones de los demás.'},
   {id:'revisor',nombre:'Revisor',descripcion:'Aprueba o rechaza hallazgos y comenta.'},
   {id:'dueno_proceso',nombre:'Dueño de Proceso',descripcion:'Corrige los documentos que se le escalan.'}];
-S.histDocs=new Set();   // documentos abiertos desde Histórico: solo consulta, sin la columna de hallazgos y decisiones
+S.histDocs=new Set();
+S.origen={};            // documento → vista desde la que se abrió («inicio» = Auditorías, «historico»): la usa «Volver»   // documentos abiertos desde Histórico: solo consulta, sin la columna de hallazgos y decisiones
 Object.assign(S,{modulos:[],permisos:null,escalados:{},escHist:[],editables:{},token:'',cargado:false,
   rolForm:null,rolPanel:null,usrTab:'roles',usrEdit:null,usrVals:{},usrNuevo:false,escOpen:false,escVals:{}});
 S.equipo=[{n:'Sergio',c:'sergio@airbus.es',rol:'admin'},{n:'Marina',c:'marina@airbus.es',rol:'aprobador'},
   {n:'Nelson',c:'nelson@airbus.es',rol:'revisor'},{n:'Valentina',c:'valentina@airbus.es',rol:'revisor'},
   {n:'Daniela',c:'daniela@airbus.es',rol:'revisor'}];
 S.chats=[{id:'general',tipo:'canal',nombre:'general',autor:'',miembros:{}}];
-S.abierto={canales:true,grupos:true,privados:true,equipo:true}; S.dlg=null;
+S.abierto={canales:true,grupos:true,privados:true,equipo:true,compartidos:true}; S.dlg=null;
 function miRol(){const m=S.equipo.find(x=>x.n===S.user.nombre); return m?m.rol:'';}
 function nombreRol(id){const r=(S.roles||[]).find(x=>x.id===id); return r?r.nombre:(id||'Sin rol');}
 function esAdmin(){return SRV?!!(S.permisos&&S.permisos.admin_roles):miRol()==='admin';}
@@ -924,6 +942,16 @@ function vChat(){
         <div class="card" style="padding:12px">${seccion('grupos','Grupos',de('grupo').length,
           `<div style="margin-top:6px">${grupos}</div><button class="ghost" data-act="nuevoGrupo" style="width:100%;margin-top:8px;font-size:14px">+ Nuevo grupo</button>`)}</div>
         <div class="card" style="padding:12px">${seccion('privados','Privados',de('privado').length,`<div style="margin-top:6px">${privados}</div>${nuevoPrivado}`)}</div>
+        ${(()=>{  // Documentos que otras personas han compartido conmigo (lo más reciente primero)
+          const mios=(S.compartidos||[]).filter(c=>(c.para||[]).includes(S.user.nombre)&&c.de!==S.user.nombre).slice().reverse();
+          const items=mios.map(c=>{const info=DOCS[c.doc];
+            return `<button class="comp-it" ${info?`data-act="abrirComp" data-doc="${esc(c.doc)}"`:'disabled'} title="${info?'Abrir '+esc(c.doc):'Este documento ya no está disponible'}">
+              <span class="comp-cod">${I('archivo',15)} ${esc(c.doc)}</span>
+              ${info&&info.titulo?`<span class="small comp-tit">${esc(info.titulo)}</span>`:''}
+              <span class="small">De ${esc(c.de)} · ${hace(c.fecha)}</span>
+              ${c.nota?`<span class="small comp-nota">«${esc(c.nota)}»</span>`:''}</button>`;}).join('');
+          return `<div class="card" style="padding:12px">${seccion('compartidos','Compartidos conmigo',mios.length,
+            `<div style="margin-top:6px">${items||'<p class="small" style="margin:6px 4px">Nadie ha compartido documentos contigo todavía.</p>'}</div>`)}</div>`;})()}
       </div>
       <div class="card chatbox">
         <div style="border-bottom:1px solid var(--sep);padding-bottom:10px;display:flex;align-items:center;gap:12px">
@@ -1589,7 +1617,7 @@ function cerrarPestana(doc){
   S.tabs.splice(i,1); delete S.tabEstado[doc];
   if(S.doc!==doc) return;
   if(S.tabs.length){S.doc=null; abrirRevision(S.tabs[Math.min(i,S.tabs.length-1)]);}
-  else{S.doc=null; S.view='inicio';}                                  // al cerrar la última se vuelve a Inicio
+  else{S.doc=null; S.view=S.origen[doc]||'inicio';}                  // al cerrar la última se vuelve a donde se abrió
 }
 // ---------- Versiones editables de los PDF. El PDF original NUNCA se toca: cada versión es el texto de las páginas
 // cambiadas, guardado aparte por el servidor (salidas/versiones/). Se ven dentro del propio documento (Revisión →
@@ -2598,14 +2626,15 @@ function vDecision(){
     const estado=d?st('neutral',DECTXT[d.dec]):st(sev(x.tipo),esc(x.tipo));
     return `<div class="hrow ${i===S.foco?'on':''}">
       <input type="checkbox" data-act="toggle" data-k="${esc(k)}" ${S.sel[k]?'checked':''} ${d?'disabled':''} aria-label="Seleccionar ${esc(x.ubicacion)}">
-      <button class="nm" data-act="goto" data-i="${i}">${esc(x.ubicacion)}</button>
+      <button class="nm" data-act="goto" data-i="${i}" title="${esc(x.ubicacion)}">${esc(x.ubicacion)}</button>
       ${estado}
     </div>`;
   }).join('');
   return `<div class="card right">
+    <h3 class="dec-tit">Hallazgos</h3>
     <div class="hrow" style="border-bottom:1px solid var(--sep);flex:none">
       <input type="checkbox" data-act="todos" ${todos?'checked':''} aria-label="Seleccionar todos">
-      <span class="small" style="font-weight:600;color:var(--text)">Seleccionar todos</span>
+      <span class="small sel-todos">Seleccionar todos</span>
     </div>
     <div class="lista-scroll">${filas}</div>
     <div class="motivo-scroll">${vPresencia(rs[S.foco])}${vMotivo(rs[S.foco])}${vDebate(rs[S.foco])}</div>
@@ -2884,7 +2913,7 @@ function vInicio(){
   // Filtros en una sola línea con el buscador, cada uno con su título (en pantallas estrechas bajan a la siguiente)
   const tiposH=[...new Set(RES.map(r=>r.tipo))].sort(), clausulas=[...new Set(RES.map(r=>r.clausula).filter(Boolean))].sort();
   const ESTADOS=['Pendiente','En revisión','Completado','Sin hallazgos'];
-  const ASIG=[['hmios','Míos'],['hnuevos','Nuevos'],['hcoms','Con comentarios'],['hequipo','En equipo'],['hesc','Escalados a mí']], asigSel=ASIG.filter(([id])=>S[id]).map(([,l])=>l);
+  const ASIG=[['hequipo','En equipo'],['hesc','Escalados a mí']], asigSel=ASIG.filter(([id])=>S[id]).map(([,l])=>l);
   const casilla=(id,l)=>`<label class="fchk"><input type="checkbox" id="${id}" ${S[id]?'checked':''}><span>${l}</span></label>`;
   const opt=(v,l,act)=>`<option value="${v}" ${act===v?'selected':''}>${l}</option>`;
   const nVenc=docs.filter(venc).length;
@@ -3278,25 +3307,63 @@ function vAsistente(){
     </aside>`;
 }
 
+// Histórico con el mismo esquema que Auditorías: título con botón principal, filtros con título en una línea,
+// columnas ordenables, filas como tarjetas y paginador abajo. Cada fila es un hallazgo; al abrirla se ve el documento
+// en consulta histórica (sin columna de decisiones) y «Volver» regresa aquí.
+const DEC_FIL={'':'Todas',approved:'Aprobado',rejected:'Rechazado',pend:'Sin decisión'};
 function vHist(){
-  let rows=RES.filter(r=>(!S.tipo||r.tipo===S.tipo)&&(!S.q||(r.documento+' '+r.ubicacion+' '+r.justificacion).toLowerCase().includes(S.q.toLowerCase())));
-  const h=new Set(S.hl);
+  const q=(S.q||'').trim().toLowerCase(), h=new Set(S.hl);
+  let rows=RES.filter(r=>{const d=decOf(r), dv=d?d.dec:'pend';
+    return (!S.tipo||r.tipo===S.tipo)&&(!S.hfcla||r.clausula===S.hfcla)&&(!S.hfdec||S.hfdec===dv)
+      &&(!q||(r.documento+' '+r.ubicacion+' '+r.justificacion+' '+((DOCS[r.documento]||{}).titulo||'')).toLowerCase().includes(q));});
   if(S.soloHl&&S.hl.length) rows=rows.filter(r=>h.has(key(r)));
-  const MAX=300, mas=rows.length>MAX?`<tr><td colspan="4" class="small">… y ${rows.length-MAX} más. Filtra para acotar.</td></tr>`:'';
-  const chip=S.soloHl&&S.hl.length?`<div class="chipf">Filtro del asistente: ${esc(S.hlTxt)}<button data-act="limpiarHl" aria-label="Quitar el filtro del asistente">Quitar ×</button></div>`:'';
-  return `<h2>Histórico</h2>
-  <p class="sub">Hallazgos de la solución y tus decisiones. Filtra aquí o pregunta al Asistente IA.</p>
-  <div class="card">
-      ${chip}
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-        <input id="flt" placeholder="Buscar documento, ubicación o texto" value="${esc(S.q)}" aria-label="Buscar hallazgos" style="flex:1;min-width:180px">
-        <select id="ftipo" aria-label="Filtrar por tipo"><option value="">Todos los tipos</option>${TIPOS.map(t=>`<option ${S.tipo===t?'selected':''}>${t}</option>`).join('')}</select>
-      </div>
-      <div class="small" style="margin-bottom:6px">${rows.length} de ${RES.length} hallazgos</div>
-      <div class="hscroll"><table><thead><tr><th>Ubicación</th><th>Tipo</th><th>Cláusula</th><th>Tu decisión</th></tr></thead>
-      <tbody>${rows.slice(0,MAX).map(r=>{const d=decOf(r);return `<tr class="${h.has(key(r))?'hl':''} clic" data-act="abrirH" data-doc="${esc(r.documento)}" data-u="${esc(r.ubicacion)}"><td><span class="small">${esc(r.documento)}</span><br><b>${esc(r.ubicacion)}</b><div class="small">${esc(r.justificacion)}</div></td><td>${esc(r.tipo)}</td><td>${esc(r.clausula)}</td><td>${d?st('neutral',DECTXT[d.dec]):'<span class="small">Pendiente</span>'}</td></tr>`;}).join('') || '<tr><td colspan="4" class="small">Sin resultados</td></tr>'}${mas}</tbody></table></div>
-      ${menuExportar()}
-  </div>`;
+  // orden por columna
+  const o=S.horden;
+  if(o){const val=r=>o.col==='hallazgo'?(r.documento+' '+r.ubicacion).toLowerCase():o.col==='tipo'?r.tipo:o.col==='clausula'?(r.clausula||''):(decOf(r)?DECTXT[decOf(r).dec]:'~');
+    const sg=o.dir==='asc'?1:-1; rows=rows.slice().sort((a,b)=>{const x=val(a),y=val(b); return (x<y?-1:x>y?1:0)*sg;});}
+  // paginador (vuelve a la página 1 si cambian filtros u orden)
+  const firma=JSON.stringify([S.q,S.tipo,S.hfcla,S.hfdec,S.horden,S.hporPag,S.soloHl,S.hl.length]);
+  if(firma!==S._hfirma){S._hfirma=firma; S.hpag=1;}
+  const porPag=S.hporPag||10, nPag=Math.max(1,Math.ceil(rows.length/porPag)); S.hpag=Math.min(Math.max(1,S.hpag||1),nPag);
+  const desde=(S.hpag-1)*porPag, pagina=rows.slice(desde,desde+porPag);
+  const campo=(t,html,cls='',para='')=>`<div class="fcampo ${cls}">${para?`<label class="ftit" for="${para}">${t}</label>`:`<span class="ftit">${t}</span>`}${html}</div>`;
+  const clausulas=[...new Set(RES.map(r=>r.clausula).filter(Boolean))].sort();
+  const filtros=`<div class="ffil">
+      ${campo('Buscar',`<input id="flt" type="search" placeholder="Documento, ubicación o texto" value="${esc(S.q||'')}">`,'fbus','flt')}
+      ${campo('Tipo de hallazgo',`<select id="ftipo"><option value="">Todos</option>${TIPOS.map(t=>`<option ${S.tipo===t?'selected':''}>${t}</option>`).join('')}</select>`,'','ftipo')}
+      ${campo('Cláusula',`<select id="hfcla"><option value="">Todas</option>${clausulas.map(c=>`<option ${S.hfcla===c?'selected':''}>${esc(c)}</option>`).join('')}</select>`,'','hfcla')}
+      ${campo('Decisión',`<select id="hfdec">${Object.entries(DEC_FIL).map(([v,l])=>`<option value="${v}" ${(S.hfdec||'')===v?'selected':''}>${l}</option>`).join('')}</select>`,'','hfdec')}
+    </div>`;
+  const COLS=[['hallazgo','Hallazgo'],['tipo','Motivo'],['clausula','Cláusula'],['decision','Decisión']];
+  const cab=`<div class="dcab hcab" role="row">${COLS.map(([k,l])=>{const on=o&&o.col===k, dir=on?o.dir:'';
+      return `<button class="dcol ${on?'on':''} ${k==='decision'?'der':''}" data-act="hordenar" data-v="${k}" aria-sort="${on?(dir==='asc'?'ascending':'descending'):'none'}" title="Ordenar por ${l.toLowerCase()}">${l}<span class="flecha-ord" aria-hidden="true">${on?(dir==='asc'?'▲':'▼'):'↕'}</span></button>`;}).join('')}</div>`;
+  const filas=pagina.map(r=>{const d=decOf(r), c=TCOL[r.tipo]||GRIS, info=DOCS[r.documento]||{};
+    return `<div class="drow hrowc ${h.has(key(r))?'hl':''}" style="--c:${c[0]}" data-act="abrirH" data-doc="${esc(r.documento)}" data-u="${esc(r.ubicacion)}" role="button" tabindex="0" aria-label="Abrir ${esc(r.documento)} · ${esc(r.ubicacion)}">
+      <div><div class="cod">${esc(r.ubicacion)}</div><div class="small">${esc(r.documento)}${info.familia?' · '+esc(info.familia):''}</div></div>
+      <div><div style="margin-bottom:4px">${pill(esc(r.tipo),c)}</div><div class="small hjust">${esc(r.justificacion)}</div></div>
+      <div class="small">${esc(r.clausula||'—')}</div>
+      <div class="estado">${d?pill(DECTXT[d.dec],d.dec==='approved'?['#248a3d','rgba(52,199,89,.14)']:['#d70015','rgba(255,59,48,.12)']):pill('Sin decisión',GRIS)}${d?`<div class="small" style="margin-top:4px">${esc(d.user||'')}${d.fecha?' · '+fmtFecha(d.fecha):''}</div>`:''}</div>
+    </div>`;}).join('');
+  const nums=(()=>{const b=[]; for(let i=1;i<=nPag;i++){if(i===1||i===nPag||Math.abs(i-S.hpag)<=1) b.push(i); else if(b[b.length-1]!=='…') b.push('…');} return b;})();
+  const pie=`<div class="dpie">
+      <span class="small">${rows.length?`${desde+1}–${desde+pagina.length} de ${rows.length} hallazgos`:'0 hallazgos'}${rows.length!==RES.length?` (de ${RES.length})`:''}</span>
+      <nav class="pager" aria-label="Paginación">
+        <button class="ghost" data-act="hpag" data-v="${S.hpag-1}" ${S.hpag<=1?'disabled':''} aria-label="Página anterior">‹</button>
+        ${nums.map(n=>n==='…'?'<span class="small">…</span>':`<button class="${n===S.hpag?'on':'ghost'}" data-act="hpag" data-v="${n}" ${n===S.hpag?'aria-current="page"':''}>${n}</button>`).join('')}
+        <button class="ghost" data-act="hpag" data-v="${S.hpag+1}" ${S.hpag>=nPag?'disabled':''} aria-label="Página siguiente">›</button>
+      </nav>
+      <label class="small" style="display:flex;align-items:center;gap:6px">Por página<select id="hporPag">${[10,20,50].map(n=>`<option ${n===porPag?'selected':''}>${n}</option>`).join('')}</select></label></div>`;
+  const hayFil=S.q||S.tipo||S.hfcla||S.hfdec;
+  const pR=puede('historico','descargar_respuestas'), pV=puede('historico','descargar_revision');
+  const chip=S.soloHl&&S.hl.length?`<div class="chipf" style="margin:0 0 12px">Filtro del asistente: ${esc(S.hlTxt)}<button data-act="limpiarHl" aria-label="Quitar el filtro del asistente">Quitar ×</button></div>`:'';
+  return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><h2 style="margin:0">Histórico</h2>
+      ${hayFil?'<button class="enlace" data-act="hlimpiar">Limpiar filtros</button>':''}
+      ${pR||pV?`<button class="btn-principal" data-act="menuExp" aria-expanded="${!!S.expOpen}" style="margin-left:auto;border:0">Exportar</button>`:''}</div>
+    ${S.expOpen&&(pR||pV)?`<div class="card" style="margin-bottom:12px">${menuExportar().replace(/<button class="ok" data-act="menuExp"[^>]*>[^<]*<\/button>/,'')}</div>`:''}
+    ${chip}${filtros}
+    ${rows.length?cab:''}
+    <div class="dlist">${filas||'<div class="card small">Ningún hallazgo coincide con el filtro.</div>'}</div>
+    ${pie}`;
 }
 
 // Plazo de respuesta: lo usa la columna «Días para responder» de Auditorías. Con servidor es común a todo el equipo y
@@ -3696,6 +3763,7 @@ document.addEventListener('click',e=>{
     api('/api/claves/revocar',{id:c.id}).then(r=>{if(r.ok){aviso('Clave revocada'); sondear();}}); return;
   }
   if(a==='revisarDoc'){S.histDocs.delete(S.doc); render(); return;}
+  if(a==='abrirComp'){const d=el.dataset.doc; if(!DOCS[d]) return; S.origen[d]='chat'; S.histDocs.delete(d); abrirRevision(d); render(); window.scrollTo(0,0); return;}
   if(a==='irPestana'){if(el.dataset.doc!==S.doc){abrirRevision(el.dataset.doc); render();} return;}
   if(a==='cerrarPestana'){cerrarPestana(el.dataset.doc); render(); window.scrollTo(0,0); return;}
   if(a==='cerrarPrev'){cerrarPrev(); return;}
@@ -3858,18 +3926,21 @@ document.addEventListener('click',e=>{
     api('/api/config/plazo',datos).then(r=>{if(r.ok){aviso('Plazo de respuesta guardado'); S.plazoVals={}; sondear().then(render);}});
     return;
   }
+  if(a==='hordenar'){const k=el.dataset.v; S.horden=S.horden&&S.horden.col===k?(S.horden.dir==='asc'?{col:k,dir:'desc'}:null):{col:k,dir:'asc'}; render(); return;}
+  if(a==='hpag'){S.hpag=Number(el.dataset.v)||1; render(); document.querySelector('.ffil')?.scrollIntoView({block:'start'}); return;}
+  if(a==='hlimpiar'){Object.assign(S,{q:'',tipo:'',hfcla:'',hfdec:''}); render(); return;}
   if(a==='ordenar'){const k=el.dataset.v; S.orden=S.orden&&S.orden.col===k?(S.orden.dir==='asc'?{col:k,dir:'desc'}:null):{col:k,dir:'asc'}; render(); return;}
   if(a==='pag'){S.pag=Number(el.dataset.v)||1; render(); document.querySelector('.ffil')?.scrollIntoView({block:'start'}); return;}
   if(a==='asigMenu'){S.asigOpen=!S.asigOpen; render(); return;}
   if(a==='navCfg'){const d=document.getElementById('drawer'), o=!d.classList.contains('cfg-open'); d.classList.toggle('cfg-open',o); el.setAttribute('aria-expanded',String(o)); return;}
   if(a==='drawer') toggleDrawer();
   else if(a==='nav'){S.view=el.dataset.v; toggleDrawer(false); render(); window.scrollTo(0,0);}
-  else if(a==='abrir'){S.histDocs.delete(el.dataset.doc); abrirRevision(el.dataset.doc); render(); window.scrollTo(0,0);}
+  else if(a==='abrir'){S.origen[el.dataset.doc]='inicio'; S.histDocs.delete(el.dataset.doc); abrirRevision(el.dataset.doc); render(); window.scrollTo(0,0);}
   else if(a==='iest'){S.iest=el.dataset.v; render();}
   else if(a==='hdec'){S.hdec=el.dataset.v; render();}
   else if(a==='limpiarFiltros'){Object.assign(S,{iq:'',itipo:'',iest:'',asigOpen:false,hdec:'',htipo:'',hclau:'',hmios:false,hnuevos:false,hcoms:false,hequipo:false,hesc:false,iprio:'',iant:''}); render();}
-  else if(a==='abrirH'){S.histDocs.add(el.dataset.doc); abrirRevision(el.dataset.doc); const i=R().findIndex(r=>r.ubicacion===el.dataset.u); if(i>=0) irA(i); render(); window.scrollTo(0,0);}
-  else if(a==='volver'){S.view='inicio'; S.sel={}; S.comment=''; render(); window.scrollTo(0,0);}
+  else if(a==='abrirH'){S.origen[el.dataset.doc]='historico'; S.histDocs.add(el.dataset.doc); abrirRevision(el.dataset.doc); const i=R().findIndex(r=>r.ubicacion===el.dataset.u); if(i>=0) irA(i); render(); window.scrollTo(0,0);}
+  else if(a==='volver'){S.view=S.origen[S.doc]||'inicio'; S.sel={}; S.comment=''; render(); window.scrollTo(0,0);}
   else if(a==='criterios'){S.criteriosOpen=true; render();}
   else if(a==='cerrarCriterios'){S.criteriosOpen=false; render();}
   else if(a==='toggleExtra'){S.extraOpen=!S.extraOpen; render();}
@@ -3952,6 +4023,9 @@ document.addEventListener('input',e=>{
 
 document.addEventListener('change',e=>{
   if(e.target.id==='ftipo'){S.tipo=e.target.value; render();}
+  if(e.target.id==='hfcla'){S.hfcla=e.target.value; render();}
+  if(e.target.id==='hfdec'){S.hfdec=e.target.value; render();}
+  if(e.target.id==='hporPag'){S.hporPag=Number(e.target.value)||10; render();}
   if(e.target.id==='itipo'){S.itipo=e.target.value; render();}
   if(e.target.id==='htipo'){S.htipo=e.target.value; render();}
   if(e.target.id==='plazoDias'||e.target.id==='plazoIni'){S.plazoVals={...S.plazoVals,[e.target.id==='plazoDias'?'plazo_dias':'inicio']:e.target.value}; render();}
