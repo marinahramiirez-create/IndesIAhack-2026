@@ -20,6 +20,7 @@ import argparse
 import hashlib
 import json
 import sys
+from fnmatch import fnmatch
 from pathlib import Path
 
 import chromadb
@@ -56,11 +57,24 @@ def read_file(path: Path) -> str:
         return ""
 
 
+def es_privado(rel: Path) -> bool:
+    """True si el archivo (ruta relativa a su carpeta) no debe entrar nunca en el índice: secretos, chats y
+    adjuntos de la revisión en equipo… (ver PRIVATE_* en config.py)."""
+    if any(part in cfg.PRIVATE_DIRS for part in rel.parts[:-1]):
+        return True
+    if any(fnmatch(rel.name.lower(), patron) for patron in cfg.PRIVATE_FILES):
+        return True
+    ruta = "/" + rel.as_posix().lower()
+    return any(fnmatch(ruta, patron) for patron in cfg.PRIVATE_PATHS)
+
+
 def iter_files(folder: Path):
     for p in folder.rglob("*"):
         if not p.is_file():
             continue
         if any(part in cfg.IGNORED_DIRS for part in p.relative_to(folder).parts):
+            continue
+        if es_privado(p.relative_to(folder)):
             continue
         if p.name in cfg.GENERATED_FILES:
             continue
@@ -213,6 +227,8 @@ def tree(folder: Path, max_lines: int = 80) -> str:
     for p in sorted(folder.rglob("*")):
         rel = p.relative_to(folder)
         if any(part in cfg.IGNORED_DIRS for part in rel.parts) or p.name in cfg.GENERATED_FILES:
+            continue
+        if es_privado(rel) or rel.name in cfg.PRIVATE_DIRS:      # ni el contenido ni los nombres de lo privado
             continue
         lines.append("  " * (len(rel.parts) - 1) + ("📁 " if p.is_dir() else "") + p.name)
         if len(lines) >= max_lines:

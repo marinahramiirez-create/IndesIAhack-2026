@@ -21,7 +21,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from src import auth, cartera, db, llm, normativa, normativa_es, textos
+from src import auth, cartera, db, llm, normativa, normativa_es, permisos, textos
 
 st.set_page_config(page_title="Part-IS audit", page_icon="🛡️", layout="wide")
 
@@ -411,19 +411,24 @@ def panel_detalle(rid: str):
         st.markdown(f"<div class='card'><div class='hd'>{T['decision']} <small>· {T['hitl']}</small></div></div>",
                     unsafe_allow_html=True)
         st.text_input(T["comentario"], key=f"c_{rid}", placeholder=T["comentario"], label_visibility="collapsed")
+        # Permisos por rol (src/permisos.py): se comprueban aquí, antes de guardar, además de desactivar el botón
+        puede_aprobar, puede_corregir = permisos.puede(USUARIO, "aprobar"), permisos.puede(USUARIO, "corregir")
         d1, d2, d3 = st.columns(3)
-        if d1.button(T["aprobar"], key=f"a_{rid}", type="primary", width="stretch"):
+        if d1.button(T["aprobar"], key=f"a_{rid}", type="primary", width="stretch",
+                     disabled=not puede_aprobar) and puede_aprobar:
             db.registrar_decision(rid, "aprobado", r.veredicto_ia, st.session_state.get(f"c_{rid}", ""),
                                   usuario=USUARIO["nombre"], usuario_id=USUARIO["id"])
             st.session_state.aviso = T["guardado"].format(rid=rid, v=V(r.veredicto_ia))
             st.rerun()
         nuevo = d2.selectbox(T["veredicto_final"], list(ORDEN), index=list(ORDEN).index(r.veredicto), key=f"v_{rid}",
-                             format_func=V, label_visibility="collapsed")
-        if d3.button(T["guardar"], key=f"g_{rid}", width="stretch"):
+                             format_func=V, label_visibility="collapsed", disabled=not puede_corregir)
+        if d3.button(T["guardar"], key=f"g_{rid}", width="stretch", disabled=not puede_corregir) and puede_corregir:
             db.registrar_decision(rid, "corregido", nuevo, st.session_state.get(f"c_{rid}", ""),
                                   usuario=USUARIO["nombre"], usuario_id=USUARIO["id"])
             st.session_state.aviso = T["guardado"].format(rid=rid, v=V(nuevo))
             st.rerun()
+        if not puede_corregir:
+            st.caption(T["sin_permiso_corregir"])
 
     _panel()
 

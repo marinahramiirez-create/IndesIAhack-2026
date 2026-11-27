@@ -1,9 +1,18 @@
 """
 Revisión EN EQUIPO y en vivo de la pantalla de hallazgos (sin instalar nada: solo la biblioteca estándar).
 
-    .\\.venv\\Scripts\\python servidor.py            # después de generar_revision.py
+    .\\.venv\\Scripts\\python servidor.py            # después de generar_revision.py (solo este ordenador)
+    .\\.venv\\Scripts\\python servidor.py --lan      # además, para los compañeros de la misma red
 
-Sirve salidas/revision/ en http://<tu-IP>:8765 para los compañeros de la misma red (o de la misma red de Radmin VPN).
+Sirve salidas/revision/ en http://localhost:8765. Por seguridad solo escucha en este ordenador; con --lan también
+en http://<tu-IP>:8765 para los compañeros de la misma red (o de la misma red de Radmin VPN).
+
+Protecciones de red (sección «Seguridad» de este archivo):
+  - solo atiende peticiones dirigidas a sus propias direcciones (cabecera Host) y rechaza las que llegan desde
+    otra web (cabecera Origin): una página ajena abierta en el navegador no puede hablar con este servidor;
+  - el tipo de cada adjunto se decide mirando el archivo, no lo que declara quien lo sube; SVG, HTML y demás
+    tipos activos nunca se muestran dentro del navegador: se descargan.
+
 Guarda en salidas/colaboracion.json, compartido por todos:
   - decisiones (aprobar / rechazar con comentario), con quién y cuándo;
   - comentarios por hallazgo, con @menciones → avisos (la campanita);
@@ -31,7 +40,7 @@ import unicodedata
 from datetime import datetime
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, quote, urlparse
 from urllib.request import Request, urlopen
 
 from src import permisos as P
@@ -46,7 +55,17 @@ MAX_ADJUNTO = 25 * 1024 * 1024                # 25 MB por archivo
 # Asistente IA con RAG local (AIworkspaces/_rag/servidor_rag.py: ChromaDB + Llama en Ollama). Si no está encendido,
 # el botón «Asistente IA» sigue funcionando con su búsqueda dentro de la app.
 ASISTENTE_URL = "http://127.0.0.1:8766/preguntar"
-TIPOS_EN_LINEA = ("image/", "video/", "audio/", "application/pdf", "text/plain")
+
+# ------------------------------------------------------------------ Seguridad
+# Adjuntos: solo estos tipos se muestran dentro del navegador, y el tipo lo decide _tipo_real() mirando los primeros
+# bytes del archivo. Todo lo demás (SVG, HTML, Office, ejecutables…) se guarda como «application/octet-stream» y
+# solo se puede descargar: un SVG con <script> abierto en esta misma dirección podría actuar en nombre de quien lo abre.
+TIPOS_EN_LINEA = frozenset({"image/png", "image/jpeg", "image/gif", "image/webp", "image/avif", "application/pdf",
+                            "text/plain", "video/mp4", "video/webm", "audio/mpeg", "audio/mp4", "audio/wav",
+                            "audio/ogg", "audio/webm"})
+TIPO_DESCARGA = "application/octet-stream"
+# Valores de la cabecera Host que atiende el servidor (los rellena main()). Vacío = sin comprobar (solo en pruebas).
+_HOSTS: set[str] = set()
 
 # Equipo inicial (después se gestiona desde Configuración → Usuarios; se guarda en colaboracion.json).
 # «rol» es el id de un rol de src/permisos.py (roles editables por el Admin).
@@ -220,12 +239,101 @@ def _borrar_cargado(cid: str):
         f.unlink(missing_ok=True)
 
 
+def _tipo_real(datos: bytes, declarado: str) -> str:
+    """Tipo del archivo según sus primeros bytes. Lo que declara quien lo sube solo sirve para desempatar
+    (audio o vídeo en el mismo contenedor); nunca basta para que algo se muestre dentro del navegador."""
+    c = datos[:16]
+    audio = declarado.startswith("audio/")
+    if c.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "image/png"
+    if c.startswith(b"\xff\xd8\xff"):
+        return "image/jpeg"
+    if c.startswith((b"GIF87a", b"GIF89a")):
+        return "image/gif"
+    if c[:4] == b"RIFF" and c[8:12] == b"WEBP":
+        return "image/webp"
+    if c[:4] == b"RIFF" and c[8:12] == b"WAVE":
+        return "audio/wav"
+    if c.startswith(b"%PDF-"):
+        return "application/pdf"
+    if c[4:8] == b"ftyp":                              # contenedor MP4 / MOV / M4A / AVIF / HEIC
+        marca = c[8:12]
+        if marca in (b"avif", b"avis"):
+            return "image/avif"
+        if marca in (b"heic", b"heix", b"hevc", b"mif1", b"msf1"):
+            return TIPO_DESCARGA
+        return "audio/mp4" if audio else "video/mp4"
+    if c.startswith(b"\x1a\x45\xdf\xa3"):              # WebM / Matroska
+        return "audio/webm" if audio else "video/webm"
+    if c.startswith(b"OggS"):
+        return "audio/ogg"
+    if c.startswith(b"ID3") or (audio and len(c) > 1 and c[0] == 0xFF and (c[1] & 0xE0) == 0xE0):
+        return "audio/mpeg"
+    if declarado == "text/plain" and b"\x00" not in datos:
+        try:
+            datos.decode("utf-8")
+            return "text/plain"
+        except UnicodeDecodeError:
+            pass
+    return TIPO_DESCARGA
+
+
+def _hosts_permitidos(puerto: int, lan: bool, extra: list[str]) -> set[str]:
+    """Valores de Host válidos: este ordenador y, con --lan, sus IP y su nombre en la red."""
+    nombres = {"localhost", "127.0.0.1", "[::1]"}
+    if lan:
+        nombres |= set(ips_locales()) | {socket.gethostname().lower()}
+    hosts = set()
+    for n in nombres:
+        hosts.add(f"{n}:{puerto}")
+        if puerto == 80:
+            hosts.add(n)
+    for e in extra:                                    # --host-permitido: tal cual y, si no trae puerto, también con él
+        e = e.strip().lower()
+        if e:
+            hosts.add(e)
+            if not re.search(r":\d+$", e):
+                hosts.add(f"{e}:{puerto}")
+    return hosts
+
+
 class Manejador(SimpleHTTPRequestHandler):
+    timeout = 60              # segundos sin recibir datos antes de soltar la conexión (evita hilos colgados)
+
     def __init__(self, *a, **k):
         super().__init__(*a, directory=str(WEB), **k)
 
     def log_message(self, *_):            # sin ruido en la consola
         pass
+
+    def _origen_ok(self) -> bool:
+        """Rechaza lo que no va dirigido a este servidor o llega desde otra web.
+        - Host: solo las direcciones propias (_HOSTS). Corta el «DNS rebinding», con el que una web de fuera
+          consigue que el navegador le hable a este servidor creyendo que es el suyo.
+        - Origin (en los POST): el navegador la pone siempre que la petición sale de otra página; si no es una
+          dirección propia, es otra web intentando actuar con el navegador de un compañero (CSRF).
+        Los programas que no son navegadores (curl, scripts) no mandan Origin y pasan: no son este tipo de ataque."""
+        if not _HOSTS:
+            return True
+        if self.headers.get("Host", "").strip().lower() not in _HOSTS:
+            return False
+        if self.command == "POST":
+            origen = self.headers.get("Origin")
+            if origen is not None:
+                return urlparse(origen).netloc.lower() in _HOSTS
+            if self.headers.get("Sec-Fetch-Site", "same-origin") not in ("same-origin", "none"):
+                return False
+        return True
+
+    def _rechazar_origen(self):
+        self.close_connection = True
+        return self._json({"error": "Dirección no permitida. Abre la app con una de las direcciones que muestra el "
+                                    "servidor al arrancar (o arráncalo con --host-permitido NOMBRE)."}, 403)
+
+    def do_HEAD(self):
+        if not self._origen_ok():
+            return self._rechazar_origen()
+        return super().do_HEAD()
 
     def end_headers(self):
         # La página se regenera a menudo: que el navegador la pida siempre de nuevo (si no, enseña la versión antigua)
@@ -242,14 +350,28 @@ class Manejador(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(cuerpo)
 
-    def _cuerpo(self, limite: int = 20000) -> dict:
-        n = int(self.headers.get("Content-Length", 0) or 0)
-        if n > limite:
-            return {}
+    def _longitud(self, limite: int) -> int | None:
+        """Content-Length si es válido (0..limite); si no, None y se cierra la conexión sin leer el cuerpo.
+        Un valor negativo hacía que read() leyera hasta que el cliente quisiera: memoria sin límite."""
         try:
-            return json.loads(self.rfile.read(n).decode("utf-8") or "{}")
+            n = int(self.headers.get("Content-Length") or 0)
+        except ValueError:
+            n = -1
+        if n < 0 or n > limite:
+            self.close_connection = True
+            return None
+        return n
+
+    def _cuerpo(self, limite: int = 20000) -> dict | None:
+        """Cuerpo JSON de la petición (siempre un diccionario). None = tamaño no válido o por encima del límite."""
+        n = self._longitud(limite)
+        if n is None:
+            return None
+        try:
+            d = json.loads(self.rfile.read(n).decode("utf-8") or "{}")
         except (ValueError, UnicodeDecodeError):
             return {}
+        return d if isinstance(d, dict) else {}
 
     def _adjunto(self, q):
         """Descarga o muestra un archivo del chat, solo si quien lo pide puede ver ese chat."""
@@ -258,19 +380,28 @@ class Manejador(SimpleHTTPRequestHandler):
             user = _usuario_de_token((q.get("s") or [""])[0])
             meta = _estado["adjuntos"].get(aid)
             c = _chat(meta["chat"]) if meta else None
-            if not meta or not c or not _ve(user, c):
+            if not meta or not c or not user or not _ve(user, c):   # sin sesión no se sirve nada, tampoco de un canal público
                 return self._json({"error": "archivo no disponible"}, 404)
         ruta = ADJUNTOS / meta["archivo"]
         if not ruta.exists():
             return self._json({"error": "archivo no encontrado"}, 404)
         datos = ruta.read_bytes()
-        en_linea = meta["tipo"].startswith(TIPOS_EN_LINEA) and (q.get("descargar") or ["0"])[0] != "1"
-        nombre = re.sub(r'[^\w.\- ]', "_", meta["nombre"])
+        # Lista cerrada también al servir: protege de adjuntos antiguos guardados con el tipo que declaró quien los subió
+        tipo = meta["tipo"] if meta["tipo"] in TIPOS_EN_LINEA else TIPO_DESCARGA
+        en_linea = tipo != TIPO_DESCARGA and (q.get("descargar") or ["0"])[0] != "1"
+        ascii_ = re.sub(r'[^\w.\- ]', "_", meta["nombre"], flags=re.ASCII) or "archivo"   # las cabeceras solo admiten latin-1
         self.send_response(200)
-        self.send_header("Content-Type", meta["tipo"] or "application/octet-stream")
+        self.send_header("Content-Type", tipo + ("; charset=utf-8" if tipo == "text/plain" else ""))
         self.send_header("Content-Length", str(len(datos)))
-        self.send_header("Content-Disposition", f'{"inline" if en_linea else "attachment"}; filename="{nombre}"')
+        self.send_header("Content-Disposition", f'{"inline" if en_linea else "attachment"}; filename="{ascii_}"; '
+                                                f"filename*=UTF-8''{quote(meta['nombre'], safe='')}")
         self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Cross-Origin-Resource-Policy", "same-origin")      # otras webs no pueden incrustarlo
+        self.send_header("Referrer-Policy", "no-referrer")                   # la dirección lleva el token de sesión (?s=)
+        if tipo != "application/pdf":      # (el visor de PDF del navegador no funciona dentro de un «sandbox»)
+            # Si alguien abre el archivo directamente, se ve pero no puede ejecutar nada ni llamar a /api
+            self.send_header("Content-Security-Policy",
+                             "sandbox; default-src 'none'; img-src 'self' data:; media-src 'self'; style-src 'unsafe-inline'")
         self.end_headers()
         self.wfile.write(datos)
 
@@ -281,19 +412,21 @@ class Manejador(SimpleHTTPRequestHandler):
             user = _usuario_de_token(self.headers.get("X-Sesion", ""))
         chat = unquote(self.headers.get("X-Chat", ""))[:200]
         nombre = unquote(self.headers.get("X-Nombre", "archivo"))[:120] or "archivo"
-        tipo = (self.headers.get("Content-Type") or "application/octet-stream").split(";")[0][:100]
-        n = int(self.headers.get("Content-Length", 0) or 0)
+        declarado = (self.headers.get("Content-Type") or "").split(";")[0].strip().lower()[:100]
+        n = self._longitud(MAX_ADJUNTO)
         with _lock:
             c = _chat(chat)
             permitido = bool(user and c and _ve(user, c))
-        if not permitido or n <= 0 or n > MAX_ADJUNTO:
+        if not permitido or not n:
             self.close_connection = True          # no se lee el cuerpo: se cierra la conexión
             if not permitido:
                 return self._json({"error": "no puedes adjuntar en ese chat"}, 403)
             return self._json({"error": "el archivo está vacío o pasa de 25 MB"}, 400)
         datos = self.rfile.read(n)
-        aid = f"{int(time.time() * 1000):x}{len(_estado['adjuntos']):x}"
-        ext = Path(nombre).suffix.lower()[:10]
+        tipo = _tipo_real(datos, declarado)       # el tipo sale del contenido, no de lo que declara quien sube
+        aid = secrets.token_hex(8)                # identificador imposible de adivinar y sin choques entre subidas
+        ext = Path(nombre).suffix.lower()
+        ext = ext if re.fullmatch(r"\.[a-z0-9]{1,9}", ext) else ""
         ADJUNTOS.mkdir(parents=True, exist_ok=True)
         (ADJUNTOS / f"{aid}{ext}").write_bytes(datos)
         with _lock:
@@ -310,8 +443,8 @@ class Manejador(SimpleHTTPRequestHandler):
             user = _usuario_de_token(self.headers.get("X-Sesion", ""))
             permitido = bool(user) and P.puede(_estado, user, "revisiones", "cargar")
         nombre = Path(unquote(self.headers.get("X-Nombre", "documento"))[:120]).name or "documento"
-        n = int(self.headers.get("Content-Length", 0) or 0)
-        if not permitido or n <= 0 or n > MAX_ADJUNTO:
+        n = self._longitud(MAX_ADJUNTO)           # None si el Content-Length es negativo, no numérico o pasa de 25 MB
+        if not permitido or not n:
             self.close_connection = True          # no se lee el cuerpo: se cierra la conexión
             if not user:
                 return self._json({"error": "sesión no válida: vuelve a entrar"}, 401)
@@ -363,6 +496,8 @@ class Manejador(SimpleHTTPRequestHandler):
             return self._json({"ok": True, "token": token, "n": m["n"], "c": m["c"], "rol": m["rol"]})
 
     def do_GET(self):
+        if not self._origen_ok():
+            return self._rechazar_origen()
         u = urlparse(self.path)
         if u.path == "/api/adjunto":
             return self._adjunto(parse_qs(u.query))
@@ -417,12 +552,21 @@ class Manejador(SimpleHTTPRequestHandler):
                         "cargados": [{"id": k, **v} for k, v in _estado.get("cargados", {}).items() if ve and v.get("confirmado")]})
 
     def do_POST(self):
+        if not self._origen_ok():
+            return self._rechazar_origen()
         u = urlparse(self.path).path
         if u == "/api/subir":
             return self._subir()
         if u == "/api/cargar":
             return self._recibir_documento()
+        # Solo JSON declarado como tal: un formulario o un fetch «simple» desde otra web no puede mandarlo sin que el
+        # navegador pida permiso antes (preflight), y ese permiso aquí nunca se da.
+        if (self.headers.get("Content-Type") or "").split(";")[0].strip().lower() != "application/json":
+            self.close_connection = True
+            return self._json({"error": "se esperaba Content-Type: application/json"}, 415)
         d = self._cuerpo(MAX_VERSION if u == "/api/version/guardar" else 20000)
+        if d is None:
+            return self._json({"error": "petición demasiado grande o con un tamaño no válido"}, 413)
         if u == "/api/login":
             return self._login(d)
         with _lock:                                     # el usuario sale SIEMPRE del token, nunca del cuerpo
@@ -763,17 +907,28 @@ def ips_locales() -> list[str]:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--puerto", type=int, default=8765)
+    ap.add_argument("--lan", action="store_true",
+                    help="aceptar también a los compañeros de la misma red (por defecto, solo este ordenador)")
+    ap.add_argument("--host-permitido", action="append", default=[], metavar="NOMBRE[:PUERTO]",
+                    help="otra dirección por la que se entra a la app (p. ej. detrás de un proxy); se puede repetir")
     a = ap.parse_args()
     if not (WEB / "index.html").exists():
         raise SystemExit("\nTodavía no está generada la pantalla.\n  → Ejecuta primero: .\\.venv\\Scripts\\python generar_revision.py\n")
     _cargar()
     _cargar_documentos()
-    srv = ThreadingHTTPServer(("0.0.0.0", a.puerto), Manejador)
+    _HOSTS.update(_hosts_permitidos(a.puerto, a.lan, a.host_permitido))
+    srv = ThreadingHTTPServer(("0.0.0.0" if a.lan else "127.0.0.1", a.puerto), Manejador)
     print("\nRevisión en equipo en marcha. Ábrela en el navegador:")
     print(f"  · En este ordenador:   http://localhost:{a.puerto}")
-    for ip in ips_locales():
-        print(f"  · Compañeros (misma red o Radmin VPN):  http://{ip}:{a.puerto}")
-    print("\nSi Windows pregunta por el Firewall, pulsa «Permitir».")
+    if a.lan:
+        for ip in ips_locales():
+            print(f"  · Compañeros (misma red o Radmin VPN):  http://{ip}:{a.puerto}")
+        print("\nAVISO: con --lan cualquiera de esa red puede llegar a la app, y el inicio de sesión es de prototipo")
+        print("(no comprueba contraseñas). Úsalo solo en una red de confianza. Si cambias de red, vuelve a arrancar.")
+        print("Si Windows pregunta por el Firewall, pulsa «Permitir».")
+    else:
+        print("\nSolo se puede abrir desde este ordenador. Para compartirla con los compañeros de la misma red:")
+        print("  → python servidor.py --lan")
     print("Ctrl+C para pararla. Lo compartido se guarda en salidas\\colaboracion.json.\n", flush=True)
     try:
         srv.serve_forever()

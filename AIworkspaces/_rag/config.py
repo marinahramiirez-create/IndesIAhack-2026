@@ -36,6 +36,16 @@ IGNORED_DIRS = {
     ".obsidian", "_instalar", "_papelera",
 }
 
+# PRIVADO: nunca se indexa (rag.es_privado). El asistente responde a cualquiera que llegue a la app, así que todo lo
+# que entra en el índice puede acabar en una respuesta. Fuera quedan:
+#   - los secretos del inicio de sesión (.streamlit/secrets.toml) y cualquier archivo de claves;
+#   - la revisión en equipo de airbus/auditor: los chats, incluidos los privados (salidas/colaboracion.json), los
+#     archivos adjuntos de esos chats y las versiones editadas de los documentos (borradores, no la fuente).
+# Después de cambiar esto: `python rag.py ingest` (quita del índice lo que ya no debe estar).
+PRIVATE_DIRS = {".streamlit", ".ssh", ".aws", ".azure"}                    # carpetas, estén donde estén
+PRIVATE_PATHS = ("*/salidas/adjuntos/*", "*/salidas/versiones/*")          # rutas (patrón sobre /carpeta/…/archivo)
+PRIVATE_FILES = ("colaboracion*.json", "secrets.*", "credentials*", ".env*", "*.env", "*.pem", "*.key", "id_rsa*")
+
 # Carpetas de FUERA de AIworkspaces que también se indexan (nombre en el índice → ruta).
 # El corpus NIMBUS del reto Airbus está en la raíz del repo y en .gitignore: se indexa solo en local
 # (chroma_db tampoco se sube). Si el zip se descomprimió con una sola carpeta, vale igual.
