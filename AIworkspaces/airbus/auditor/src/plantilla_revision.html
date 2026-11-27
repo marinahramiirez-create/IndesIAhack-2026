@@ -538,6 +538,17 @@ button.adj-img:focus-visible{outline:2px solid var(--tint);outline-offset:2px}
 .tab-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tab-x{background:none;color:var(--sec);width:24px;height:24px;padding:0;border-radius:6px;font-size:16px;line-height:24px;margin-right:4px;flex:none}
 .tab-x:hover{background:#d8d8de;color:var(--text)}
+.tabs{position:relative}.tab{flex:0 1 auto}.tab-b{flex:0 1 auto;padding-right:2px}.tab-x{margin:0 6px 0 2px;width:20px;height:20px;line-height:20px;font-size:15px}
+.tab-mas-w{display:flex;align-items:center;flex:none}
+.tab-mas{background:none;color:var(--sec);width:30px;height:30px;padding:0;border-radius:8px;font-size:20px;line-height:28px;flex:none}
+.tab-mas:hover,.tab-mas[aria-expanded=true]{background:rgba(255,255,255,.7);color:var(--text)}
+.tab-mas:focus-visible{outline:2px solid var(--tint);outline-offset:-2px}
+.tm-scrim{position:fixed;inset:0;z-index:40}
+.tm{position:absolute;z-index:41;margin-top:-6px;width:min(440px,calc(100vw - 32px));background:#fff;border:1px solid var(--sep);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.14);padding:8px}
+.tm input{width:100%;margin-bottom:6px}.tm-lista{max-height:min(360px,60vh);overflow-y:auto}
+.tm-f{all:unset;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer}
+.tm-f:hover,.tm-f:focus-visible{background:#f2f2f7}.tm-c{font-weight:600;font-size:13px;white-space:nowrap}
+.tm-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* Aviso emergente (10 s) con el mismo aspecto que las tarjetas de la campanita */
 #banners{position:fixed;top:66px;right:16px;width:min(380px,calc(100vw - 32px));z-index:60;display:flex;flex-direction:column;gap:8px;pointer-events:none}
 #banners .banner{pointer-events:auto;margin:0;background:rgba(250,250,252,.97);backdrop-filter:blur(14px);box-shadow:0 10px 30px rgba(0,0,0,.18);animation:bannerIn .25s ease-out}
@@ -643,7 +654,6 @@ button.adj-img:focus-visible{outline:2px solid var(--tint);outline-offset:2px}
     <div class="drawer-cab"><img class="logo-ref" alt="Airbus"><button class="drawer-x" data-act="drawer" aria-label="Cerrar menú"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5 5 19"/></svg></button></div>
     <!-- Iconos de línea (estilo Feather): heredan el color del texto, así el activo cambia de color solo -->
     <button class="nav-item" data-act="nav" data-v="inicio"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9v11h5v-6h4v6h5V9"/></svg>Auditorías</button>
-    <button class="nav-item" data-act="nav" data-v="ia"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="13" width="3.5" height="7" rx="1"/><rect x="10.25" y="8" width="3.5" height="12" rx="1"/><rect x="16.5" y="4" width="3.5" height="16" rx="1"/></svg>Panel de control IA</button>
     <button class="nav-item" data-act="nav" data-v="metricas"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 6-6"/></svg>Métricas</button>
     <button class="nav-item" data-act="nav" data-v="historico"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>Histórico</button>
     <button class="nav-item" data-act="nav" data-v="actividad"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6M9 4a1 1 0 0 0-1 1v1h8V5a1 1 0 0 0-1-1M8 6H6a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1h-2"/><path d="M9 12h6M9 16h4"/></svg>Actividad</button>
@@ -1397,6 +1407,7 @@ const EN={'Inicio':'Home','Auditorías':'Audits','Ver documentos en Auditorías'
  'No se guarda el texto del chat ni de los comentarios: solo que hubo un comentario en un hallazgo.':'Chat and comment text is not stored: only that a finding was commented on.','El registro se ha modificado fuera de la app.':'The log was modified outside the app.',
  'Entró en la aplicación':'Signed in','Cerró sesión':'Signed out','Cambió el plazo de respuesta':'Changed the response deadline',
  'Hallazgo, regla, persona…':'Finding, rule, person…','se ha modificado su contenido.':'its content was changed.','no encaja con la línea anterior.':'it does not match the previous line.','falta o sobra una línea.':'a line is missing or was added.','la línea no se puede leer.':'the line cannot be read.','La anterior está bien.':'The one before is fine.','Comprobando…':'Checking…','Cargando la actividad…':'Loading activity…',
+ 'Panel de la IA':'AI panel','Abrir otro documento':'Open another document','Busca por código, título o familia':'Search by code, title or family','Ningún documento coincide.':'No document matches.','Ya tienes abiertos todos los documentos.':'All documents are already open.','Ver el resultado en Métricas':'See the result in Metrics',
  'Claves de API':'API keys','Cómo usar la API':'How to use the API','Crear clave':'Create key','Caduca en':'Expires in','Puede leer':'Can read',
  'Documentos':'Documents','Hallazgos':'Findings','Tus claves':'Your keys','Claves del equipo':'Team keys','(eres Admin)':'(you are Admin)','Revocar':'Revoke',
  'Revocada':'Revoked','Caducada':'Expired','Copiar':'Copy','Ya la he guardado':'I have saved it','Clave copiada':'Key copied','Clave revocada':'Key revoked',
@@ -2254,9 +2265,13 @@ function vMetricas(){
       ${sel('mClausula','Cláusula',[['','Todas'],...o.clausulas.map(x=>[x,x])],f.clausula)}
       ${Object.entries(f).some(([k,v])=>v&&!(k==='periodo'&&v==='todo'))?'<button class="enlace" data-act="metLimpiar" style="align-self:end;margin-bottom:10px">Limpiar filtros</button>':''}
     </div>`;
-  const tabs=[['resumen','Resumen'],['cumplimiento','Cumplimiento'],['equipo','Equipo'],['ia','Calidad de la IA']]
+  const tabs=[['resumen','Resumen'],['cumplimiento','Cumplimiento'],['equipo','Equipo'],['ia','Calidad de la IA'],['panel','Panel de la IA']]
     .map(([k,l])=>`<button role="tab" aria-selected="${S.metTab===k}" class="${S.metTab===k?'on':''}" data-act="metTab" data-v="${k}">${l}</button>`).join('');
   let cuerpo='';
+  if(S.metTab==='panel'){                                   // el antiguo «Panel de control IA»: no usa los filtros
+    return `<div class="met"><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px"><h2 style="margin:0">Métricas</h2>
+      <div class="seg" role="tablist" aria-label="Vista de métricas">${tabs}</div></div>${vIA(true)}</div>`;
+  }
   if(S.metTab==='resumen'){
     const r=m.resumen, k=r.kpis;
     cuerpo=`<div class="mkpis">
@@ -2356,9 +2371,21 @@ function vPestanas(){
     const on=d===S.doc, pend=RES.filter(r=>r.documento===d&&!decOf(r)).length;
     return `<div class="tab ${on?'on':''}" role="presentation">
       <button role="tab" aria-selected="${on}" class="tab-b" data-act="irPestana" data-doc="${esc(d)}" title="${esc(d)} · ${esc((DOCS[d]||{}).titulo||'')}">
-        <span class="tab-n">${esc(d)}</span>${pend?`<span class="cnt" style="background:var(--sec)">${pend}</span>`:''}</button>
-      <button class="tab-x" data-act="cerrarPestana" data-doc="${esc(d)}" aria-label="Cerrar ${esc(d)}" title="Cerrar pestaña">×</button></div>`;
-  }).join('')}</div>`;
+        <span class="tab-n">${esc(d)}</span>${pend?`<span class="cnt" style="background:var(--sec)">${pend}</span>`:''}</button><button class="tab-x" data-act="cerrarPestana" data-doc="${esc(d)}" aria-label="Cerrar ${esc(d)}" title="Cerrar pestaña">×</button></div>`;
+  }).join('')}<div class="tab-mas-w"><button class="tab-mas" data-act="tabMas" aria-haspopup="dialog" aria-expanded="${!!S.tabMas}" aria-label="Abrir otro documento" title="Abrir otro documento">+</button></div></div>${vTabMas()}`;
+}
+// «+» de las pestañas: buscador para abrir otro documento en una pestaña nueva
+function vTabMas(){
+  if(!S.tabMas) return '';
+  const q=norm(S.tabMasQ||'').trim();
+  const todos=Object.keys(DOCS).filter(d=>!S.tabs.includes(d)).sort();
+  const lista=todos.filter(d=>!q||norm(d+' '+(DOCS[d].titulo||'')+' '+(DOCS[d].familia||'')).includes(q));
+  const filas=lista.slice(0,40).map(d=>{const pend=RES.filter(r=>r.documento===d&&!decOf(r)).length;
+    return `<button class="tm-f" data-act="abrir" data-doc="${esc(d)}"><span class="tm-c">${esc(d)}</span><span class="small tm-t">${esc(DOCS[d].titulo||'')}</span>${pend?`<span class="cnt" style="background:var(--sec)">${pend}</span>`:''}</button>`;}).join('');
+  return `<div class="tm-scrim" data-act="tabMasCerrar"></div><div class="tm" role="dialog" aria-label="Abrir otro documento">
+    <input id="tabMasQ" type="search" placeholder="Busca por código, título o familia" value="${esc(S.tabMasQ||'')}" autocomplete="off">
+    <div class="tm-lista">${filas||`<p class="small" style="margin:10px 12px">${todos.length?'Ningún documento coincide.':'Ya tienes abiertos todos los documentos.'}</p>`}</div>
+    ${lista.length>40?`<div class="small" style="padding:6px 12px">Y ${lista.length-40} más: escribe para acotar.</div>`:''}</div>`;
 }
 
 // Sobre qué se aplica la decisión: los seleccionados pendientes; si no hay ninguno, el hallazgo activo.
@@ -2884,7 +2911,7 @@ function vInicio(){
   // Filtros en una sola línea con el buscador, cada uno con su título (en pantallas estrechas bajan a la siguiente)
   const tiposH=[...new Set(RES.map(r=>r.tipo))].sort(), clausulas=[...new Set(RES.map(r=>r.clausula).filter(Boolean))].sort();
   const ESTADOS=['Pendiente','En revisión','Completado','Sin hallazgos'];
-  const ASIG=[['hmios','Míos'],['hnuevos','Nuevos'],['hcoms','Con comentarios'],['hequipo','En equipo'],['hesc','Escalados a mí']], asigSel=ASIG.filter(([id])=>S[id]).map(([,l])=>l);
+  const ASIG=[['hnuevos','Nuevos'],['hcoms','Con comentarios'],['hequipo','En equipo'],['hesc','Escalados a mí']], asigSel=ASIG.filter(([id])=>S[id]).map(([,l])=>l);
   const casilla=(id,l)=>`<label class="fchk"><input type="checkbox" id="${id}" ${S[id]?'checked':''}><span>${l}</span></label>`;
   const opt=(v,l,act)=>`<option value="${v}" ${act===v?'selected':''}>${l}</option>`;
   const nVenc=docs.filter(venc).length;
@@ -2939,7 +2966,7 @@ function panelAgente(){
   </div>`;
 }
 
-function vIA(){
+function vIA(enMetricas){
   const pct=ETAPAS.map(()=>100);
   const flujo=ETAPAS.map((e,i)=>`<div role="button" tabindex="0" data-act="agente" data-i="${i}" aria-expanded="${S.agente===i}" style="cursor:pointer;flex:1;min-width:150px;background:#fff;border:2px solid ${S.agente===i?'var(--tint)':'var(--sep)'};border-radius:12px;padding:12px">
       <div class="small">Agente ${i+1}</div><b style="font-size:14px">${esc(e.n)}</b>
@@ -2956,7 +2983,7 @@ function vIA(){
     <h3>Defectos encontrados por familia</h3>
     ${m.familias.map(f=>`<div style="display:grid;grid-template-columns:200px 1fr 60px;gap:10px;align-items:center;padding:5px 0"><span class="small" style="color:var(--text)">${esc(f.n)}</span><div style="height:8px;background:#e5e5ea;border-radius:999px;overflow:hidden"><div style="width:${f.ok/f.total*100}%;height:100%;background:${f.ok===f.total?'var(--ok)':'var(--tint)'}"></div></div><span class="small" style="text-align:right">${f.ok}/${f.total}</span></div>`).join('')}
   </div>`:'';
-  return `<h2>Panel de control IA</h2>
+  return `${enMetricas?'':'<h2>Panel de control IA</h2>'}
   <p class="sub">Flujo de agentes de la solución y lo que hizo cada uno en la última ejecución. Avance total: <b style="color:var(--text)">100%</b>.</p>
   <div class="card" style="margin-bottom:16px">
     <h3>Flujo</h3>
@@ -3041,12 +3068,12 @@ function answer(q){
   if(ag<0&&/agente/.test(s)) ag=ETAPAS.findIndex(e=>palabras(e.n).some(w=>w.length>4&&w!=='agente'&&ws.includes(w)));
   if(MET&&/\bf1\b|precis|recall|exhaust|metric|puntu|resultado|clave|rendimiento|acierto/.test(s)){
     partes.push(`Resultado frente a la clave: F1 <b>${esc(MET.f1)}</b>, precisión ${esc(MET.precision)}, recall ${esc(MET.recall)}, defectos encontrados ${esc(MET.encontrados)}.`);
-    add('Ver métricas en el Panel de control IA','Panel de control IA · Resultado frente a la clave',{view:'ia'});
+    add('Ver el resultado en Métricas','Métricas · Panel de la IA · Resultado frente a la clave',{view:'ia'});
   }
   if(ag>=0||/agente|flujo|pipeline|descart|registro de ejec|log\b/.test(s)){
     const e=ETAPAS[ag>=0?ag:0];
     partes.push(ag>=0?`<b>Agente ${ag+1} · ${esc(e.n)}</b>: ${esc(e.d)}`:`La solución tiene ${ETAPAS.length} agentes: ${ETAPAS.map((x,i)=>`${i+1}. ${esc(x.n)}`).join(' · ')}.`);
-    add(ag>=0?`Ver el agente ${ag+1} en el Panel de control IA`:'Ver el flujo de agentes',`Panel de control IA${ag>=0?' · Agente '+(ag+1)+' abierto':''}`,{view:'ia',agente:ag>=0?ag:null});
+    add(ag>=0?`Ver el agente ${ag+1} en Métricas`:'Ver el flujo de agentes',`Métricas · Panel de la IA${ag>=0?' · Agente '+(ag+1)+' abierto':''}`,{view:'ia',agente:ag>=0?ag:null});
   }
 
   // 4. Configuración: reglas, criterio de aceptación, equipo
@@ -3213,7 +3240,7 @@ function irDestino(d){
   S.asisOpen=false;
   if(d.view==='historico'){S.tipo=d.tipo||''; S.q=d.q||''; S.hl=d.hl||[]; S.soloHl=!!S.hl.length; S.hlTxt=d.hlTxt||'';}
   if(d.view==='inicio'){S.iq=d.iq||''; S.iest=d.iest||''; S.itipo=d.itipo||'';}
-  if(d.view==='ia') S.agente=d.agente??null;
+  if(d.view==='ia'){S.agente=d.agente??null; S.metTab='panel'; d={...d,view:'metricas'};}
   if(d.view==='chat'&&d.canal){S.canal=d.canal; S.chatAbajo=true;}
   if(d.view==='revision'){abrirRevision(d.doc); if(d.u){const i=R().findIndex(r=>r.ubicacion===d.u); if(i>=0) irA(i);}}
   else S.view=d.view;
@@ -3538,6 +3565,7 @@ const TITLES={inicio:'Nimbus Audit Studio',revision:'Revisión',ia:'Panel de con
 const VISTA_PERM={metricas:['metricas','consultar'],actividad:['actividad','consultar'],inicio:['revisiones','consultar'],revision:['revisiones','consultar'],historico:['revisiones','consultar'],
   versiones:['revisiones','consultar'],reglas:['configuracion','consultar'],usuarios:['configuracion','consultar']};
 function vista(v){
+  if(v==='ia'){S.view=v='metricas'; S.metTab='panel';}      // el Panel de control IA vive ahora en Métricas
   const p=VISTA_PERM[v];
   if(SRV&&!S.cargado&&p) return `<div class="card small" aria-busy="true">Cargando permisos…</div>`;
   if(p&&!puede(p[0],p[1])) return `<h2>${esc(TITLES[v])}</h2><div class="card"><p class="sub" style="margin:0">${esc(sinPermiso(p[0],p[1]))} Pide a un administrador que revise tu rol.</p></div>`;
@@ -3697,6 +3725,8 @@ document.addEventListener('click',e=>{
   }
   if(a==='revisarDoc'){S.histDocs.delete(S.doc); render(); return;}
   if(a==='irPestana'){if(el.dataset.doc!==S.doc){abrirRevision(el.dataset.doc); render();} return;}
+  if(a==='tabMas'){S.tabMas=!S.tabMas; S.tabMasQ=''; render(); if(S.tabMas) document.getElementById('tabMasQ')?.focus(); return;}
+  if(a==='tabMasCerrar'){S.tabMas=false; render(); return;}
   if(a==='cerrarPestana'){cerrarPestana(el.dataset.doc); render(); window.scrollTo(0,0); return;}
   if(a==='cerrarPrev'){cerrarPrev(); return;}
   if(a==='irAviso'){                                          // «Ver»: abre el chat o el hallazgo y borra ese grupo de la campanita
@@ -3864,7 +3894,7 @@ document.addEventListener('click',e=>{
   if(a==='navCfg'){const d=document.getElementById('drawer'), o=!d.classList.contains('cfg-open'); d.classList.toggle('cfg-open',o); el.setAttribute('aria-expanded',String(o)); return;}
   if(a==='drawer') toggleDrawer();
   else if(a==='nav'){S.view=el.dataset.v; toggleDrawer(false); render(); window.scrollTo(0,0);}
-  else if(a==='abrir'){S.histDocs.delete(el.dataset.doc); abrirRevision(el.dataset.doc); render(); window.scrollTo(0,0);}
+  else if(a==='abrir'){S.tabMas=false; S.tabMasQ=''; S.histDocs.delete(el.dataset.doc); abrirRevision(el.dataset.doc); render(); window.scrollTo(0,0);}
   else if(a==='iest'){S.iest=el.dataset.v; render();}
   else if(a==='hdec'){S.hdec=el.dataset.v; render();}
   else if(a==='limpiarFiltros'){Object.assign(S,{iq:'',itipo:'',iest:'',asigOpen:false,hdec:'',htipo:'',hclau:'',hmios:false,hnuevos:false,hcoms:false,hequipo:false,hesc:false,iprio:'',iant:''}); render();}
@@ -4009,7 +4039,10 @@ document.addEventListener('change',e=>{
 
 // En el chat, Intro envía y Mayúsculas+Intro hace salto de línea. Con la lista de @ abierta: ↑ ↓ eligen, Intro/Tab
 // mencionan y Esc la cierra.
+document.addEventListener('input',e=>{if(e.target.id==='tabMasQ'){S.tabMasQ=e.target.value; render();}});
 document.addEventListener('keydown',e=>{
+  if(S.tabMas&&e.key==='Escape'){S.tabMas=false; render(); document.querySelector('[data-act=tabMas]')?.focus(); return;}
+  if(S.tabMas&&e.key==='Enter'&&e.target.id==='tabMasQ'){const b=document.querySelector('.tm-f'); if(b){e.preventDefault(); b.click();} return;}
   if(S.cmp&&e.key==='Escape'){e.preventDefault(); S.cmp=null; pintarCmp(); return;}
   if(S.comp&&e.key==='Escape'){e.preventDefault(); S.comp=null; pintarComp(); return;}
   if(S.carga&&S.carga.paso==='confirmar'&&e.key==='Escape'){e.preventDefault(); document.querySelector('[data-act="cgCancelar"]')?.click(); return;}
