@@ -37,7 +37,7 @@ import socket
 import threading
 import time
 import unicodedata
-from datetime import datetime
+from datetime import date, datetime
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, quote, urlparse
@@ -46,6 +46,7 @@ from urllib.request import Request, urlopen
 from src import permisos as P
 from src import api_v1 as A
 from src import claves_api as CA
+from src import actividad as AC
 
 RAIZ = Path(__file__).resolve().parent
 WEB = RAIZ / "salidas" / "revision"
@@ -101,6 +102,32 @@ SESION_S = 30 * 60                     # una sesión sin señales durante 30 min
 
 def _ahora() -> str:
     return datetime.now().isoformat(timespec="seconds")
+
+
+_registro: list = [None]
+
+
+def _reg() -> "AC.Registro":
+    """El registro de actividad (se vuelve a abrir si cambia la ruta, como en las pruebas)."""
+    ruta = DATOS.with_name("actividad.jsonl")      # salidas/actividad.jsonl: solo crece, encadenado (src/actividad.py)
+    if _registro[0] is None or _registro[0].ruta != ruta:
+        _registro[0] = AC.Registro(ruta)
+    return _registro[0]
+
+
+def _anotar(user: str, evs) -> None:
+    for ev in (evs if isinstance(evs, list) else [evs]):
+        if ev:
+            try:
+                _reg().anotar(user, ev, _ahora())
+            except OSError as e:                     # sin disco no se pierde la operación, pero queda dicho en la consola
+                print(f"  ⚠ No se pudo escribir el registro de actividad: {e}")
+
+
+def _original(key: str) -> dict | None:
+    doc, _, ubic = key.partition("|")
+    r = next((x for x in _DATOS["res"] if x.get("documento") == doc and x.get("ubicacion") == ubic), None)
+    return r and {k: str(r.get(k) or "")[:300] for k in ("tipo", "clausula", "justificacion")}
 
 
 def _norm(t: str) -> str:
@@ -352,6 +379,10 @@ class Manejador(SimpleHTTPRequestHandler):
         super().end_headers()
 
     def _json(self, datos, code=200):
+        self._codigo = code
+        if getattr(self, "_diferir", False):          # una operación: primero se anota en el registro, luego se responde
+            self._respuesta = (datos, code)
+            return None
         cuerpo = json.dumps(datos, ensure_ascii=False).encode("utf-8")
         self.send_response(code)
         self.send_header("Content-Type", "application/json; charset=utf-8")
@@ -504,6 +535,33 @@ class Manejador(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(datos)
 
+    def _actividad(self, ruta, q):
+        """Registro de actividad. Con «Ver el registro de actividad»: todo, con filtros. Sin él: solo lo tuyo."""
+        f = {k: (q.get(k) or [""])[0][:120] for k in ("persona", "tipo", "doc", "desde", "hasta", "q", "pagina", "limite")}
+        with _lock:
+            user = _usuario_de_token(self.headers.get("X-Sesion", ""))
+            if not user:
+                return self._json({"error": "sesión no válida: vuelve a entrar"}, 401)
+            todo = P.puede(_estado, user, "actividad", "consultar")
+            if ruta == "/api/actividad/integridad":
+                if not todo:
+                    return self._json({"error": "Tu rol no permite: Ver el registro de actividad."}, 403)
+                return self._json(_reg().verificar())
+            if not todo:
+                f["persona"] = user                  # «Mi actividad» en Mi cuenta
+            lista = AC.filtrar(_reg().entradas, f)
+            personas = sorted({e["user"] for e in _reg().entradas}) if todo else [user]
+        if ruta == "/api/actividad/csv":
+            datos = AC.a_csv(lista).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "text/csv; charset=utf-8")
+            self.send_header("Content-Disposition", f'attachment; filename="actividad_{date.today().isoformat()}.csv"')
+            self.send_header("Content-Length", str(len(datos)))
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            return self.wfile.write(datos)
+        return self._json({**AC.pagina(lista, f["pagina"], f["limite"]), "todo": todo, "personas": personas})
+
     def _metricas(self, q):
         """Resumen, cumplimiento, equipo (de conjunto) y calidad de la IA, con los filtros de la petición."""
         from datetime import date
@@ -577,6 +635,7 @@ class Manejador(SimpleHTTPRequestHandler):
                 return self._json({"error": "Ese correo no está dado de alta. Pide a un administrador que te cree el usuario."}, 403)
             token = secrets.token_urlsafe(24)
             _tokens[token] = m["n"]
+            _anotar(m["n"], AC.evento("/api/login", d, {}, _estado, {}))   # antes de responder
             return self._json({"ok": True, "token": token, "n": m["n"], "c": m["c"], "rol": m["rol"]})
 
     def do_GET(self):
@@ -587,6 +646,8 @@ class Manejador(SimpleHTTPRequestHandler):
             return self._api_v1(u)
         if u.path == "/api/adjunto":
             return self._adjunto(parse_qs(u.query))
+        if u.path in ("/api/actividad", "/api/actividad/csv", "/api/actividad/integridad"):
+            return self._actividad(u.path, parse_qs(u.query))
         if u.path == "/api/metricas":                 # pestaña Métricas: todas las cifras salen de src/metricas.py
             return self._metricas(parse_qs(u.query))
         if u.path == "/api/version":                  # texto completo de una versión (la lista va en /api/estado)
@@ -667,10 +728,19 @@ class Manejador(SimpleHTTPRequestHandler):
             return self._asistente(d)
         extra = {}
         with _lock:
+            antes = AC.antes(u, d, _estado)
+            if u == "/api/edicion" and not antes.get("ultima"):
+                antes["ultima"] = _original(str(d.get("key", "")))
+            self._codigo, self._respuesta, self._diferir = None, None, True
             try:
-                return self._operar(u, d, user, extra)
+                self._operar(u, d, user, extra)
             except P.Denegado as e:
-                return self._json({"error": str(e)}, e.code)
+                self._json({"error": str(e)}, e.code)
+            finally:
+                self._diferir = False
+            if self._codigo == 200:                 # solo lo que se ha hecho de verdad
+                _anotar(user, AC.evento(u, d, antes, _estado, extra))
+        return self._json(*self._respuesta)
 
     def _operar(self, u, d, user, extra):
         """Una operación de escritura, ya con el usuario autenticado y dentro del candado."""
