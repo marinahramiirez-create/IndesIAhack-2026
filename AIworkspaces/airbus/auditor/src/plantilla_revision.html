@@ -2872,8 +2872,84 @@ function answer(q){
 // Primero se enseña al instante la búsqueda en la app (con sus botones «Ver…»); después llega la respuesta del modelo,
 // que lee los documentos del corpus y los datos ya calculados de la app (el modelo no calcula ni inventa).
 const plano=h=>{const d=document.createElement('div'); d.innerHTML=h; return d.textContent||'';};
+// Datos ya calculados de la app para el Asistente IA (la IA no cuenta ni resta: solo lee estas cifras)
+function fIA(f){return String(f||'').replace('T',' ').slice(0,16);}
+function estadoApp(q){
+  const s=' '+norm(q)+' ', yo=S.user.nombre||'', L=[];
+  const hay=(...ws)=>ws.some(w=>s.includes(w));
+  const nombres=S.equipo.map(p=>p.n), citado=nombres.filter(n=>s.includes(norm(n)));
+  const h=new Date(), dd=n=>String(n).padStart(2,'0');
+  L.push(`Fecha y hora actual: ${h.getFullYear()}-${dd(h.getMonth()+1)}-${dd(h.getDate())} ${dd(h.getHours())}:${dd(h.getMinutes())}. Usuario que pregunta: ${yo||'(sin nombre)'} · rol: ${miRol()?nombreRol(miRol()):'sin rol'}.`);
+  // Revisión de hallazgos
+  const decs=RES.map(r=>decOf(r)), apr=decs.filter(d=>d&&d.dec==='approved').length, rec=decs.filter(d=>d&&d.dec==='rejected').length;
+  L.push(`Revisión del equipo: ${RES.length} hallazgos en total; ${apr} aprobados, ${rec} rechazados y ${RES.length-apr-rec} sin decidir (pendientes de revisar).`);
+  const porDoc={}; RES.forEach(r=>(porDoc[r.documento]=porDoc[r.documento]||[]).push(r));
+  const ix=indiceDocs(), est={}; Object.keys(DOCS).forEach(d=>{const e=estadoDocDe(d,ix.get(d)); (est[e]=est[e]||[]).push(d);});
+  L.push('Documentos por estado: '+['Pendiente','En revisión','Completado','Sin hallazgos'].map(e=>`${e} ${(est[e]||[]).length}`).join(', ')+'.');
+  if(hay('document','complet','estado','en revision','terminad'))
+    ['Completado','En revisión'].forEach(e=>{if(est[e]) L.push(`Documentos «${e}»: ${est[e].slice(0,25).join(', ')}.`);});
+  if(hay('pendiente','falta','queda','revisar','sin decidir')){
+    const top=Object.entries(porDoc).map(([d,rs])=>[d,rs.filter(r=>!decOf(r)).length]).filter(x=>x[1]).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    if(top.length) L.push('Documentos con más hallazgos pendientes: '+top.map(([d,n])=>`${d} (${n})`).join(', ')+'.');
+  }
+  // Prioridad, plazos, escalados, compartidos y cargados (Daniela y Valentina)
+  if(hay('prioridad','urgente','vencid','plazo','antigu','atrasad')){
+    const pr={Alta:[],Media:[],Baja:[]}, venc=[];
+    Object.keys(DOCS).forEach(d=>{const x=ix.get(d); pr[prioridadDe(d,x)].push(d); const r=diasRestantes(estadoDocDe(d,x),d); if(r.tipo==='dias'&&r.n<0) venc.push(d);});
+    L.push(`Documentos por prioridad: Alta ${pr.Alta.length}, Media ${pr.Media.length}, Baja ${pr.Baja.length}.`);
+    L.push(`Documentos de prioridad alta: ${pr.Alta.slice(0,20).join(', ')||'ninguno'}.`);
+    L.push(`Documentos vencidos (plazo de respuesta pasado): ${venc.length}${venc.length?': '+venc.slice(0,20).join(', '):''}.`);
+    const c=S.config||{}; if(c.inicio) L.push(`Plazo de respuesta de la auditoría: ${c.plazo_dias||15} días desde ${c.inicio}.`);
+  }
+  if(hay('escal','dueno','dueño')){
+    const es=Object.entries(S.escalados||{});
+    L.push(`Documentos escalados: ${es.length}${es.length?': '+es.map(([d,e])=>`${d} a ${e.para}`).join(', '):''}.`);
+    const mios=es.filter(([d,e])=>e.para===yo).map(([d])=>d);
+    L.push(`Documentos escalados a ti: ${mios.length}${mios.length?': '+mios.join(', '):''}.`);
+  }
+  if(hay('compart')){
+    const cs=S.compartidos||[], conmigo=cs.filter(c=>c.para.includes(yo)), mios=cs.filter(c=>c.de===yo);
+    L.push(`Documentos compartidos contigo: ${conmigo.length}${conmigo.length?': '+conmigo.slice(-8).map(c=>`${c.doc} (de ${c.de}, ${fIA(c.fecha)})`).join('; '):''}.`);
+    L.push(`Documentos que has compartido: ${mios.length}${mios.length?': '+mios.slice(-8).map(c=>`${c.doc} con ${c.para.join(', ')}`).join('; '):''}.`);
+  }
+  if(hay('cargad','subid','subio')){
+    const cg=S.cargados||[];
+    L.push(`Documentos cargados a mano: ${cg.length}${cg.length?': '+cg.slice(-10).map(c=>`${c.archivo} (por ${c.user}, ${fIA(c.fecha)})`).join('; '):''}.`);
+  }
+  // Decisiones por persona
+  const quien={}; Object.values(S.dec||{}).forEach(d=>{if(d&&d.user){const c=quien[d.user]=quien[d.user]||{a:0,r:0}; d.dec==='approved'?c.a++:c.r++;}});
+  nombres.forEach(n=>{const c=quien[n]; L.push(c?`Decisiones de ${n}${n===yo?' (tú)':''}: ${n} ha aprobado ${c.a} y ha rechazado ${c.r} hallazgos.`
+    :`Decisiones de ${n}${n===yo?' (tú)':''}: ${n} no ha aprobado ni rechazado ningún hallazgo (0 decisiones).`);});
+  const objetivo=citado.length?citado:(hay(' mis ',' yo ',' he ',' mias ',' mios ')?[yo]:[]);
+  if(hay('aprob','rechaz','decid','decision','revis')) objetivo.forEach(n=>{
+    const ls=Object.entries(S.dec||{}).filter(([k,d])=>d&&d.user===n).slice(-10);
+    if(ls.length) L.push(`Hallazgos decididos por ${n}: `+ls.map(([k,d])=>`${k.replace('|',' · ')} → ${DECTXT[d.dec]} (${fIA(d.fecha)}${d.note?', comentario «'+String(d.note).slice(0,60)+'»':''})`).join('; ')+'.');
+  });
+  // Ediciones, versiones, comentarios y lo que la IA no vio
+  const ed=Object.entries(S.ediciones||{}).filter(([k,v])=>v&&v.length);
+  L.push(`Hallazgos editados: ${ed.length}.`+(ed.length&&hay('edit','modific','cambi')?' '+ed.slice(0,10).map(([k,v])=>`${k.replace('|',' · ')} (última edición de ${v[v.length-1].user}, ${fIA(v[v.length-1].fecha)})`).join('; ')+'.':''));
+  const vs=Object.entries(S.versiones||{}).filter(([d,v])=>v&&v.length);
+  if(hay('version')) L.push('Versiones de PDF guardadas: '+(vs.length?vs.map(([d,v])=>`${d}: ${v.length} versiones (la última de ${v[v.length-1].user}, ${fIA(v[v.length-1].fecha)})`).join('; '):'ninguna')+'.');
+  if(hay('coment','debate')) L.push(`Comentarios en hallazgos: ${(S.coms||[]).length}.`+(S.coms||[]).slice(-5).map(c=>` ${c.user} (${fIA(c.fecha)}) en ${String(c.key).replace('|',' · ')}: «${String(c.texto).slice(0,80)}»`).join(';'));
+  if(hay('no vio','no detect','extra','añadid','anadid')) L.push(`Comentarios de «lo que la IA no vio»: ${(S.extra||[]).length}.`);
+  // Chat y avisos: solo lo que esta persona puede ver
+  if(SRV&&hay('mensaje','chat','escrib','mencion','leid','notific','aviso','canal','grupo','privad','mandaron','enviaron','dijo','dicho','hablad')){
+    const sin=(S.avisos||[]).filter(a=>!a.leido), chats=S.chats||[], nc=id=>nombreChat(chats.find(c=>c.id===id))||id;
+    const porChat=chats.map(c=>[nombreChat(c),sin.filter(a=>a.key==='chat:'+c.id).length]).filter(x=>x[1]);
+    L.push(`Mensajes y avisos sin leer en total: tienes ${sin.length} sin leer`+(porChat.length?' ('+porChat.map(([n,k])=>`${n}: ${k}`).join(', ')+')':'')+'.');
+    const menc=sin.filter(a=>a.mencion||!String(a.key).startsWith('chat:'));
+    L.push(`Menciones sin leer: ${menc.length}.`+menc.slice(-5).map(a=>` ${a.de} (${fIA(a.fecha)}): «${String(a.texto||'').slice(0,80)}»`).join(';'));
+    chats.forEach(c=>{const ms=(S.mensajes||[]).filter(m=>m.canal===c.id);
+      L.push(`Chat ${c.tipo} ${nombreChat(c)}: tiene ${ms.length} mensajes en total; ${sin.filter(a=>a.key==='chat:'+c.id).length} sin leer para ti.`);});
+    const otros=(S.mensajes||[]).filter(m=>m.user!==yo&&(!citado.length||citado.includes(m.user))).slice(-6).reverse();
+    if(!otros.length) L.push(citado.length?`Mensajes de ${citado.join(' y ')}: ninguno; no te ha escrito ningún mensaje.`:'Mensajes que te han escrito: ninguno.');
+    otros.forEach(m=>L.push(`Mensaje que te escribió ${m.user} en el chat ${nc(m.canal)} el ${fIA(m.fecha)}: «${String(m.texto||'(adjunto)').slice(0,120)}»`));
+  }
+  if(hay('conectad','en linea','online','quien esta')) L.push('Conectados ahora: '+(nombres.filter(n=>enLinea(n)).join(', ')||'nadie')+'.');
+  return L.join('\n');
+}
 function datosApp(q,a){
-  const s=norm(q), ws=palabras(q), L=[];
+  const s=norm(q), ws=palabras(q), L=[estadoApp(q)];
   L.push(`Documentos auditados: ${Object.keys(DOCS).length}. Hallazgos de la solución: ${RES.length}.`);
   if(MET) L.push(`Métricas frente a la clave: F1 ${MET.f1}, precisión ${MET.precision}, recall ${MET.recall}, defectos encontrados ${MET.encontrados}.`);
   if(!a.vacia) L.push('Resultado de la búsqueda en la app: '+plano(a.text));
@@ -2883,7 +2959,7 @@ function datosApp(q,a){
   if(doc) L.push(`Documento ${doc}: ${DOCS[doc].titulo} (v${DOCS[doc].version}, ${DOCS[doc].familia}).`);
   hits.slice(0,15).forEach(r=>{const d=decOf(r);
     L.push(`- Hallazgo ${r.documento} · ${r.ubicacion} · ${r.tipo} · ${r.clausula}${d?' · decisión: '+DECTXT[d.dec]:''} · ${String(r.justificacion||'').slice(0,220)}`);});
-  return L.join('\n').slice(0,4000);
+  return L.join('\n').slice(0,6000);
 }
 function textoIA(t){return esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n/g,'<br>');}
 function bajarAsis(){const m=document.getElementById('msgs'); if(m) m.scrollTop=m.scrollHeight;}
@@ -2897,7 +2973,7 @@ async function preguntarIA(q,a){
       body:JSON.stringify({user:S.user.nombre||'anon',pregunta:q.trim(),datos_app:datosApp(q,a),historial})});
     const d=await r.json();
     if(!r.ok||d.error) throw new Error(d.error||r.status);
-    const fu=(d.fuentes||[]).map(f=>`<mark>${esc(f.split('/').pop())}</mark>`).join(' ');
+    const fu=([]).map(f=>`<mark>${esc(f.split('/').pop())}</mark>`).join(' ');
     m.t=`<b>Asistente IA</b><br>${textoIA(d.respuesta)}${fu?`<div class="small" style="margin-top:6px">Fuentes: ${fu}</div>`:''}`;
   }catch(e){
     m.t=`<span class="small">El asistente con IA no responde (${esc(String(e.message||e))}). Arriba tienes lo que encontré en la app.</span>`;
