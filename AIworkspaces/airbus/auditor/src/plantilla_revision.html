@@ -15,13 +15,13 @@
   unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
 :root{--bg:#f8f9fb;--card:#fff;--text:#1c1c1e;--sec:#6e6e73;--sep:#d1d1d6;--tint:#0a84ff;--ok:#34c759;--warn:#ff9f0a;--err:#ff3b30;--r:14px;font-family:"Inter",Arial,sans-serif}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font-size:15px;line-height:1.45;font-weight:200}
-/* Jerarquía tipográfica con Inter: títulos Bold, subtítulos Regular y texto ExtraLight.
-   Controles (botones, campos, menús) y etiquetas de estado en Regular para que se lean bien. */
-h1,h2,h3,.topbar .title,.login-card h1,.drawer-cab b{font-weight:700}
-h4,.sub,.login-card p,.ftit,.dcol,th{font-weight:400}
-button,select,input,textarea,.btn-principal,.pill,.st,.rolpill,.chipf{font-weight:400}
-b,strong{font-weight:700}
+body{margin:0;background:var(--bg);color:var(--text);font-size:15px;line-height:1.45;font-weight:400}
+/* Jerarquía tipográfica con Inter en TODA la herramienta (páginas, ventanas, paneles, avisos y desplegables):
+   títulos Inter Bold (700), subtítulos Inter SemiBold (600) y texto Inter Regular (400). */
+body,button,select,input,textarea,option,#toast,.dialog,.sidemodal,.menuusr,.avisos,#editor,#prevAdj{font-family:"Inter",Arial,sans-serif}
+h1,h2,.topbar .title,.login-card h1,.veredicto>div b{font-weight:700}
+h3,h4,th,.ftit,.dcol,.rg-paso b,.mu-cab b,.sumrow b,summary b,b,strong{font-weight:600}
+button,select,input,textarea,.sub,.small,.note,.login-card p{font-weight:400}
 pre,code,kbd,samp{font-family:inherit}
 button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:9px 16px;background:var(--tint);color:#fff}
 button:disabled{opacity:.45;cursor:not-allowed}
@@ -48,7 +48,7 @@ a{color:var(--tint)}
 .login-card button{width:100%;padding:12px}
 .topbar{position:sticky;top:0;height:56px;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--sep);display:flex;align-items:center;gap:14px;padding:0 20px;z-index:5}
 /* Botón «Menú» como en brand.airbus.com: texto + tres líneas de largo decreciente, separado del logo por una línea */
-.burger{display:flex;align-items:center;gap:12px;background:none;color:#00205b;padding:0 20px 0 0;margin-left:-4px;height:56px;border-radius:0;border-right:1px solid var(--sep);font-size:16px;font-weight:500}
+.burger{display:flex;align-items:center;gap:12px;background:none;color:#00205b;padding:0 20px 0 0;margin-left:-4px;height:56px;border-radius:0;border-right:1px solid var(--sep);font-size:16px;font-weight:600}
 .burger svg{width:22px;height:16px;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
 .burger:hover{color:#0a3d91}
 .marca-top{height:17px;width:auto;display:block}
@@ -63,9 +63,9 @@ a{color:var(--tint)}
 .drawer-x svg{width:22px;height:22px;stroke:currentColor;stroke-width:2;stroke-linecap:round}
 .drawer-x:hover{background:#f2f4f8}
 .drawer .ni{display:none}
-.drawer .nav-item{justify-content:space-between;background:none;color:#00205b;font-size:19px;font-weight:500;padding:12px 0;border-radius:0}
+.drawer .nav-item{justify-content:space-between;background:none;color:#00205b;font-size:19px;font-weight:400;padding:12px 0;border-radius:0}
 .drawer .nav-item:hover{background:none;text-decoration:underline;text-underline-offset:5px;text-decoration-thickness:1px}
-.drawer .nav-item.active{background:none;color:#00205b;font-weight:700;box-shadow:inset 3px 0 0 #00205b;padding-left:14px}
+.drawer .nav-item.active{background:none;color:#00205b;font-weight:600;box-shadow:inset 3px 0 0 #00205b;padding-left:14px}
 .drawer .nav-item.sub{font-size:16px;font-weight:400;padding:9px 0 9px 18px;color:#2b3a55}
 .drawer .nav-item.sub.active{background:none;font-weight:600;color:#00205b;box-shadow:inset 3px 0 0 #00205b}
 .drawer .chev{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
@@ -93,7 +93,7 @@ h3{margin:0 0 8px;font-size:16px}
 .sub{color:var(--sec);margin:0 0 14px}
 table{width:100%;border-collapse:collapse}
 th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--sep);font-size:14px;vertical-align:top}
-th{color:var(--sec);font-weight:500;font-size:13px}
+th{color:var(--sec);font-weight:600;font-size:13px}
 tr.clic{cursor:pointer}
 tr.clic:hover td{background:#f7f7fa}
 tr.hl td{background:#fff6cc}
@@ -187,7 +187,7 @@ mark{background:#ffe27a;padding:0 2px;border-radius:3px}
 .pager button{min-width:34px;height:34px;padding:0 10px;font-size:14px}
 .pager button.on{background:#00205b;color:#fff}
 .dpie select{height:32px;padding:4px 8px}
-.btn-principal{cursor:pointer;padding:9px 18px;border-radius:10px;background:var(--tint);color:#fff;font-size:15px;font-weight:500}
+.btn-principal{cursor:pointer;padding:9px 18px;border-radius:10px;background:var(--tint);color:#fff;font-size:15px;font-weight:600}
 .btn-principal:hover{filter:brightness(.95)}
 .btn-principal:focus-within{outline:3px solid rgba(10,132,255,.45);outline-offset:2px}
 .drow{display:grid;grid-template-columns:240px minmax(0,1fr) 170px 160px;gap:16px;align-items:center;background:#fff;border-radius:12px;padding:12px 16px;border-left:4px solid var(--c);box-shadow:0 1px 2px rgba(0,0,0,.04);cursor:pointer;transition:box-shadow .15s}
@@ -478,12 +478,29 @@ button.adj-img:focus-visible{outline:2px solid var(--tint);outline-offset:2px}
 #metTip b{display:block;color:#0b0b0b;font-size:14px}
 @media (max-width:700px){.mkpi.hero{grid-column:auto}.mgrid{grid-template-columns:1fr}}
 /* Mi cuenta */
+/* Mi cuenta: listado por secciones, sin recuadros */
+.lc{max-width:860px}
+.lc-sec{margin-top:26px}
+.lc-sec h3{margin:0 0 2px;font-size:15px;color:#00205b}
+.lc-d{margin:0 0 6px}
+.lc-lista{border-top:1px solid var(--sep)}
+.lc-fila{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid var(--sep);font-size:14px}
+.lc-k{display:flex;flex-direction:column;gap:2px;min-width:0}
+.lc-l1{display:flex;align-items:center;gap:8px;color:var(--text)}
+.lc-k .dot{display:inline-block;margin:0}
+.lc-fila .lc-k:only-child{flex:1}
+.lc-txt{display:block;line-height:1.5}
+.lc-sub{font-size:13px}
+.lc-v{text-align:right;color:var(--text);overflow-wrap:anywhere}
+.lc-fila>.lc-k:first-child:not(:only-child){color:var(--sec)}
+.lc-salir{background:none;color:#d70015;padding:12px 0;border-radius:0;font-size:14px;font-weight:600;width:100%;text-align:left;border-bottom:1px solid var(--sep)}
+.lc-salir:hover{text-decoration:underline}
 .cta-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}
 .cuenta-card h3{margin:0 0 10px}
 .cuenta-card .cta-f .seg{justify-self:start}
 .cta-f{display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:5px 0;font-size:14px}
 .cta-f>span{color:var(--sec)}
-.cta-f b{font-weight:500;overflow-wrap:anywhere}
+.cta-f b{font-weight:400;overflow-wrap:anywhere}
 .cta-pronto{margin:0;background:#fff4e0;color:#c76a00}
 .cuenta-card button[disabled]{opacity:.55;cursor:not-allowed}
 .cta-ses{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--sep);font-size:14px}
@@ -1965,46 +1982,42 @@ function navegadorDe(ua){
   const so=/iPhone|iPad/.test(ua)?'iOS':/Android/.test(ua)?'Android':/Mac OS X|Macintosh/.test(ua)?'macOS':/Windows/.test(ua)?'Windows':/Linux/.test(ua)?'Linux':'';
   return so?`${nav} (${so})`:nav;
 }
+// Mi cuenta: un listado por secciones (sin recuadros), como los ajustes de una app: título de sección y filas
+// separadas por una línea fina.
 function vCuenta(){
   const yo=S.equipo.find(x=>x.n===S.user.nombre);
-  const fila=(k,v)=>`<div class="cta-f"><span>${k}</span><b>${v}</b></div>`;
-  const pronto=(t,d,b)=>`<div class="card cuenta-card"><div style="display:flex;align-items:center;gap:8px"><h3 style="margin:0">${t}</h3><span class="rolpill cta-pronto">Próximamente</span></div>
-      <p class="small">${d}</p><button class="ghost" disabled aria-disabled="true" style="width:100%">${b}</button></div>`;
-  const ses=SRV?(S.sesiones||[]).map(s=>{
-      const esta=s.sid===SID, viva=s.hace_s<20;
-      return `<div class="cta-ses"><span class="dot ${viva?'on':''}" title="${viva?'Activa':'Inactiva'}"></span>
-        <div style="min-width:0;flex:1"><div><b>${esc(navegadorDe(s.ua))}</b>${esta?' <span class="rolpill" style="margin:0 0 0 6px">Esta</span>':''}</div>
-        <div class="small">Desde ${fmtFecha(s.inicio)} · ${viva?'activa ahora':'última señal '+hace(new Date(Date.now()-s.hace_s*1000).toISOString())}</div></div></div>`;
-    }).join('')||'<p class="small">Cargando…</p>'
-    :'<p class="small">Sin la revisión en equipo (python servidor.py) no hay sesiones compartidas: estás solo en este navegador.</p>';
-  return `<h2 style="margin-bottom:2px">Mi cuenta</h2><p class="sub">Tus datos y cómo entras.</p>
-    <div class="cta-grid">
-      <div class="card cuenta-card"><h3>Perfil</h3>
-        ${fila('Nombre visible',esc(S.user.nombre))}${fila('Usuario',esc(S.user.login||'—'))}${fila('Correo',esc(S.user.correo||(yo&&yo.c)||'—'))}
-        ${fila('Rol',esc(yo?nombreRol(yo.rol):'Sin rol · no está en el equipo'))}${fila('Esta sesión',`Prototipo · sin contraseña real`)}
-        <div class="cta-f" style="align-items:center"><span>Idioma</span><div class="seg" role="group" aria-label="Idioma">
-          <button data-act="lang" data-v="es" class="${S.lang==='es'?'on':''}">ES</button><button data-act="lang" data-v="en" class="${S.lang==='en'?'on':''}">EN</button></div></div>
-        <button class="ghost" data-act="logout" style="width:100%;margin-top:6px">Cerrar sesión</button></div>
-      ${pronto('Llaves de acceso','Servirán como segundo paso y para entrar sin contraseña. Llegarán con el inicio de sesión de Microsoft (Entra ID).','Añadir una llave de acceso')}
-      ${pronto('App de autenticación','Códigos de 6 dígitos con Microsoft Authenticator. Los pedirá Entra ID al entrar, no esta app.','Configurar')}
-      ${pronto('Códigos de recuperación','Para entrar si pierdes el segundo paso. Llegarán junto con la verificación en dos pasos.','Generar códigos nuevos')}
-      <div class="card cuenta-card"><h3>Sesiones abiertas</h3><p class="small">Dónde has entrado ahora mismo. «Cerrar sesión» quita esta de la lista.</p>${ses}</div>
-      <div class="card cuenta-card"><h3>Política de acceso</h3>
-        <p class="small" style="margin-bottom:4px"><b style="color:var(--text)">Hoy, en este prototipo:</b></p>
-        <ul class="cta-ul">
-          <li>Solo entra quien está dado de alta. El servidor te da una sesión y comprueba el permiso de tu rol en cada operación; el inicio de sesión todavía no pide contraseña.</li>
-          <li>Solo el rol Admin crea, edita o elimina roles y crea canales públicos. Los usuarios los gestiona quien tenga ese permiso en su rol.</li>
-          <li>Un documento solo lo edita la persona con rol Dueño de Proceso a la que se ha escalado, y solo mientras su revisión no esté completada.</li>
-          <li>Cargar documentos, compartirlos, cambiar su prioridad y marcar como revisado uno sin hallazgos son permisos de tu rol.</li>
-          <li>Cada persona solo recibe los chats en los que está, y los adjuntos solo se sirven a quien ve ese chat.</li>
-          <li>Un mensaje del chat solo se puede editar durante 30 minutos.</li>
-          <li>El PDF original y respuestas.csv nunca se modifican: ediciones y versiones se guardan aparte.</li>
-          <li>Todo se guarda en el ordenador que ejecuta el servidor; nada sale fuera.</li></ul>
-        <p class="small" style="margin:10px 0 4px"><b style="color:var(--text)">Previsto:</b></p>
-        <ul class="cta-ul cta-prev">
-          <li>Entrar con la cuenta de Microsoft (Entra ID) y verificación en dos pasos con Microsoft Authenticator.</li>
-          <li>Roles asignados desde Entra ID.</li></ul></div>
-    </div>`;
+  const fila=(k,v,extra='')=>`<div class="lc-fila"><span class="lc-k">${k}</span><span class="lc-v">${v}</span>${extra}</div>`;
+  const seccion=(t,d,cuerpo)=>`<section class="lc-sec"><h3>${t}</h3>${d?`<p class="small lc-d">${d}</p>`:''}<div class="lc-lista">${cuerpo}</div></section>`;
+  const pronto=(t,d)=>`<div class="lc-fila"><span class="lc-k">${t}<span class="small lc-sub">${d}</span></span><span class="lc-v"><span class="rolpill cta-pronto">Próximamente</span></span></div>`;
+  const ses=SRV?(S.sesiones||[]).map(x=>{
+      const esta=x.sid===SID, viva=x.hace_s<20;
+      return `<div class="lc-fila"><span class="lc-k"><span class="lc-l1"><span class="dot ${viva?'on':''}" title="${viva?'Activa':'Inactiva'}"></span>${esc(navegadorDe(x.ua))}${esta?'<span class="rolpill" style="margin:0">Esta</span>':''}</span>
+          <span class="small lc-sub">Desde ${fmtFecha(x.inicio)}</span></span>
+        <span class="lc-v small">${viva?'Activa ahora':'Última señal '+hace(new Date(Date.now()-x.hace_s*1000).toISOString())}</span></div>`;
+    }).join('')||'<div class="lc-fila"><span class="small">Cargando…</span></div>'
+    :'<div class="lc-fila"><span class="small">Sin la revisión en equipo (python servidor.py) no hay sesiones compartidas: estás solo en este navegador.</span></div>';
+  const lista=xs=>xs.map(t=>`<div class="lc-fila"><span class="lc-k lc-txt">${t}</span></div>`).join('');
+  return `<div class="lc">
+    <h2 style="margin-bottom:2px">Mi cuenta</h2><p class="sub">Tus datos y cómo entras.</p>
+    ${seccion('Perfil','',fila('Nombre visible',esc(S.user.nombre))+fila('Usuario',esc(S.user.login||'—'))+fila('Correo',esc(S.user.correo||(yo&&yo.c)||'—'))
+      +fila('Rol',esc(yo?nombreRol(yo.rol):'Sin rol · no está en el equipo'))+fila('Esta sesión','Prototipo · sin contraseña real'))}
+    ${seccion('Preferencias','',`<div class="lc-fila"><span class="lc-k">Idioma</span><span class="lc-v"><div class="seg" role="group" aria-label="Idioma">
+        <button data-act="lang" data-v="es" class="${S.lang==='es'?'on':''}">ES</button><button data-act="lang" data-v="en" class="${S.lang==='en'?'on':''}">EN</button></div></span></div>`)}
+    ${seccion('Seguridad','Llegarán con el inicio de sesión de Microsoft (Entra ID).',
+      pronto('Llaves de acceso','Segundo paso y entrar sin contraseña.')+pronto('App de autenticación','Códigos de 6 dígitos con Microsoft Authenticator.')+pronto('Códigos de recuperación','Para entrar si pierdes el segundo paso.'))}
+    ${seccion('Sesiones abiertas','Dónde has entrado ahora mismo. «Cerrar sesión» quita esta de la lista.',ses)}
+    ${seccion('Política de acceso','Hoy, en este prototipo:',lista([
+      'Solo entra quien está dado de alta. El servidor te da una sesión y comprueba el permiso de tu rol en cada operación; el inicio de sesión todavía no pide contraseña.',
+      'Solo el rol Admin crea, edita o elimina roles y crea canales públicos. Los usuarios los gestiona quien tenga ese permiso en su rol.',
+      'Un documento solo lo edita la persona con rol Dueño de Proceso a la que se ha escalado, y solo mientras su revisión no esté completada.',
+      'Cargar documentos, compartirlos, cambiar su prioridad y marcar como revisado uno sin hallazgos son permisos de tu rol.',
+      'Cada persona solo recibe los chats en los que está, y los adjuntos solo se sirven a quien ve ese chat.',
+      'Un mensaje del chat solo se puede editar durante 30 minutos.',
+      'El PDF original y respuestas.csv nunca se modifican: ediciones y versiones se guardan aparte.',
+      'Todo se guarda en el ordenador que ejecuta el servidor; nada sale fuera.']))}
+    ${seccion('Previsto','',lista(['Entrar con la cuenta de Microsoft (Entra ID) y verificación en dos pasos con Microsoft Authenticator.','Roles asignados desde Entra ID.']))}
+    <section class="lc-sec"><div class="lc-lista"><button class="lc-salir" data-act="logout">Cerrar sesión</button></div></section>
+  </div>`;
 }
 // ---------- Métricas: resumen, cumplimiento, equipo (de conjunto, sin nombres) y calidad de la IA.
 // Las cifras las calcula el servidor (src/metricas.py, GET /api/metricas): aquí solo se pintan. Cada tarjeta dice qué
