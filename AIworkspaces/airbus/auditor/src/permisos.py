@@ -40,7 +40,8 @@ MODULOS = [
     ]),
     ("configuracion", "Configuración", [
         ("consultar", "Consultar configuración", "Ver reglas, criterio de aceptación, usuarios y roles"),
-        ("editar_umbral", "Cambiar el umbral de aceptación", "El umbral se guarda en el navegador de cada persona"),
+        ("gestionar_reglas", "Gestionar reglas de aceptación",
+         "Crear, editar, activar y eliminar las reglas que deciden si un documento se aprueba"),
         ("editar_plazo", "Cambiar el plazo de respuesta",
          "Días disponibles para responder a la auditoría y fecha de inicio; se aplica a todo el equipo"),
         ("gestionar_usuarios", "Gestionar usuarios", "Crear, editar y eliminar usuarios (no puede dar ni quitar el rol Admin)"),
@@ -85,11 +86,11 @@ ROLES_INICIALES = [
      "permisos": {**_todo(True), "revisiones": {**_todo(True)["revisiones"], "editar_escalados": False}}},
     {"id": "aprobador", "nombre": "Aprobador", "sistema": False,
      "descripcion": "Decide y firma las decisiones de los demás.",
-     "permisos": _perm(revisiones=_REV_COMUN, configuracion=["consultar", "editar_umbral", "editar_plazo"],
+     "permisos": _perm(revisiones=_REV_COMUN, configuracion=["consultar", "gestionar_reglas", "editar_plazo"],
                        historico=["descargar_respuestas", "descargar_revision"], metricas=["consultar"], api=["usar"])},
     {"id": "revisor", "nombre": "Revisor", "sistema": False,
      "descripcion": "Aprueba o rechaza hallazgos y comenta.",
-     "permisos": _perm(revisiones=_REV_COMUN, configuracion=["consultar", "editar_umbral"],
+     "permisos": _perm(revisiones=_REV_COMUN, configuracion=["consultar"],
                        historico=["descargar_respuestas", "descargar_revision"], metricas=["consultar"])},
     {"id": DUENO, "nombre": "Dueño de Proceso", "sistema": True,
      "descripcion": "Corrige los documentos que se le escalan. No decide sobre los hallazgos.",
@@ -125,6 +126,77 @@ def cambiar_plazo(estado: dict, user: str, d: dict) -> None:
     estado["config"] = cfg
 
 
+# ------------------------------------------------------------------ reglas de aceptación
+# Cada regla es una condición sobre los hallazgos YA DECIDIDOS de un documento. Si no se cumple, aplica su efecto:
+# «rechazar» el documento o mandarlo a «revisar» (revisión manual). Sin reglas que fallen, el documento se aprueba.
+# Las evalúa la pantalla (evaluarDoc) con los mismos tipos; el servidor solo guarda y valida.
+TIPOS_REGLA = {
+    "porcentaje_aprobados": {"min_pct": (0, 100)},          # % de hallazgos aprobados por el auditor ≥ min
+    "max_hallazgos_tipo": {"tipo": str, "max": (0, 999)},   # nº de hallazgos aprobados de ese tipo ≤ max
+    "clausula_critica": {"clausula": str},                  # ningún hallazgo aprobado en esa cláusula
+    "confianza_minima": {"min_pct": (0, 100)},              # todos los hallazgos aprobados con confianza ≥ min
+    "plazo_respuesta": {},                                  # la última decisión llegó dentro del plazo
+}
+EFECTOS = ("rechazar", "revisar")
+REGLA_INICIAL = {"id": "r1", "nombre": "Aceptación mínima", "descripcion": "Antes era el umbral de aceptación.",
+                 "tipo": "porcentaje_aprobados", "params": {"min_pct": 80}, "familia": "", "efecto": "rechazar",
+                 "activa": True}
+
+
+def _validar_regla(d: dict) -> dict:
+    nombre = _texto(d.get("nombre"), 60)
+    if not nombre:
+        raise Denegado("La regla necesita un nombre.", 400)
+    tipo = d.get("tipo")
+    if tipo not in TIPOS_REGLA:
+        raise Denegado("Tipo de regla no válido.", 400)
+    params, crudo = {}, d.get("params") if isinstance(d.get("params"), dict) else {}
+    for k, regla in TIPOS_REGLA[tipo].items():
+        v = crudo.get(k)
+        if regla is str:
+            v = _texto(v, 60)
+            if not v:
+                raise Denegado("Falta completar la condición de la regla.", 400)
+        else:
+            try:
+                v = int(v)
+            except (TypeError, ValueError):
+                raise Denegado("La condición de la regla tiene que ser un número.", 400)
+            if not regla[0] <= v <= regla[1]:
+                raise Denegado(f"El valor tiene que estar entre {regla[0]} y {regla[1]}.", 400)
+        params[k] = v
+    if d.get("efecto") not in EFECTOS:
+        raise Denegado("Efecto no válido.", 400)
+    return {"nombre": nombre, "descripcion": _texto(d.get("descripcion"), 300), "tipo": tipo, "params": params,
+            "familia": _texto(d.get("familia"), 60), "efecto": d["efecto"], "activa": d.get("activa") is not False}
+
+
+def crear_regla(estado: dict, user: str, d: dict) -> str:
+    exigir(estado, user, "configuracion", "gestionar_reglas")
+    r = _validar_regla(d)
+    usados = {x["id"] for x in estado["reglas"]}
+    n = 1
+    while f"r{n}" in usados:
+        n += 1
+    estado["reglas"].append({"id": f"r{n}", **r})
+    return f"r{n}"
+
+
+def editar_regla(estado: dict, user: str, d: dict) -> None:
+    exigir(estado, user, "configuracion", "gestionar_reglas")
+    r = next((x for x in estado["reglas"] if x["id"] == d.get("id")), None)
+    if not r:
+        raise Denegado("Esa regla no existe.", 400)
+    r.update(_validar_regla({**r, **d}))
+
+
+def borrar_regla(estado: dict, user: str, rid: str) -> None:
+    exigir(estado, user, "configuracion", "gestionar_reglas")
+    if not any(x["id"] == rid for x in estado["reglas"]):
+        raise Denegado("Esa regla no existe.", 400)
+    estado["reglas"] = [x for x in estado["reglas"] if x["id"] != rid]
+
+
 class Denegado(Exception):
     """Operación no autorizada o no válida. code: 403 (permiso) o 400 (datos)."""
 
@@ -156,6 +228,11 @@ def migrar(estado: dict) -> None:
                 mod = perms.setdefault(m, {})
                 if isinstance(mod, dict):
                     mod.setdefault(a, r.get("id") in roles)
+        conf = (r.get("permisos") or {}).get("configuracion") or {}
+        if "editar_umbral" in conf:                 # el umbral local pasó a ser «Gestionar reglas de aceptación»:
+            antes = conf.pop("editar_umbral")       # los roles de fábrica toman su valor por defecto; los creados
+            fabrica = next((x for x in ROLES_INICIALES if x["id"] == r["id"]), None)   # a mano, el que tenían
+            conf["gestionar_reglas"] = fabrica["permisos"]["configuracion"]["gestionar_reglas"] if fabrica else antes is True
         r["permisos"] = limpiar_permisos(r.get("permisos", {}), r["id"])
     for m in estado.get("equipo", []):
         if m.get("rol") not in ids:
@@ -164,6 +241,8 @@ def migrar(estado: dict) -> None:
     estado.setdefault("config", {})
     estado["config"].setdefault("plazo_dias", PLAZO_DIAS)
     estado["config"].setdefault("inicio", date.today().isoformat())   # inicio de la auditoría: editable en Reglas
+    if "reglas" not in estado:                     # la regla que antes era el «umbral de aceptación» (80 %)
+        estado["reglas"] = [dict(REGLA_INICIAL)]
     estado.setdefault("escalados_hist", [])
 
 

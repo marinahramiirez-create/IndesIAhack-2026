@@ -59,6 +59,14 @@ python "..\..\..\06_kit_desarrollo_equipos\06_kit_desarrollo_equipos\puntuar.py"
 
 Ejecuta el paso 3 **cuando haya terminado** el paso 1: necesita su `salidas\respuestas.csv`.
 
+**Editor de documentos con estructura.** Al editar una versión, la página se ve con sus títulos, párrafos y tablas (y
+una barra para añadir o quitar filas y columnas). Esa estructura sale del PDF, sin IA, y la crea `generar_revision.py`;
+si ya tienes la pantalla generada, basta con (tarda unos minutos la primera vez):
+
+```powershell
+.\.venv\Scripts\python estructurar_paginas.py      # Mac: .venv/bin/python estructurar_paginas.py
+```
+
 Opciones de `auditar.py`:
 - `--sin-llm`: solo reglas, sin coste;
 - `--solo COD1,COD2`: audita solo esos documentos;
@@ -163,6 +171,12 @@ sacan el usuario de ese token (nunca del cuerpo de la petición) y comprueban el
   - Descarga de histórico: respuestas del auditor, revisión del equipo.
 - **Usuarios**: crear, editar (correo y rol) y eliminar. Todo usuario tiene un rol existente; solo un Admin da o quita
   el rol Admin y siempre queda al menos uno. Al cambiar el rol cambian al momento los permisos.
+- **Reglas de aceptación** (Configuración → Reglas): tabla de reglas y «Crear regla». Cada regla es una condición sobre
+  los hallazgos aprobados de un documento (porcentaje mínimo de aceptación, máximo de hallazgos de un tipo, cláusula
+  crítica, confianza mínima de la IA o respuesta dentro de plazo), puede aplicarse a una familia y, si no se cumple,
+  **rechaza** el documento o lo manda a **revisión manual**. Con todos los hallazgos decididos, el sistema da el
+  veredicto (Aprobado / Rechazado / Revisión manual) en Auditorías y en el detalle, con las reglas que no cumple.
+  Las gestiona quien tenga «Gestionar reglas de aceptación» (Admin y Aprobador por defecto).
 - **Escalamiento y edición de documentos**: en Revisión, «⇪ Escalar» asigna el documento a UNA persona con rol
   **Dueño de Proceso**. Solo esa persona puede pulsar «✎ Editar» (crear versiones), y solo mientras el documento no
   esté Completado. Si se escala a otra persona, el anterior deja de poder editarlo; ambos reciben un aviso.

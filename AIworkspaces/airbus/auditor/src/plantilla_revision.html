@@ -15,13 +15,13 @@
   unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
 :root{--bg:#f8f9fb;--card:#fff;--text:#1c1c1e;--sec:#6e6e73;--sep:#d1d1d6;--tint:#0a84ff;--ok:#34c759;--warn:#ff9f0a;--err:#ff3b30;--r:14px;font-family:"Inter",Arial,sans-serif}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font-size:15px;line-height:1.45;font-weight:200}
-/* Jerarquía tipográfica con Inter: títulos Bold, subtítulos Regular y texto ExtraLight.
-   Controles (botones, campos, menús) y etiquetas de estado en Regular para que se lean bien. */
-h1,h2,h3,.topbar .title,.login-card h1,.drawer-cab b{font-weight:700}
-h4,.sub,.login-card p,.ftit,.dcol,th{font-weight:400}
-button,select,input,textarea,.btn-principal,.pill,.st,.rolpill,.chipf{font-weight:400}
-b,strong{font-weight:700}
+body{margin:0;background:var(--bg);color:var(--text);font-size:15px;line-height:1.45;font-weight:400}
+/* Jerarquía tipográfica con Inter en TODA la herramienta (páginas, ventanas, paneles, avisos y desplegables):
+   títulos Inter Bold (700), subtítulos Inter SemiBold (600) y texto Inter Regular (400). */
+body,button,select,input,textarea,option,#toast,.dialog,.sidemodal,.menuusr,.avisos,#editor,#prevAdj{font-family:"Inter",Arial,sans-serif}
+h1,h2,.topbar .title,.login-card h1,.veredicto>div b{font-weight:700}
+h3,h4,th,.ftit,.dcol,.rg-paso b,.mu-cab b,.sumrow b,summary b,b,strong{font-weight:600}
+button,select,input,textarea,.sub,.small,.note,.login-card p{font-weight:400}
 pre,code,kbd,samp{font-family:inherit}
 button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:9px 16px;background:var(--tint);color:#fff}
 button:disabled{opacity:.45;cursor:not-allowed}
@@ -48,7 +48,7 @@ a{color:var(--tint)}
 .login-card button{width:100%;padding:12px}
 .topbar{position:sticky;top:0;height:56px;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--sep);display:flex;align-items:center;gap:14px;padding:0 20px;z-index:5}
 /* Botón «Menú» como en brand.airbus.com: texto + tres líneas de largo decreciente, separado del logo por una línea */
-.burger{display:flex;align-items:center;gap:12px;background:none;color:#00205b;padding:0 20px 0 0;margin-left:-4px;height:56px;border-radius:0;border-right:1px solid var(--sep);font-size:16px;font-weight:500}
+.burger{display:flex;align-items:center;gap:12px;background:none;color:#00205b;padding:0 20px 0 0;margin-left:-4px;height:56px;border-radius:0;border-right:1px solid var(--sep);font-size:16px;font-weight:600}
 .burger svg{width:22px;height:16px;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
 .burger:hover{color:#0a3d91}
 .marca-top{height:17px;width:auto;display:block}
@@ -63,9 +63,9 @@ a{color:var(--tint)}
 .drawer-x svg{width:22px;height:22px;stroke:currentColor;stroke-width:2;stroke-linecap:round}
 .drawer-x:hover{background:#f2f4f8}
 .drawer .ni{display:none}
-.drawer .nav-item{justify-content:space-between;background:none;color:#00205b;font-size:19px;font-weight:500;padding:12px 0;border-radius:0}
+.drawer .nav-item{justify-content:space-between;background:none;color:#00205b;font-size:19px;font-weight:400;padding:12px 0;border-radius:0}
 .drawer .nav-item:hover{background:none;text-decoration:underline;text-underline-offset:5px;text-decoration-thickness:1px}
-.drawer .nav-item.active{background:none;color:#00205b;font-weight:700;box-shadow:inset 3px 0 0 #00205b;padding-left:14px}
+.drawer .nav-item.active{background:none;color:#00205b;font-weight:600;box-shadow:inset 3px 0 0 #00205b;padding-left:14px}
 .drawer .nav-item.sub{font-size:16px;font-weight:400;padding:9px 0 9px 18px;color:#2b3a55}
 .drawer .nav-item.sub.active{background:none;font-weight:600;color:#00205b;box-shadow:inset 3px 0 0 #00205b}
 .drawer .chev{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
@@ -93,7 +93,7 @@ h3{margin:0 0 8px;font-size:16px}
 .sub{color:var(--sec);margin:0 0 14px}
 table{width:100%;border-collapse:collapse}
 th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--sep);font-size:14px;vertical-align:top}
-th{color:var(--sec);font-weight:500;font-size:13px}
+th{color:var(--sec);font-weight:600;font-size:13px}
 tr.clic{cursor:pointer}
 tr.clic:hover td{background:#f7f7fa}
 tr.hl td{background:#fff6cc}
@@ -102,6 +102,7 @@ tr.hl td{background:#fff6cc}
 .st{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--text);white-space:nowrap}
 .st i{width:8px;height:8px;border-radius:50%;background:var(--c)}
 .two{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:16px;align-items:start}
+.two.solo{grid-template-columns:minmax(0,1fr)}   /* consulta histórica: solo el documento */
 .right{position:sticky;top:74px;max-height:calc(100vh - 150px);display:flex;flex-direction:column;overflow:hidden}
 .lista-scroll{max-height:min(190px,24vh);overflow:auto;flex:none}
 .motivo-scroll{margin-top:12px;flex:1 1 auto;min-height:90px;overflow:auto}
@@ -116,6 +117,31 @@ tr.hl td{background:#fff6cc}
 .pnav-tit .small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .pnav-rev>button{flex:none}
 .pnav-fijo{margin-left:6px}
+/* Reglas de aceptación */
+.reg-res{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:16px 0}
+.reg-res>div{background:#f8f9fb;border:1px solid var(--sep);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.reg-res b{font-size:22px}
+.treg td{vertical-align:top}.treg tr.off td{opacity:.55}
+.vacio{padding:22px;text-align:center;color:var(--sec);border:1px dashed var(--sep);border-radius:10px}
+.sw{position:relative;display:inline-block;width:38px;height:22px}.sw input{opacity:0;width:0;height:0}
+.sw span{position:absolute;inset:0;background:#d1d1d6;border-radius:999px;transition:.2s;cursor:pointer}
+.sw span::before{content:"";position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.2s}
+.sw input:checked+span{background:#00205b}.sw input:checked+span::before{transform:translateX(16px)}
+.sw input:focus-visible+span{outline:3px solid rgba(10,132,255,.45)}.sw input:disabled+span{opacity:.5;cursor:not-allowed}
+.ref-det summary{cursor:pointer}
+.dlg-regla{width:min(720px,94vw);max-height:90vh;overflow:auto}
+.rg-paso{display:flex;align-items:center;gap:8px;margin:18px 0 8px;color:#00205b}
+.rg-n{width:22px;height:22px;border-radius:50%;background:#00205b;color:#fff;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.rg-f{display:flex;flex-direction:column;gap:4px}
+.rg-tipos{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.rg-tipo{display:flex;gap:8px;align-items:flex-start;border:1px solid var(--sep);border-radius:10px;padding:10px;cursor:pointer}
+.rg-tipo.on{border-color:#00205b;box-shadow:inset 0 0 0 1px #00205b;background:#f6f8fc}
+.rg-tipo>span{display:flex;flex-direction:column;gap:3px}.rg-tipo input{margin-top:3px;accent-color:#00205b}
+.dlg-regla .fchk{background:none;white-space:nowrap;padding:0 4px}
+.rg-prev{margin-top:16px;padding:10px 12px;border-radius:10px;background:#f6f8fc;font-size:14px}
+.veredicto{margin:10px 0 14px;padding:12px 14px;border-radius:12px;background:var(--vb);border-left:4px solid var(--vc)}
+.veredicto>div{display:flex;flex-direction:column}.veredicto>div b{font-size:20px;color:var(--vc)}
+.veredicto ul{margin:8px 0 0;padding-left:18px;font-size:14px}
 .pr-u{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--sep)}
 .pr-u select{width:150px;height:32px;padding:4px 8px;font-size:13px}
 tr.clic{cursor:pointer}tr.clic:hover td{background:#f6f8fb}
@@ -161,7 +187,7 @@ mark{background:#ffe27a;padding:0 2px;border-radius:3px}
 .pager button{min-width:34px;height:34px;padding:0 10px;font-size:14px}
 .pager button.on{background:#00205b;color:#fff}
 .dpie select{height:32px;padding:4px 8px}
-.btn-principal{cursor:pointer;padding:9px 18px;border-radius:10px;background:var(--tint);color:#fff;font-size:15px;font-weight:500}
+.btn-principal{cursor:pointer;padding:9px 18px;border-radius:10px;background:var(--tint);color:#fff;font-size:15px;font-weight:600}
 .btn-principal:hover{filter:brightness(.95)}
 .btn-principal:focus-within{outline:3px solid rgba(10,132,255,.45);outline-offset:2px}
 .drow{display:grid;grid-template-columns:240px minmax(0,1fr) 170px 160px;gap:16px;align-items:center;background:#fff;border-radius:12px;padding:12px 16px;border-left:4px solid var(--c);box-shadow:0 1px 2px rgba(0,0,0,.04);cursor:pointer;transition:box-shadow .15s}
@@ -326,6 +352,20 @@ button.adj-img:focus-visible{outline:2px solid var(--tint);outline-offset:2px}
 .ed-pag{overflow:auto;background:#fff;border-radius:10px;border:1px solid var(--sep)}
 .ed-pag img{width:100%;display:block}
 .ed-texto{display:flex;flex-direction:column;gap:6px;min-height:0}
+.ed-barra{display:flex;flex-wrap:wrap;gap:4px;align-items:center;background:#fff;border:1px solid var(--sep);border-radius:10px;padding:5px}
+.ed-barra button{background:none;color:#00205b;padding:5px 9px;border-radius:7px;font-size:13px}
+.ed-barra button:hover{background:#eef2f8}
+.ed-sep{width:1px;height:20px;background:var(--sep);margin:0 4px}
+.ed-doc{flex:1;min-height:200px;overflow:auto;background:#fff;border:1px solid var(--sep);border-radius:10px;padding:24px 28px;font-size:13px;line-height:1.5;color:var(--text);outline:none}
+.ed-doc:focus{border-color:#00205b;box-shadow:0 0 0 3px rgba(0,32,91,.12)}
+.ed-doc h2{font-size:18px;font-weight:700;color:#00205b;margin:14px 0 8px}
+.ed-doc h3{font-size:14px;font-weight:700;color:#00205b;margin:12px 0 6px}
+.ed-doc p{margin:0 0 8px}
+.ed-doc .ed-mod{background:#fff1b8}
+.ed-doc table{border-collapse:collapse;width:100%;margin:8px 0 14px;font-size:12px}
+.ed-doc th,.ed-doc td{border:1px solid #c9cfd8;padding:5px 7px;vertical-align:top;text-align:left;min-width:30px}
+.ed-doc th{background:#eef2f8;font-weight:700;color:#00205b}
+.ed-doc td:focus-within,.ed-doc th:focus-within{outline:2px solid rgba(0,32,91,.35)}
 .ed-texto textarea{flex:1;min-height:200px;resize:none;font:13px/1.55 "Inter",Arial,sans-serif;font-feature-settings:"tnum";padding:12px;border-radius:10px}
 .ed-pie{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;background:#fff;border-top:1px solid var(--sep)}
 @media (max-width:800px){.ed-cuerpo{grid-template-columns:1fr;grid-template-rows:40% 60%}}
@@ -438,20 +478,36 @@ button.adj-img:focus-visible{outline:2px solid var(--tint);outline-offset:2px}
 #metTip b{display:block;color:#0b0b0b;font-size:14px}
 @media (max-width:700px){.mkpi.hero{grid-column:auto}.mgrid{grid-template-columns:1fr}}
 /* Mi cuenta → Claves de API */
-.cla-card{grid-column:span 2}
+.cla-card .cla-form,.cla-card .note{max-width:720px}
 .cla-form{display:flex;flex-direction:column;gap:4px}.cla-form input:not([type=checkbox]){width:100%}.cla-alc .fchk{white-space:nowrap}
 .cla-fila{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px}.cla-alc{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
 .cla-f{display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--sep)}.cla-f.off{opacity:.6}
 .cla-nueva{background:#eef7ee;border:1px solid #a7d8a7;border-radius:10px;padding:10px 12px;margin-bottom:10px;display:flex;flex-direction:column;gap:6px}
 .cla-copia{display:flex;gap:8px;align-items:center}.cla-copia code{flex:1;min-width:0;overflow-wrap:anywhere;background:#fff;border:1px solid var(--sep);border-radius:6px;padding:6px 8px;font-size:12px}
-@media (max-width:1100px){.cla-card{grid-column:1/-1}}
 /* Mi cuenta */
+/* Mi cuenta: listado por secciones, sin recuadros */
+.lc{max-width:860px}
+.lc-sec{margin-top:26px}
+.lc-sec h3{margin:0 0 2px;font-size:15px;color:#00205b}
+.lc-d{margin:0 0 6px}
+.lc-lista{border-top:1px solid var(--sep)}
+.lc-fila{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid var(--sep);font-size:14px}
+.lc-k{display:flex;flex-direction:column;gap:2px;min-width:0}
+.lc-l1{display:flex;align-items:center;gap:8px;color:var(--text)}
+.lc-k .dot{display:inline-block;margin:0}
+.lc-fila .lc-k:only-child{flex:1}
+.lc-txt{display:block;line-height:1.5}
+.lc-sub{font-size:13px}
+.lc-v{text-align:right;color:var(--text);overflow-wrap:anywhere}
+.lc-fila>.lc-k:first-child:not(:only-child){color:var(--sec)}
+.lc-salir{background:none;color:#d70015;padding:12px 0;border-radius:0;font-size:14px;font-weight:600;width:100%;text-align:left;border-bottom:1px solid var(--sep)}
+.lc-salir:hover{text-decoration:underline}
 .cta-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}
 .cuenta-card h3{margin:0 0 10px}
 .cuenta-card .cta-f .seg{justify-self:start}
 .cta-f{display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:5px 0;font-size:14px}
 .cta-f>span{color:var(--sec)}
-.cta-f b{font-weight:500;overflow-wrap:anywhere}
+.cta-f b{font-weight:400;overflow-wrap:anywhere}
 .cta-pronto{margin:0;background:#fff4e0;color:#c76a00}
 .cuenta-card button[disabled]{opacity:.55;cursor:not-allowed}
 .cta-ses{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--sep);font-size:14px}
@@ -611,7 +667,8 @@ const S={
   view:'inicio', doc:null, foco:0, pdfPag:1,
   sel:{}, comment:'', q:'', tipo:'', uploads:[],
   criteriosOpen:false, extraOpen:false, extraForm:{ref:'',txt:''},
-  iq:'', iest:'', itipo:'', agente:null, umbral:80,
+  iq:'', iest:'', itipo:'', agente:null, reglaForm:null,
+  reglas:[{id:'r1',nombre:'Aceptación mínima',descripcion:'Antes era el umbral de aceptación.',tipo:'porcentaje_aprobados',params:{min_pct:80},familia:'',efecto:'rechazar',activa:true}],
   // Filtros de hallazgos en Inicio: un documento se muestra si tiene algún hallazgo que los cumpla
   hdec:'', htipo:'', hclau:'', hmios:false, hnuevos:false, hcoms:false, hequipo:false, hesc:false, orden:null, pag:1, porPag:10,
   config:{plazo_dias:15,inicio:null},
@@ -628,6 +685,7 @@ try{S.lang=localStorage.getItem('rv_lang')||'es';}catch(e){S.lang='es';}
 try{S.ediciones=JSON.parse(localStorage.getItem(LS+'_edic')||'{}');}catch(e){S.ediciones={};}
 if(!location.protocol.startsWith('http')){
   try{S.config=JSON.parse(localStorage.getItem(LS+'_cfg')||'null')||S.config;}catch(e){}
+  try{S.reglas=JSON.parse(localStorage.getItem(LS+'_reglas')||'null')||S.reglas;}catch(e){}
   if(!S.config.inicio){S.config.inicio=new Date().toISOString().slice(0,10); try{localStorage.setItem(LS+'_cfg',JSON.stringify(S.config));}catch(e){}}
 }
 
@@ -644,6 +702,7 @@ S.roles=[{id:'admin',nombre:'Admin',descripcion:'Administra la estructura de rol
   {id:'aprobador',nombre:'Aprobador',descripcion:'Decide y firma las decisiones de los demás.'},
   {id:'revisor',nombre:'Revisor',descripcion:'Aprueba o rechaza hallazgos y comenta.'},
   {id:'dueno_proceso',nombre:'Dueño de Proceso',descripcion:'Corrige los documentos que se le escalan.'}];
+S.histDocs=new Set();   // documentos abiertos desde Histórico: solo consulta, sin la columna de hallazgos y decisiones
 Object.assign(S,{modulos:[],permisos:null,escalados:{},escHist:[],editables:{},token:'',cargado:false,
   rolForm:null,rolPanel:null,usrTab:'roles',usrEdit:null,usrVals:{},usrNuevo:false,escOpen:false,escVals:{}});
 S.equipo=[{n:'Sergio',c:'sergio@airbus.es',rol:'admin'},{n:'Marina',c:'marina@airbus.es',rol:'aprobador'},
@@ -706,7 +765,7 @@ async function sondear(){
                      mensajes:d.mensajes||[],chats:d.chats||S.chats,ediciones:d.ediciones||{},versiones:d.versiones||{},
                      sesiones:d.sesiones||[],roles:d.roles||S.roles,modulos:d.modulos||[],permisos:d.permisos||null,
                      escalados:d.escalados||{},escHist:d.escalados_hist||[],editables:d.editables||{},cargado:true,config:d.config||S.config,
-                     docs_meta:d.docs_meta||{},compartidos:d.compartidos||[],cargados:d.cargados||[],claves_api:d.claves_api||[]});
+                     docs_meta:d.docs_meta||{},compartidos:d.compartidos||[],cargados:d.cargados||[],claves_api:d.claves_api||[],reglas:d.reglas||S.reglas});
     if(d.equipo&&d.equipo.length) S.equipo=d.equipo;
     const yo=S.equipo.find(m=>m.n===S.user.nombre); if(yo) S.user.cargo=`${nombreRol(yo.rol)} · Calidad Part-IS`;   // si te cambian el rol
     fusionarCargados();                                               // documentos cargados → DOCS (se abren como los demás)
@@ -1512,6 +1571,51 @@ async function textoOriginal(doc,n){
   try{const r=await fetch(`${D.carpeta}/${DOCS[doc].slug}_${n}.txt`,{cache:'no-store'}); _orig[k]=r.ok?await r.text():'';}catch(e){_orig[k]='';}
   return _orig[k];
 }
+// Estructura de cada página (títulos, párrafos y tablas) generada desde el PDF por estructurar_paginas.py.
+// Todo HTML que se enseña o se guarda pasa por limpiarHTML: solo estas etiquetas, sin atributos salvo colspan/rowspan
+// (una versión manipulada no puede inyectar código en el navegador de otra persona).
+const ETQ_OK=new Set(['H2','H3','H4','P','TABLE','THEAD','TBODY','TR','TH','TD','B','STRONG','BR','UL','OL','LI']);
+function limpiarHTML(html){
+  const doc=new DOMParser().parseFromString(`<body>${html||''}</body>`,'text/html');
+  const limpiar=nodo=>{
+    for(const n of [...nodo.childNodes]){
+      if(n.nodeType===3) continue;
+      if(n.nodeType!==1){n.remove(); continue;}
+      limpiar(n);
+      let t=n.tagName;
+      if(t==='DIV'||t==='H1'){const p=doc.createElement(t==='H1'?'h2':'p'); while(n.firstChild) p.appendChild(n.firstChild); n.replaceWith(p); continue;}
+      if(t==='STRONG'){const b=doc.createElement('b'); while(n.firstChild) b.appendChild(n.firstChild); n.replaceWith(b); continue;}
+      if(!ETQ_OK.has(t)){if(['SCRIPT','STYLE','IFRAME','OBJECT','EMBED','SVG','MATH','TEMPLATE'].includes(t)) n.remove(); else n.replaceWith(...n.childNodes); continue;}
+      for(const at of [...n.attributes]) if(!(['colspan','rowspan'].includes(at.name)&&/^\d{1,2}$/.test(at.value))) n.removeAttribute(at.name);
+    }
+  };
+  limpiar(doc.body); return doc.body.innerHTML.trim();
+}
+function esHTML(t){return /^\s*</.test(t||'');}
+function textoAHTML(t){return String(t||'').split('\n').map(l=>l.trim()).filter(Boolean).map(l=>`<p>${esc(l)}</p>`).join('');}
+function aHTML(t){return esHTML(t)?limpiarHTML(t):textoAHTML(t);}
+function htmlATexto(html){                       // para comparar y descargar: tablas como «celda | celda»
+  const d=document.createElement('div'); d.innerHTML=limpiarHTML(html); const out=[];
+  for(const b of d.children){
+    if(b.tagName==='TABLE') b.querySelectorAll('tr').forEach(tr=>out.push([...tr.children].map(c=>c.innerText.replace(/\s+/g,' ').trim()).join(' | ')));
+    else if(b.tagName==='UL'||b.tagName==='OL') b.querySelectorAll('li').forEach(li=>out.push('• '+li.innerText.trim()));
+    else out.push(b.innerText.trim());
+  }
+  return out.filter(Boolean).join('\n');
+}
+const _origH={};
+async function htmlOriginal(doc,n){
+  const k=doc+'|'+n; if(k in _origH) return _origH[k];
+  let h='';
+  try{const r=await fetch(`${D.carpeta}/${DOCS[doc].slug}_${n}.html`,{cache:'no-store'}); if(r.ok) h=await r.text();}catch(e){}
+  return (_origH[k]=h.trim()?limpiarHTML(h):textoAHTML(await textoOriginal(doc,n)));
+}
+// Texto de una página para comparar o descargar (una versión antigua en texto plano se compara con el .txt)
+async function textoComparable(doc,n,pagVersion){
+  if(pagVersion!==undefined&&!esHTML(pagVersion)) return {o:await textoOriginal(doc,n),v:pagVersion};
+  const o=htmlATexto(await htmlOriginal(doc,n));
+  return {o,v:pagVersion===undefined?o:htmlATexto(pagVersion)};
+}
 async function textoVersion(doc,n){
   const k=doc+'|'+n; if(_vers[k]) return _vers[k];
   const r=await fetch(`/api/version?doc=${encodeURIComponent(doc)}&n=${n}`,{cache:'no-store',headers:{'X-Sesion':S.token||''}});
@@ -1584,37 +1688,40 @@ async function abrirEditor(doc,base){
 async function cargarPaginaEditor(){
   const e=S.ed; if(!e) return; const p=e.pag;
   e.cargando=true; pintarEditor();
-  if(!(p in e.orig)) e.orig[p]=await textoOriginal(e.doc,p);
-  if(!(p in e.textos)) e.textos[p]=e.basePags[p]??e.orig[p];
+  if(!(p in e.orig)) e.orig[p]=await htmlOriginal(e.doc,p);
+  if(!(p in e.textos)) e.textos[p]=p in e.basePags?aHTML(e.basePags[p]):e.orig[p];
   e.cargando=false; pintarEditor();
 }
 function cambiosEditor(){
   const e=S.ed, final={...e.basePags};
-  for(const [p,t] of Object.entries(e.textos)){if(t!==e.orig[p]) final[p]=t; else delete final[p];}
+  for(const [p,t] of Object.entries(e.textos)){if(limpiarHTML(t)!==e.orig[p]) final[p]=limpiarHTML(t); else delete final[p];}
   const igual=JSON.stringify(Object.entries(final).sort())===JSON.stringify(Object.entries(e.basePags).sort());
   return {final,igual};
 }
-// Resaltado en vivo: detrás del cuadro de texto hay una capa con el mismo texto y las mismas medidas, donde lo
-// añadido o cambiado respecto al ORIGINAL va en amarillo y donde se quitó algo hay una marca roja. Debajo, lo quitado.
+// Resaltado en vivo en el editor con estructura: cada párrafo, título o celda cuyo texto no está en el ORIGINAL se
+// marca en amarillo (añadido o cambiado); debajo se avisa de lo que se quitó. Las marcas son solo de pantalla:
+// limpiarHTML las quita al guardar.
 let _tMarcas=null;
-function pintarMarcas(){
-  const e=S.ed, t=document.getElementById('edTxt'), capa=document.getElementById('edCapa'), q=document.getElementById('edQuit');
-  if(!e||!t||!capa) return;
-  const ops=diffTexto(e.orig[e.pag]||'',t.value);
-  capa.innerHTML=ladoHTML(ops,'b',true)+' ';
-  capa.scrollTop=t.scrollTop;
-  const qs=quitadosDe(ops), hay=ops.some(o=>o.t!=='=');
+function marcarCambios(){
+  const e=S.ed, doc=document.getElementById('edDoc'), q=document.getElementById('edQuit');
+  if(!e||!doc) return;
+  const unidades=r=>[...r.querySelectorAll('p,h2,h3,h4,li,td,th')].filter(x=>!x.querySelector('p,h2,h3,h4,li,td,th'));
+  const norm=t=>t.replace(/\s+/g,' ').trim();
+  const o=document.createElement('div'); o.innerHTML=e.orig[e.pag]||'';
+  const orig=unidades(o).map(x=>norm(x.textContent)).filter(Boolean), enOrig=new Set(orig), ahora=new Set();
+  unidades(doc).forEach(x=>{const t=norm(x.textContent); if(t) ahora.add(t); x.classList.toggle('ed-mod',!!t&&!enOrig.has(t));});
+  const quit=orig.filter(t=>!ahora.has(t)), hay=quit.length||doc.querySelector('.ed-mod');
   if(q) q.innerHTML=!hay?'<span class="small">Sin cambios en esta página respecto al original.</span>'
-    :qs.length?`<span class="small"><span class="ln-del" style="text-decoration:none">Quitado</span> en esta página: ${qs.slice(0,4).map(x=>`«${esc(x.length>80?x.slice(0,80)+'…':x)}»`).join(' · ')}${qs.length>4?` y ${qs.length-4} más`:''}</span>`
+    :quit.length?`<span class="small"><span class="ln-del" style="text-decoration:none">Quitado</span> en esta página: ${quit.slice(0,4).map(x=>`«${esc(x.length>80?x.slice(0,80)+'…':x)}»`).join(' · ')}${quit.length>4?` y ${quit.length-4} más`:''}</span>`
     :'<span class="small">Solo hay texto añadido o cambiado (en amarillo).</span>';
 }
 function pintarEditor(){
   let c=document.getElementById('editor');
   if(!S.ed){if(c) c.remove(); document.body.style.overflow=''; return;}
   if(!c){c=document.createElement('div'); c.id='editor'; document.body.appendChild(c);}
-  const e=S.ed, info=DOCS[e.doc], N=info.paginas, txt=e.textos[e.pag]??'', cambiada=e.pag in e.textos?txt!==e.orig[e.pag]:e.pag in e.basePags;
+  const e=S.ed, info=DOCS[e.doc], N=info.paginas, txt=e.textos[e.pag]??'', cambiada=e.pag in e.textos?limpiarHTML(txt)!==e.orig[e.pag]:e.pag in e.basePags;
   const nCamb=Object.keys(cambiosEditor().final).length, sig=etiquetaVersion(e.doc,versionesDe(e.doc).reduce((m,v)=>Math.max(m,v.n),0)+1);
-  const foco=document.activeElement&&document.activeElement.id, sel=foco==='edTxt'?[document.activeElement.selectionStart,document.activeElement.selectionEnd,document.activeElement.scrollTop]:null;
+  const foco=document.activeElement&&document.activeElement.id, sel=null;
   c.innerHTML=`<div class="prev-fondo"></div>
     <div class="ed-caja" role="dialog" aria-modal="true" aria-label="Editar ${esc(e.doc)}">
       <div class="ed-cab"><div style="flex:1;min-width:0"><b>Editar ${esc(e.doc)} · se guardará como ${esc(sig)}</b>
@@ -1623,10 +1730,15 @@ function pintarEditor(){
       <div class="ed-cuerpo">
         <div class="ed-pag"><img src="${D.carpeta}/${info.slug}_${e.pag}.jpg" alt="Página ${e.pag} del original"></div>
         <div class="ed-texto">
-          <div class="small" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">Texto de la página ${e.pag}${cambiada?'<span class="rolpill" style="margin:0;background:#fff4e0;color:#c76a00">Modificada</span>':''}
-            <span class="ed-ley"><span class="ed-add">amarillo</span> = añadido o cambiado respecto al original · <span class="ed-del-ley"></span> = se quitó algo</span>
-            ${cambiada?`<button class="enlace" data-act="edRestaurar" style="margin-left:auto">Volver al texto original</button>`:''}</div>
-          ${e.cargando?'<p class="small">Cargando…</p>':`<div class="ed-area"><div class="ed-capa" id="edCapa" aria-hidden="true"></div><textarea id="edTxt" spellcheck="false" aria-label="Texto de la página ${e.pag}">${esc(txt)}</textarea></div>
+          <div class="small" style="display:flex;gap:8px;align-items:center">Página ${e.pag} · editable con su estructura<span id="edMod">${cambiada?'<span class="rolpill" style="margin:0;background:#fff4e0;color:#c76a00">Modificada</span>':''}</span>
+            <span class="ed-ley"><span class="ed-add">amarillo</span> = añadido o cambiado respecto al original</span>
+            ${cambiada?`<button class="enlace" data-act="edRestaurar" style="margin-left:auto">Volver al original</button>`:''}</div>
+          <div class="ed-barra" role="toolbar" aria-label="Formato">
+            <button type="button" data-act="edFmt" data-v="p" title="Párrafo">Párrafo</button><button type="button" data-act="edFmt" data-v="h2" title="Título">Título</button><button type="button" data-act="edFmt" data-v="h3" title="Subtítulo">Subtítulo</button><button type="button" data-act="edFmt" data-v="bold" title="Negrita"><b>N</b></button>
+            <span class="ed-sep"></span>
+            <button type="button" data-act="edTabla" data-v="nueva" title="Insertar una tabla de 3 × 3">Insertar tabla</button><button type="button" data-act="edTabla" data-v="fila+" title="Añadir una fila debajo de la celda actual">+ Fila</button><button type="button" data-act="edTabla" data-v="fila-" title="Quitar la fila de la celda actual">− Fila</button><button type="button" data-act="edTabla" data-v="col+" title="Añadir una columna a la derecha">+ Columna</button><button type="button" data-act="edTabla" data-v="col-" title="Quitar la columna de la celda actual">− Columna</button>
+          </div>
+          ${e.cargando?'<p class="small">Cargando…</p>':`<div id="edDoc" class="ed-doc" contenteditable="true" spellcheck="false" role="textbox" aria-multiline="true" aria-label="Contenido de la página ${e.pag}">${limpiarHTML(txt)}</div>
           <div id="edQuit" class="ed-quit" aria-live="polite"></div>`}
           ${!e.cargando&&!e.orig[e.pag]&&!txt?'<p class="note" style="margin:0">Esta página no tiene texto extraído (por ejemplo, un escaneado sin transcripción). Puedes escribirlo tú.</p>':''}
         </div>
@@ -1643,14 +1755,38 @@ function pintarEditor(){
         <button class="ok" data-act="edGuardar" ${e.cargando?'disabled':''}>Guardar como ${esc(sig)}</button></div>
     </div>`;
   document.body.style.overflow='hidden';
-  const t=document.getElementById('edTxt');
-  if(t){
-    t.onscroll=()=>{const capa=document.getElementById('edCapa'); if(capa) capa.scrollTop=t.scrollTop;};
-    pintarMarcas();
-  }
-  const f=document.getElementById(foco||'');
-  if(f){f.focus(); if(sel) try{f.setSelectionRange(sel[0],sel[1]); f.scrollTop=sel[2];}catch(err){}} else c.querySelector('.prev-x').focus();
+  const t=document.getElementById(foco||'');
+  if(t&&t.id!=='edDoc'){t.focus(); if(sel) try{t.setSelectionRange(sel[0],sel[1]);}catch(err){}} else c.querySelector('.prev-x').focus();
+  marcarCambios();
   aplicarIdioma();
+}
+function edSync(){
+  const el=document.getElementById('edDoc'); if(!el||!S.ed) return;
+  S.ed.textos[S.ed.pag]=el.innerHTML;
+  const n=Object.keys(cambiosEditor().final).length, c=document.getElementById('edCnt');
+  if(c) c.textContent=`${n} ${n===1?'página cambiada':'páginas cambiadas'}`;
+  const m=document.getElementById('edMod'); if(m) m.innerHTML=limpiarHTML(el.innerHTML)!==S.ed.orig[S.ed.pag]?'<span class="rolpill" style="margin:0;background:#fff4e0;color:#c76a00">Modificada</span>':'';
+}
+function celdaActual(){
+  const s=window.getSelection(); if(!s||!s.anchorNode) return null;
+  const n=s.anchorNode.nodeType===1?s.anchorNode:s.anchorNode.parentElement, c=n&&n.closest('td,th');
+  return c&&c.closest('#edDoc')?c:null;
+}
+function edTabla(op){
+  const doc=document.getElementById('edDoc'); if(!doc) return;
+  if(op==='nueva'){
+    doc.focus();
+    const fila=t=>`<tr>${[1,2,3].map(()=>`<${t}><br></${t}>`).join('')}</tr>`;
+    document.execCommand('insertHTML',false,`<table><tbody>${fila('th')}${fila('td')}${fila('td')}</tbody></table><p><br></p>`);
+    return edSync();
+  }
+  const c=celdaActual(); if(!c){aviso('Coloca el cursor dentro de una celda de la tabla'); return;}
+  const tr=c.parentElement, tabla=c.closest('table'), filas=[...tabla.querySelectorAll('tr')], i=[...tr.children].indexOf(c);
+  if(op==='fila+'){const n=document.createElement('tr'); [...tr.children].forEach(x=>{const td=document.createElement('td'); if(x.colSpan>1) td.colSpan=x.colSpan; td.innerHTML='<br>'; n.appendChild(td);}); tr.after(n);}
+  if(op==='fila-'){if(filas.length<=1){aviso('La tabla necesita al menos una fila'); return;} tr.remove();}
+  if(op==='col+'){filas.forEach(f=>{const ref=f.children[Math.min(i,f.children.length-1)], nueva=document.createElement(ref&&ref.tagName==='TH'?'th':'td'); nueva.innerHTML='<br>'; ref?ref.after(nueva):f.appendChild(nueva);});}
+  if(op==='col-'){if(tr.children.length<=1){aviso('La tabla necesita al menos una columna'); return;} filas.forEach(f=>{const x=f.children[Math.min(i,f.children.length-1)]; if(x) x.remove();});}
+  edSync();
 }
 async function guardarVersion(){
   const e=S.ed, {final,igual}=cambiosEditor();
@@ -1660,7 +1796,7 @@ async function guardarVersion(){
 }
 async function descargarVersion(doc,n){
   const N=DOCS[doc].paginas, pags=n?await textoVersion(doc,n):{}, partes=[];
-  for(let p=1;p<=N;p++) partes.push(`[página ${p}${p in pags?' · modificada':''}]\n${p in pags?pags[p]:await textoOriginal(doc,p)}`);
+  for(let p=1;p<=N;p++){const t=await textoComparable(doc,p,p in pags?pags[p]:undefined); partes.push(`[página ${p}${p in pags?' · modificada':''}]\n${t.v}`);}
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([partes.join('\n\n')],{type:'text/plain;charset=utf-8'}));
   a.download=`${doc}_${etiquetaVersion(doc,n).replace(/\s+/g,'_')}${n?'':'_original'}.txt`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
@@ -1695,7 +1831,7 @@ async function compararVersion(doc,n,pag){
   const v=versionesDe(doc).find(x=>x.n===n); if(!v) return;
   pag=pag||v.paginas[0];
   S.cmp={doc,n,pag,cargando:true}; pintarCmp();
-  try{const [o,pv]=await Promise.all([textoOriginal(doc,pag),textoVersion(doc,n)]); if(S.cmp&&S.cmp.doc===doc&&S.cmp.n===n) Object.assign(S.cmp,{orig:o,txt:pv[pag]??o,cargando:false});}
+  try{const pv=await textoVersion(doc,n), t=await textoComparable(doc,pag,pv[pag]); if(S.cmp&&S.cmp.doc===doc&&S.cmp.n===n) Object.assign(S.cmp,{orig:t.o,txt:t.v,cargando:false});}
   catch(err){S.cmp=null; aviso('No se pudo cargar la versión');}
   pintarCmp();
 }
@@ -1881,60 +2017,56 @@ function vClavesApi(){
         <div><span class="small">Puede leer</span><div class="cla-alc">${ALC.map(([k,l,pm])=>`<label class="fchk"><input type="checkbox" data-clalc="${k}" ${f.alcances[k]&&puede(pm[0],pm[1])?'checked':''} ${puede(pm[0],pm[1])?'':'disabled'}><span>${l}</span></label>`).join('')}</div></div></div>
       <button class="ok" data-act="claveCrear" style="width:100%;margin-top:8px">Crear clave</button></div>`
     :`<p class="note">${esc(sinPermiso('api','usar'))}</p>`;
-  return `<div class="card cuenta-card cla-card"><h3>Claves de API</h3>
+  return `<section class="lc-sec cla-card"><h3>Claves de API</h3>
     <p class="small">Para leer métricas, documentos y hallazgos desde Power BI, Excel o scripts, sin nombres de personas.
       <a href="/api/v1/docs" target="_blank" rel="noopener">Cómo usar la API</a>.</p>
     <p class="note" style="margin:6px 0 10px">Este servidor usa <b>http</b> sin cifrar: usa la clave en este ordenador o en una red de confianza, nunca desde internet.</p>
     ${nueva}${form}
     ${propias.length?`<div class="small" style="margin-top:12px"><b>Tus claves</b></div>${propias.map(c=>fila(c,false)).join('')}`:''}
-    ${otras.length?`<div class="small" style="margin-top:12px"><b>Claves del equipo</b> (eres Admin)</div>${otras.map(c=>fila(c,true)).join('')}`:''}</div>`;
+    ${otras.length?`<div class="small" style="margin-top:12px"><b>Claves del equipo</b> (eres Admin)</div>${otras.map(c=>fila(c,true)).join('')}`:''}</section>`;
 }
 async function crearClave(){
   const f=S.claveForm, alcances=Object.entries(f.alcances).filter(([k,v])=>v&&!document.querySelector(`[data-clalc="${k}"]`)?.disabled).map(([k])=>k);
   const r=await api('/api/claves/crear',{nombre:f.nombre,dias:Number(f.dias),alcances});
   if(r.ok){S.claveNueva=r.clave; S.claveForm={...f,nombre:''}; await sondear(); render(); document.getElementById('claveTxt')?.scrollIntoView({block:'center'});}
 }
+// Mi cuenta: un listado por secciones (sin recuadros), como los ajustes de una app: título de sección y filas
+// separadas por una línea fina.
 function vCuenta(){
   const yo=S.equipo.find(x=>x.n===S.user.nombre);
-  const fila=(k,v)=>`<div class="cta-f"><span>${k}</span><b>${v}</b></div>`;
-  const pronto=(t,d,b)=>`<div class="card cuenta-card"><div style="display:flex;align-items:center;gap:8px"><h3 style="margin:0">${t}</h3><span class="rolpill cta-pronto">Próximamente</span></div>
-      <p class="small">${d}</p><button class="ghost" disabled aria-disabled="true" style="width:100%">${b}</button></div>`;
-  const ses=SRV?(S.sesiones||[]).map(s=>{
-      const esta=s.sid===SID, viva=s.hace_s<20;
-      return `<div class="cta-ses"><span class="dot ${viva?'on':''}" title="${viva?'Activa':'Inactiva'}"></span>
-        <div style="min-width:0;flex:1"><div><b>${esc(navegadorDe(s.ua))}</b>${esta?' <span class="rolpill" style="margin:0 0 0 6px">Esta</span>':''}</div>
-        <div class="small">Desde ${fmtFecha(s.inicio)} · ${viva?'activa ahora':'última señal '+hace(new Date(Date.now()-s.hace_s*1000).toISOString())}</div></div></div>`;
-    }).join('')||'<p class="small">Cargando…</p>'
-    :'<p class="small">Sin la revisión en equipo (python servidor.py) no hay sesiones compartidas: estás solo en este navegador.</p>';
-  return `<h2 style="margin-bottom:2px">Mi cuenta</h2><p class="sub">Tus datos y cómo entras.</p>
-    <div class="cta-grid">
-      <div class="card cuenta-card"><h3>Perfil</h3>
-        ${fila('Nombre visible',esc(S.user.nombre))}${fila('Usuario',esc(S.user.login||'—'))}${fila('Correo',esc(S.user.correo||(yo&&yo.c)||'—'))}
-        ${fila('Rol',esc(yo?nombreRol(yo.rol):'Sin rol · no está en el equipo'))}${fila('Esta sesión',`Prototipo · sin contraseña real`)}
-        <div class="cta-f" style="align-items:center"><span>Idioma</span><div class="seg" role="group" aria-label="Idioma">
-          <button data-act="lang" data-v="es" class="${S.lang==='es'?'on':''}">ES</button><button data-act="lang" data-v="en" class="${S.lang==='en'?'on':''}">EN</button></div></div>
-        <button class="ghost" data-act="logout" style="width:100%;margin-top:6px">Cerrar sesión</button></div>
-      ${pronto('Llaves de acceso','Servirán como segundo paso y para entrar sin contraseña. Llegarán con el inicio de sesión de Microsoft (Entra ID).','Añadir una llave de acceso')}
-      ${pronto('App de autenticación','Códigos de 6 dígitos con Microsoft Authenticator. Los pedirá Entra ID al entrar, no esta app.','Configurar')}
-      ${pronto('Códigos de recuperación','Para entrar si pierdes el segundo paso. Llegarán junto con la verificación en dos pasos.','Generar códigos nuevos')}
-      ${vClavesApi()}
-      <div class="card cuenta-card"><h3>Sesiones abiertas</h3><p class="small">Dónde has entrado ahora mismo. «Cerrar sesión» quita esta de la lista.</p>${ses}</div>
-      <div class="card cuenta-card"><h3>Política de acceso</h3>
-        <p class="small" style="margin-bottom:4px"><b style="color:var(--text)">Hoy, en este prototipo:</b></p>
-        <ul class="cta-ul">
-          <li>Solo entra quien está dado de alta. El servidor te da una sesión y comprueba el permiso de tu rol en cada operación; el inicio de sesión todavía no pide contraseña.</li>
-          <li>Solo el rol Admin crea, edita o elimina roles y crea canales públicos. Los usuarios los gestiona quien tenga ese permiso en su rol.</li>
-          <li>Un documento solo lo edita la persona con rol Dueño de Proceso a la que se ha escalado, y solo mientras su revisión no esté completada.</li>
-          <li>Cargar documentos, compartirlos, cambiar su prioridad y marcar como revisado uno sin hallazgos son permisos de tu rol.</li>
-          <li>Cada persona solo recibe los chats en los que está, y los adjuntos solo se sirven a quien ve ese chat.</li>
-          <li>Un mensaje del chat solo se puede editar durante 30 minutos.</li>
-          <li>El PDF original y respuestas.csv nunca se modifican: ediciones y versiones se guardan aparte.</li>
-          <li>Todo se guarda en el ordenador que ejecuta el servidor; nada sale fuera.</li></ul>
-        <p class="small" style="margin:10px 0 4px"><b style="color:var(--text)">Previsto:</b></p>
-        <ul class="cta-ul cta-prev">
-          <li>Entrar con la cuenta de Microsoft (Entra ID) y verificación en dos pasos con Microsoft Authenticator.</li>
-          <li>Roles asignados desde Entra ID.</li></ul></div>
-    </div>`;
+  const fila=(k,v,extra='')=>`<div class="lc-fila"><span class="lc-k">${k}</span><span class="lc-v">${v}</span>${extra}</div>`;
+  const seccion=(t,d,cuerpo)=>`<section class="lc-sec"><h3>${t}</h3>${d?`<p class="small lc-d">${d}</p>`:''}<div class="lc-lista">${cuerpo}</div></section>`;
+  const pronto=(t,d)=>`<div class="lc-fila"><span class="lc-k">${t}<span class="small lc-sub">${d}</span></span><span class="lc-v"><span class="rolpill cta-pronto">Próximamente</span></span></div>`;
+  const ses=SRV?(S.sesiones||[]).map(x=>{
+      const esta=x.sid===SID, viva=x.hace_s<20;
+      return `<div class="lc-fila"><span class="lc-k"><span class="lc-l1"><span class="dot ${viva?'on':''}" title="${viva?'Activa':'Inactiva'}"></span>${esc(navegadorDe(x.ua))}${esta?'<span class="rolpill" style="margin:0">Esta</span>':''}</span>
+          <span class="small lc-sub">Desde ${fmtFecha(x.inicio)}</span></span>
+        <span class="lc-v small">${viva?'Activa ahora':'Última señal '+hace(new Date(Date.now()-x.hace_s*1000).toISOString())}</span></div>`;
+    }).join('')||'<div class="lc-fila"><span class="small">Cargando…</span></div>'
+    :'<div class="lc-fila"><span class="small">Sin la revisión en equipo (python servidor.py) no hay sesiones compartidas: estás solo en este navegador.</span></div>';
+  const lista=xs=>xs.map(t=>`<div class="lc-fila"><span class="lc-k lc-txt">${t}</span></div>`).join('');
+  return `<div class="lc">
+    <h2 style="margin-bottom:2px">Mi cuenta</h2><p class="sub">Tus datos y cómo entras.</p>
+    ${seccion('Perfil','',fila('Nombre visible',esc(S.user.nombre))+fila('Usuario',esc(S.user.login||'—'))+fila('Correo',esc(S.user.correo||(yo&&yo.c)||'—'))
+      +fila('Rol',esc(yo?nombreRol(yo.rol):'Sin rol · no está en el equipo'))+fila('Esta sesión','Prototipo · sin contraseña real'))}
+    ${seccion('Preferencias','',`<div class="lc-fila"><span class="lc-k">Idioma</span><span class="lc-v"><div class="seg" role="group" aria-label="Idioma">
+        <button data-act="lang" data-v="es" class="${S.lang==='es'?'on':''}">ES</button><button data-act="lang" data-v="en" class="${S.lang==='en'?'on':''}">EN</button></div></span></div>`)}
+    ${seccion('Seguridad','Llegarán con el inicio de sesión de Microsoft (Entra ID).',
+      pronto('Llaves de acceso','Segundo paso y entrar sin contraseña.')+pronto('App de autenticación','Códigos de 6 dígitos con Microsoft Authenticator.')+pronto('Códigos de recuperación','Para entrar si pierdes el segundo paso.'))}
+    ${vClavesApi()}
+    ${seccion('Sesiones abiertas','Dónde has entrado ahora mismo. «Cerrar sesión» quita esta de la lista.',ses)}
+    ${seccion('Política de acceso','Hoy, en este prototipo:',lista([
+      'Solo entra quien está dado de alta. El servidor te da una sesión y comprueba el permiso de tu rol en cada operación; el inicio de sesión todavía no pide contraseña.',
+      'Solo el rol Admin crea, edita o elimina roles y crea canales públicos. Los usuarios los gestiona quien tenga ese permiso en su rol.',
+      'Un documento solo lo edita la persona con rol Dueño de Proceso a la que se ha escalado, y solo mientras su revisión no esté completada.',
+      'Cargar documentos, compartirlos, cambiar su prioridad y marcar como revisado uno sin hallazgos son permisos de tu rol.',
+      'Cada persona solo recibe los chats en los que está, y los adjuntos solo se sirven a quien ve ese chat.',
+      'Un mensaje del chat solo se puede editar durante 30 minutos.',
+      'El PDF original y respuestas.csv nunca se modifican: ediciones y versiones se guardan aparte.',
+      'Todo se guarda en el ordenador que ejecuta el servidor; nada sale fuera.']))}
+    ${seccion('Previsto','',lista(['Entrar con la cuenta de Microsoft (Entra ID) y verificación en dos pasos con Microsoft Authenticator.','Roles asignados desde Entra ID.']))}
+    <section class="lc-sec"><div class="lc-lista"><button class="lc-salir" data-act="logout">Cerrar sesión</button></div></section>
+  </div>`;
 }
 // ---------- Métricas: resumen, cumplimiento, equipo (de conjunto, sin nombres) y calidad de la IA.
 // Las cifras las calcula el servidor (src/metricas.py, GET /api/metricas): aquí solo se pintan. Cada tarjeta dice qué
@@ -2419,6 +2551,9 @@ function vDecision(){
     return `<div class="card right" style="overflow:auto">
       <h2>Revisión completa</h2>
       <p class="sub">Todos los hallazgos tienen decisión.</p>
+      ${(()=>{const ev=evaluarDoc(S.doc); return `<div class="veredicto" style="--vc:${(VCOL[ev.v]||['#00205b'])[0]};--vb:${(VCOL[ev.v]||['','#f2f4f8'])[1]}">
+        <div><span class="small">Veredicto con las reglas de aceptación</span><b>${esc(ev.v)}</b></div>
+        ${ev.fallos.length?`<ul>${ev.fallos.map(f=>`<li><b>${esc(f.regla.nombre)}</b> · ${esc(f.motivo)} <span class="small">(${f.regla.efecto==='rechazar'?'rechaza':'revisión manual'})</span></li>`).join('')}</ul>`:'<p class="small" style="margin:6px 0 0">Cumple todas las reglas activas.</p>'}</div>`;})()}
       ${rs.map(x=>vMotivo(x)).join('')}
       ${menuExportar()}
       <button data-act="volver" style="width:100%;margin-top:10px">Volver al listado</button>
@@ -2456,15 +2591,16 @@ function vDecision(){
 }
 
 function vRevision(){
-  const info=DOCS[S.doc], d=S.doc, nv=versionesDe(d).length, prio=prioridadDe(d), pm=metaDoc(d).prioridad;
+  const info=DOCS[S.doc], d=S.doc, nv=versionesDe(d).length, prio=prioridadDe(d), pm=metaDoc(d).prioridad, hist=S.histDocs.has(d);
   const icono=p=>`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
   return `${vPestanas()}<div class="pnav pnav-rev rev-barra" style="margin-bottom:14px">
       <button class="ghost iconbtn" data-act="volver" aria-label="Volver al listado" title="Volver al listado">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
-      <div class="pnav-tit"><h2 style="margin:0">${esc(d)}</h2><span class="small" title="${esc(info.titulo)}">${info.version?'v'+esc(info.version)+' · ':''}${esc(info.titulo)}</span></div>
+      <div class="pnav-tit"><h2 style="margin:0">${esc(d)}</h2>${hist?'<span class="rolpill" style="margin:0;flex:none">Consulta histórica</span>':''}<span class="small" title="${esc(info.titulo)}">${info.version?'v'+esc(info.version)+' · ':''}${esc(info.titulo)}</span></div>
       <label class="rev-prio" title="${!puede('revisiones','prioridad')?esc(sinPermiso('revisiones','prioridad')):pm?`Cambiada por ${esc(pm.user)} · ${fmtFecha(pm.fecha)}`:'Sugerida según los hallazgos'}"><span class="small">Prioridad</span>
         <select id="docPrio" aria-label="Prioridad del documento" ${SRV&&puede('revisiones','prioridad')?'':'disabled'}>${['Alta','Media','Baja'].map(p=>`<option ${p===prio?'selected':''}>${p}</option>`).join('')}</select></label>
-      <button class="ghost iconbtn" data-act="toggleExtra" aria-label="Comentario sin hallazgo de la IA" ${puede('revisiones','comentar')?'title="Comentario sin hallazgo de la IA"':`disabled title="${esc(sinPermiso('revisiones','comentar'))}"`}>
+      ${hist?`<button class="ghost" data-act="revisarDoc" title="Abrir con los hallazgos, comentarios y decisiones">Revisar</button>`:''}
+      <button class="ghost iconbtn ${hist?'hidden':''}" data-act="toggleExtra" aria-label="Comentario sin hallazgo de la IA" ${puede('revisiones','comentar')?'title="Comentario sin hallazgo de la IA"':`disabled title="${esc(sinPermiso('revisiones','comentar'))}"`}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
       </button>
       ${SRV&&puede('revisiones','escalar')?`<button class="ghost" data-act="escAbrir" aria-expanded="${!!S.escOpen}">${(S.escalados||{})[S.doc]?'Cambiar escalamiento':'Escalar'}</button>`:''}
@@ -2475,9 +2611,9 @@ function vRevision(){
       <button class="ghost pnav-fijo" data-act="criterios">Criterios</button>
     </div>
     ${vEscalado(S.doc)}
-    <div class="two">
+    <div class="two ${hist?'solo':''}">
       <div>${info.cargado&&info.cargado.vista!=='pdf'?vCargadoContenido(info):vPdf()}</div>
-      ${R().length?vDecision():vSinHallazgos()}
+      ${hist?'':R().length?vDecision():vSinHallazgos()}
     </div>`;
 }
 
@@ -2638,6 +2774,7 @@ function familiasConocidas(){return [...new Set(Object.values(DOCS).map(x=>x.fam
 // Días para responder: plazo (Configuración → Reglas) menos los días pasados desde el inicio de la auditoría.
 // Un documento completado ya está respondido; uno sin hallazgos no necesita respuesta. Un documento CARGADO cuenta
 // desde el día en que se cargó y, mientras nadie lo dé por revisado, sí necesita respuesta.
+function guardarReglasLocal(){try{localStorage.setItem(LS+'_reglas',JSON.stringify(S.reglas));}catch(e){}}
 function hoyISO(){const d=new Date(); return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);}
 function inicioDe(d){const c=(DOCS[d]||{}).cargado; return c?String(c.fecha).slice(0,10):(S.config||{}).inicio;}
 function diasRestantes(est,d){
@@ -2708,7 +2845,7 @@ function vInicio(){
       <div><div class="cod">${esc(d.nombre)}</div><div class="small">${esc(d.tipo)}${d.version?' · v'+esc(d.version):''}</div></div>
       <div><div class="tit">${esc(d.titulo)}</div>${etiquetas||vacio}${d.quien.length?`<div class="small" style="margin-top:2px">Revisado por ${esc(d.quien.join(', '))}</div>`:''}${carga}
         ${extra?`<div class="eqfila">${extra}</div>`:''}</div>
-      <div class="estado">${pill('● '+esc(d.est),ec)}${(S.escalados||{})[d.nombre]?`<div class="small" style="margin-top:4px;color:var(--tint);font-weight:600">Devuelto a ${esc(S.escalados[d.nombre].para)}${S.escalados[d.nombre].para===S.user.nombre?' (tú)':''}</div>`:''}${avance}${fh?`<div class="small" style="margin-top:4px;color:var(--tint);font-weight:600">${d.coinc} de ${d.hall} coinciden</div>`:''}</div>
+      <div class="estado">${pill('● '+esc(d.est),ec)}${d.est==='Completado'?`<div style="margin-top:4px">${pillVeredicto(evaluarDoc(d.nombre))}</div>`:''}${(S.escalados||{})[d.nombre]?`<div class="small" style="margin-top:4px;color:var(--tint);font-weight:600">Devuelto a ${esc(S.escalados[d.nombre].para)}${S.escalados[d.nombre].para===S.user.nombre?' (tú)':''}</div>`:''}${avance}${fh?`<div class="small" style="margin-top:4px;color:var(--tint);font-weight:600">${d.coinc} de ${d.hall} coinciden</div>`:''}</div>
       <div class="prio">${pill(d.prio,PCOL[d.prio])}</div>
       <div class="dias">${celdaDias(d.dias)}</div>
     </div>`;
@@ -2883,7 +3020,7 @@ function answer(q){
 
   // 4. Configuración: reglas, criterio de aceptación, equipo
   if(/regla|umbral|criterio|aceptac|\bv[1-5]\b|jerarq|std-sec|lista-doc|normativ|verificador/.test(s)){
-    partes.push(`Las reglas del verificador (V1 a V5), la jerarquía normativa y el umbral de aceptación (ahora ${S.umbral} %) están en Configuración.`);
+    partes.push(`Hay ${plural((S.reglas||[]).filter(r=>r.activa).length,'regla de aceptación activa','reglas de aceptación activas')}${(S.reglas||[]).length?': '+(S.reglas||[]).filter(r=>r.activa).map(r=>`<b>${esc(r.nombre)}</b> (${esc(textoRegla(r))})`).join(', '):''}. Están en Configuración → Reglas, junto al plazo de respuesta y las reglas del verificador (V1 a V5).`);
     add('Ir a Configuración · Reglas','Configuración · Reglas y criterio de aceptación',{view:'reglas'});
   }
   const persona=S.equipo.find(m=>ws.includes(norm(m.n)));
@@ -3131,7 +3268,6 @@ function vHist(){
   </div>`;
 }
 
-// Criterio de aceptación: umbral sobre los hallazgos ya decididos. Define cuándo un documento se aprueba o se rechaza.
 // Plazo de respuesta: lo usa la columna «Días para responder» de Auditorías. Con servidor es común a todo el equipo y
 // solo lo cambia quien tenga «Cambiar el plazo de respuesta» (el servidor lo comprueba).
 function plazoCard(){
@@ -3149,40 +3285,108 @@ function plazoCard(){
     <div class="sumrow"><span>Fecha límite</span><b>${vence}</b></div>
     ${ok?'':`<p class="note">${esc(sinPermiso('configuracion','editar_plazo'))}</p>`}</div>`;
 }
-function criterioCard(){
-  const dec=RES.filter(x=>decOf(x));
-  const pend=RES.length-dec.length;
-  const ap=dec.filter(x=>decOf(x).dec==='approved').length;
-  const pct=dec.length?Math.round(ap/dec.length*100):null;
-  const u=S.umbral;
-  const cuenta={Aprobado:0,Rechazado:0,'En revisión':0};
-  Object.keys(DOCS).forEach(c=>{
-    const rs=RES.filter(r=>r.documento===c); if(!rs.length) return;
-    const ds=rs.filter(r=>decOf(r));
-    if(ds.length<rs.length){cuenta['En revisión']++;return;}
-    const p=ds.filter(r=>decOf(r).dec==='approved').length/ds.length*100;
-    cuenta[p>=u?'Aprobado':'Rechazado']++;
-  });
-  return `<div class="card" style="margin-bottom:16px"><h3>Criterio de aceptación</h3>
-    <p class="small">Un documento se aprueba cuando el porcentaje de hallazgos aprobados por el auditor es igual o mayor que el umbral y no quedan hallazgos pendientes. En otro caso queda en revisión o rechazado.</p>
-    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:14px 0">
-      <label class="small" for="umbral">Umbral de aceptación (%)</label>
-      <input id="umbral" type="number" min="0" max="100" value="${u}" style="width:100px" ${puede('configuracion','editar_umbral')?'':`disabled title="${esc(sinPermiso('configuracion','editar_umbral'))}"`}>
-    </div>
-    <div class="sumrow"><span>Aceptación actual</span><b>${pct===null?'—':pct+'%'}</b></div>
-    <div class="sumrow"><span>Hallazgos pendientes</span><b>${pend}</b></div>
-    <div class="sumrow"><span>Documentos aprobados</span>${st('ok',cuenta.Aprobado)}</div>
-    <div class="sumrow"><span>Documentos rechazados</span>${st('fail',cuenta.Rechazado)}</div>
-    <div class="sumrow"><span>Documentos en revisión</span>${st('doubt',cuenta['En revisión'])}</div>
-    <p class="note">La aceptación se calcula sobre los hallazgos ya decididos. Cambiar el umbral afecta a los documentos que aún no se han cerrado.</p>
-  </div>`;
+// ---------- Reglas de aceptación: deciden si un documento con todos sus hallazgos decididos se APRUEBA, se RECHAZA o
+// pasa a REVISIÓN MANUAL. Cada regla es una condición sobre los hallazgos aprobados por el auditor; si no se cumple,
+// aplica su efecto. Se guardan en el servidor (comunes al equipo); aquí se evalúan con los datos de la pantalla.
+const TIPOS_REGLA=[
+  {id:'porcentaje_aprobados',n:'Porcentaje mínimo de aceptación',d:'El porcentaje de hallazgos aprobados por el auditor tiene que llegar a un mínimo.',params:[['min_pct','Mínimo (%)','num',0,100,80]]},
+  {id:'max_hallazgos_tipo',n:'Máximo de hallazgos de un tipo',d:'Limita cuántos hallazgos aprobados de un tipo admite el documento (por ejemplo, 0 «No cumple»).',params:[['tipo','Tipo de hallazgo','tipo'],['max','Máximo permitido','num',0,999,0]]},
+  {id:'clausula_critica',n:'Cláusula crítica',d:'Ningún hallazgo aprobado puede afectar a esta cláusula de la Part-IS.',params:[['clausula','Cláusula','clausula']]},
+  {id:'confianza_minima',n:'Confianza mínima de la IA',d:'Todos los hallazgos aprobados deben tener al menos esta confianza; si no, conviene revisarlos a mano.',params:[['min_pct','Confianza mínima (%)','num',0,100,70]]},
+  {id:'plazo_respuesta',n:'Respuesta dentro de plazo',d:'La última decisión del documento tiene que estar dentro del plazo de respuesta (Reglas → Plazo de respuesta).',params:[]}];
+const EFECTO_TXT={rechazar:'Rechazar el documento',revisar:'Enviar a revisión manual'};
+function tipoRegla(id){return TIPOS_REGLA.find(t=>t.id===id)||TIPOS_REGLA[0];}
+function textoRegla(r){
+  const p=r.params||{};
+  return {porcentaje_aprobados:`Aprobados ≥ ${p.min_pct} %`,max_hallazgos_tipo:`Como mucho ${p.max} «${p.tipo}»`,
+    clausula_critica:`Sin hallazgos en ${p.clausula}`,confianza_minima:`Confianza ≥ ${p.min_pct} %`,plazo_respuesta:'Decisión dentro de plazo'}[r.tipo]||r.tipo;
 }
-
+function efTipo(r){const e=edicionDe(r); return e?e.tipo:r.tipo;}
+function efClausula(r){const e=edicionDe(r); return e?e.clausula:r.clausula;}
+// ¿Cumple el documento la regla? Devuelve null si cumple, o el motivo si no.
+function fallaRegla(regla,doc,rs){
+  const dec=rs.filter(r=>decOf(r)), ap=dec.filter(r=>decOf(r).dec==='approved'), p=regla.params||{};
+  if(regla.tipo==='porcentaje_aprobados'){const pct=dec.length?Math.round(ap.length/dec.length*100):100; return pct<p.min_pct?`${pct} % aprobados (mínimo ${p.min_pct} %)`:null;}
+  if(regla.tipo==='max_hallazgos_tipo'){const n=ap.filter(r=>efTipo(r)===p.tipo).length; return n>p.max?`${n} hallazgos «${p.tipo}» (máximo ${p.max})`:null;}
+  if(regla.tipo==='clausula_critica'){const n=ap.filter(r=>efClausula(r)===p.clausula).length; return n?`${n} hallazgo${n>1?'s':''} en ${p.clausula}`:null;}
+  if(regla.tipo==='confianza_minima'){const n=ap.filter(r=>Math.round((r.conf||0)*100)<p.min_pct).length; return n?`${n} con confianza menor del ${p.min_pct} %`:null;}
+  if(regla.tipo==='plazo_respuesta'){const c=S.config||{}; if(!c.inicio||!dec.length) return null;
+    const limite=Date.parse(c.inicio)+((c.plazo_dias||15)+1)*86400000, ult=Math.max(...dec.map(r=>Date.parse(decOf(r).fecha)||0));
+    return ult>limite?'Decidido fuera de plazo':null;}
+  return null;
+}
+// Veredicto de un documento: solo cuando todos sus hallazgos están decididos
+function evaluarDoc(doc,reglas){
+  const rs=RES.filter(r=>r.documento===doc);
+  if(!rs.length) return {v:'Sin hallazgos',fallos:[]};
+  if(rs.some(r=>!decOf(r))) return {v:'En revisión',fallos:[]};
+  const fam=(DOCS[doc]||{}).familia;
+  const fallos=(reglas||S.reglas||[]).filter(r=>r.activa&&(!r.familia||r.familia===fam))
+    .map(r=>({regla:r,motivo:fallaRegla(r,doc,rs)})).filter(x=>x.motivo);
+  return {v:fallos.some(x=>x.regla.efecto==='rechazar')?'Rechazado':fallos.length?'Revisión manual':'Aprobado',fallos};
+}
+const VCOL={Aprobado:['#248a3d','rgba(52,199,89,.14)'],Rechazado:['#d70015','rgba(255,59,48,.12)'],'Revisión manual':['#c76a00','rgba(255,159,10,.16)']};
+function pillVeredicto(ev){
+  if(!VCOL[ev.v]) return '';
+  return `<span title="${esc(ev.fallos.map(f=>f.regla.nombre+': '+f.motivo).join(' · ')||'Cumple todas las reglas activas')}">${pill(ev.v,VCOL[ev.v])}</span>`;
+}
+function vReglasAcept(){
+  const ok=puede('configuracion','gestionar_reglas'), reglas=S.reglas||[];
+  const fams=[...new Set(Object.values(DOCS).map(d=>d.familia))];
+  const filas=reglas.map(r=>`<tr class="${r.activa?'':'off'}">
+      <td><b>${esc(r.nombre)}</b>${r.descripcion?`<div class="small">${esc(r.descripcion)}</div>`:''}</td>
+      <td>${esc(textoRegla(r))}<div class="small">${esc(tipoRegla(r.tipo).n)}</div></td>
+      <td class="small">${esc(r.familia||'Todas las familias')}</td>
+      <td>${pill(r.efecto==='rechazar'?'Rechazar':'Revisión manual',r.efecto==='rechazar'?VCOL.Rechazado:VCOL['Revisión manual'])}</td>
+      <td><label class="sw" title="${r.activa?'Activa':'Inactiva'}"><input type="checkbox" data-reglaact="${esc(r.id)}" ${r.activa?'checked':''} ${ok?'':'disabled'} aria-label="Regla ${esc(r.nombre)} activa"><span></span></label></td>
+      <td style="text-align:right;white-space:nowrap">${ok?`<button class="ghost" data-act="reglaEditar" data-v="${esc(r.id)}" style="font-size:13px;padding:6px 12px">Editar</button>
+        <button class="ghost" data-act="reglaBorrar" data-v="${esc(r.id)}" style="font-size:13px;padding:6px 12px">Eliminar</button>`:''}</td></tr>`).join('');
+  return `<div class="card" style="margin-bottom:16px">
+    <div style="display:flex;align-items:flex-start;gap:12px"><div style="flex:1"><h3 style="margin:0 0 4px">Reglas de aceptación</h3>
+      <p class="small" style="margin:0">Cuando todos los hallazgos de un documento tienen decisión, el sistema aplica las reglas activas: si alguna no se cumple, el documento se rechaza o pasa a revisión manual; si las cumple todas, se aprueba.</p></div>
+      ${ok?'<button class="btn-principal" data-act="reglaNueva" style="border:0">Crear regla</button>':''}</div>
+    ${reglas.length?`<table class="treg"><thead><tr><th>Regla</th><th>Condición</th><th>Aplica a</th><th>Si no se cumple</th><th>Activa</th><th></th></tr></thead><tbody>${filas}</tbody></table>`
+      :`<div class="vacio">Todavía no hay reglas: todos los documentos decididos se aprobarían.${ok?' Pulsa «Crear regla» para añadir la primera.':''}</div>`}
+    ${ok?'':`<p class="note">${esc(sinPermiso('configuracion','gestionar_reglas'))}</p>`}
+    <p class="note">Aplica a: ${esc(fams.length)} familias de documentos. Los veredictos se ven en Auditorías (columna Estado) y en el detalle de cada revisión.</p></div>`;
+}
+// Ventana para crear o editar una regla
+function vDlgRegla(){
+  const f=S.reglaForm; if(!f) return '';
+  const t=tipoRegla(f.tipo), fams=[...new Set(Object.values(DOCS).map(d=>d.familia))].sort();
+  const tiposH=[...new Set(RES.map(r=>r.tipo).concat(TIPOS))], clausulas=[...new Set(RES.map(r=>r.clausula).filter(c=>/^IS\./.test(c||'')))].sort();
+  const campo=([k,l,tipo,min,max])=>{
+    const v=(f.params||{})[k]??'';
+    if(tipo==='num') return `<label class="small rg-f">${l}<input type="number" data-rgp="${k}" min="${min}" max="${max}" value="${esc(v)}" style="width:130px"></label>`;
+    const ops=tipo==='tipo'?tiposH:clausulas;
+    return `<label class="small rg-f">${l}<select data-rgp="${k}"><option value="">Elige…</option>${ops.map(o=>`<option ${o===v?'selected':''}>${esc(o)}</option>`).join('')}</select></label>`;
+  };
+  const prueba={...f,id:'__prueba',activa:true}, completos=Object.keys(DOCS).filter(d=>!['Sin hallazgos','En revisión'].includes(evaluarDoc(d,[]).v));
+  const fallan=completos.filter(d=>evaluarDoc(d,[prueba]).fallos.length).length;
+  return `<div class="scrim" data-act="reglaCerrar"></div>
+    <div class="dialog dlg-regla" role="dialog" aria-modal="true" aria-label="${f.id?'Editar regla':'Crear regla'}">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><h2 style="margin:0;flex:1">${f.id?'Editar regla':'Crear regla'}</h2>
+        <button class="drawer-x" data-act="reglaCerrar" aria-label="Cerrar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5 5 19"/></svg></button></div>
+      <div class="rg-paso"><span class="rg-n">1</span><b>Nombre</b></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap"><label class="small rg-f" style="flex:1;min-width:200px">Nombre<input id="rgN" value="${esc(f.nombre||'')}" maxlength="60" autocomplete="off" placeholder="Por ejemplo: Sin incumplimientos en registros"></label>
+        <label class="small rg-f" style="flex:2;min-width:240px">Descripción (opcional)<input id="rgD" value="${esc(f.descripcion||'')}" maxlength="300" autocomplete="off"></label></div>
+      <div class="rg-paso"><span class="rg-n">2</span><b>Condición que tiene que cumplir el documento</b></div>
+      <div class="rg-tipos" role="radiogroup" aria-label="Tipo de regla">${TIPOS_REGLA.map(x=>`<label class="rg-tipo ${x.id===f.tipo?'on':''}"><input type="radio" name="rgTipo" value="${x.id}" ${x.id===f.tipo?'checked':''}><span><b>${x.n}</b><span class="small">${x.d}</span></span></label>`).join('')}</div>
+      ${t.params.length?`<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:10px">${t.params.map(campo).join('')}</div>`:''}
+      <div class="rg-paso"><span class="rg-n">3</span><b>Alcance y efecto</b></div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+        <label class="small rg-f">Aplica a<select id="rgFam"><option value="">Todas las familias</option>${fams.map(x=>`<option ${x===f.familia?'selected':''}>${esc(x)}</option>`).join('')}</select></label>
+        <div class="small rg-f">Si no se cumple<div class="seg" role="radiogroup">${Object.entries(EFECTO_TXT).map(([k,l])=>`<button type="button" class="${f.efecto===k?'on':''}" data-act="rgEfecto" data-v="${k}" role="radio" aria-checked="${f.efecto===k}">${l}</button>`).join('')}</div></div>
+        <label class="fchk" style="height:36px"><input type="checkbox" id="rgAct" ${f.activa!==false?'checked':''}><span>Regla activa</span></label></div>
+      <div class="rg-prev">Con esta regla, hoy <b>${fallan}</b> de ${completos.length} documentos ya decididos no la cumplirían${fallan?` y ${f.efecto==='rechazar'?'se rechazarían':'pasarían a revisión manual'}`:''}.</div>
+      <div class="fbtns"><button class="ghost" data-act="reglaCerrar">Cancelar</button><button class="ok" data-act="reglaGuardar">${f.id?'Guardar cambios':'Crear regla'}</button></div>
+    </div>`;
+}
 function vCfg(){
   const tab=S.view;
   let body='';
   if(tab==='reglas'){
-    body=`${plazoCard()}${criterioCard()}<div class="card"><table><thead><tr><th>Referencia</th><th>Descripción</th></tr></thead><tbody>
+    body=`${vReglasAcept()}${plazoCard()}<details class="card ref-det"><summary><b>Referencias normativas y reglas del verificador</b> <span class="small">· solo lectura</span></summary><table style="margin-top:12px"><thead><tr><th>Referencia</th><th>Descripción</th></tr></thead><tbody>
       <tr><td>Part-IS</td><td>Anexo II, puntos IS.I.OR.200 a IS.I.OR.260 (texto oficial de EASA)</td></tr>
       <tr><td>STD-SEC-001</td><td>Estándar corporativo vigente: valores numéricos y criterios de control operativo</td></tr>
       <tr><td>LISTA-DOC</td><td>Lista maestra: documentos y versiones en vigor</td></tr>
@@ -3195,7 +3399,7 @@ function vCfg(){
       <tr><td>V4</td><td>El plazo, recalculado con código a partir de las fechas, incumple de verdad</td></tr>
       <tr><td>V5</td><td>La confianza declarada supera el umbral</td></tr>
       </tbody></table>
-      <p class="note">Las reglas se cargan desde la solución. Cambiarlas requiere aprobación de Calidad; esta pantalla no las modifica.</p></div>`;
+      <p class="note">Las reglas del verificador se cargan desde la solución. Cambiarlas requiere aprobación de Calidad; esta pantalla no las modifica.</p></details>`;
     return `<h2 style="margin-bottom:14px">Reglas</h2>${body}`;
   }
   // Usuarios: dos pestañas, Roles y Usuarios
@@ -3249,7 +3453,7 @@ function render(){
       </div>
     </div>`:'';
   const versionesP=S.verOpen&&S.view==='revision'&&DOCS[S.doc]?vPanelVersiones():'';
-  document.getElementById('view').innerHTML=vista(S.view)+criterios+versionesP+comentario+(S.view==='chat'?vDlgGrupo():'')+vPanelRol()+vAsistente();
+  document.getElementById('view').innerHTML=vista(S.view)+criterios+versionesP+comentario+(S.view==='chat'?vDlgGrupo():'')+vPanelRol()+(S.view==='reglas'?vDlgRegla():'')+vAsistente();
   scr.forEach(([s,y])=>{const el=document.querySelector(s); if(el&&y) el.scrollTop=y;});
   const cl=document.getElementById('chatlist');                   // chat: baja al último mensaje si hay nuevos
   if(cl){
@@ -3280,6 +3484,8 @@ function toggleDrawer(force){
   document.querySelector('.burger').setAttribute('aria-expanded',String(open));
 }
 
+// La barra del editor no roba el foco: así «Negrita» o «+ Fila» actúan donde está el cursor
+document.addEventListener('mousedown',e=>{if(e.target.closest&&e.target.closest('.ed-barra button')) e.preventDefault();});
 document.addEventListener('click',e=>{
   if(S.asigOpen&&!e.target.closest('.fasig')){S.asigOpen=false; render();}
   if(!e.target.closest('.usrwrap')&&!document.getElementById('menuUsr').classList.contains('hidden')) menuUsr(false);
@@ -3329,6 +3535,8 @@ document.addEventListener('click',e=>{
     S.ed=null; pintarEditor(); return;
   }
   if(a==='edPag'){const e=S.ed; if(!e) return; e.pag=Math.min(DOCS[e.doc].paginas,Math.max(1,e.pag+Number(el.dataset.v))); cargarPaginaEditor(); return;}
+  if(a==='edFmt'){const d=document.getElementById('edDoc'); if(!d) return; d.focus(); if(el.dataset.v==='bold') document.execCommand('bold'); else document.execCommand('formatBlock',false,el.dataset.v); edSync(); return;}
+  if(a==='edTabla'){edTabla(el.dataset.v); return;}
   if(a==='edRestaurar'){const e=S.ed; if(!e) return; e.textos[e.pag]=e.orig[e.pag]; pintarEditor(); return;}
   if(a==='edGuardar'){guardarVersion(); return;}
   if(a==='verCmp'){compararVersion(el.dataset.doc,Number(el.dataset.n)); return;}
@@ -3360,6 +3568,7 @@ document.addEventListener('click',e=>{
     if(!confirm(`¿Revocar «${c.nombre}»? Lo que la use dejará de funcionar al momento. No se puede deshacer.`)) return;
     api('/api/claves/revocar',{id:c.id}).then(r=>{if(r.ok){aviso('Clave revocada'); sondear();}}); return;
   }
+  if(a==='revisarDoc'){S.histDocs.delete(S.doc); render(); return;}
   if(a==='irPestana'){if(el.dataset.doc!==S.doc){abrirRevision(el.dataset.doc); render();} return;}
   if(a==='cerrarPestana'){cerrarPestana(el.dataset.doc); render(); window.scrollTo(0,0); return;}
   if(a==='cerrarPrev'){cerrarPrev(); return;}
@@ -3416,6 +3625,26 @@ document.addEventListener('click',e=>{
   }
   if(a==='privado'){
     api('/api/chat/crear',{tipo:'privado',con:el.dataset.v}).then(r=>{if(r.ok){S.canal=r.id; S.chatAbajo=true; S.abierto.privados=true; sondear();}});
+    return;
+  }
+  if(a==='reglaNueva'){S.reglaForm={id:null,nombre:'',descripcion:'',tipo:'max_hallazgos_tipo',params:{tipo:'No cumple',max:0},familia:'',efecto:'rechazar',activa:true}; render(); return;}
+  if(a==='reglaEditar'){const r=(S.reglas||[]).find(x=>x.id===el.dataset.v); if(r){S.reglaForm=JSON.parse(JSON.stringify(r)); render();} return;}
+  if(a==='reglaCerrar'){S.reglaForm=null; render(); return;}
+  if(a==='rgEfecto'){if(S.reglaForm){S.reglaForm.efecto=el.dataset.v; render();} return;}
+  if(a==='reglaGuardar'){
+    const f=S.reglaForm; if(!f) return;
+    if(!(f.nombre||'').trim()){aviso('La regla necesita un nombre'); return;}
+    if(tipoRegla(f.tipo).params.some(([k])=>(f.params||{})[k]===''||(f.params||{})[k]===undefined)){aviso('Completa la condición de la regla'); return;}
+    const datos={nombre:f.nombre,descripcion:f.descripcion,tipo:f.tipo,params:f.params,familia:f.familia||'',efecto:f.efecto,activa:f.activa!==false};
+    if(!SRV){if(f.id) Object.assign(S.reglas.find(x=>x.id===f.id),datos); else S.reglas.push({id:'r'+Date.now(),...datos}); guardarReglasLocal(); S.reglaForm=null; aviso('Regla guardada'); render(); return;}
+    api(f.id?'/api/regla/editar':'/api/regla/crear',f.id?{id:f.id,...datos}:datos).then(r=>{if(r.ok){aviso(f.id?'Regla actualizada':`Regla «${f.nombre}» creada`); S.reglaForm=null; sondear().then(render);}});
+    return;
+  }
+  if(a==='reglaBorrar'){
+    const r=(S.reglas||[]).find(x=>x.id===el.dataset.v); if(!r) return;
+    if(!confirm(`¿Eliminar la regla «${r.nombre}»? Los veredictos se recalculan sin ella.`)) return;
+    if(!SRV){S.reglas=S.reglas.filter(x=>x.id!==r.id); guardarReglasLocal(); render(); return;}
+    api('/api/regla/borrar',{id:r.id}).then(x=>{if(x.ok){aviso('Regla eliminada'); sondear().then(render);}});
     return;
   }
   if(a==='usrTab'){S.usrTab=el.dataset.v; render(); return;}
@@ -3508,11 +3737,11 @@ document.addEventListener('click',e=>{
   if(a==='navCfg'){const d=document.getElementById('drawer'), o=!d.classList.contains('cfg-open'); d.classList.toggle('cfg-open',o); el.setAttribute('aria-expanded',String(o)); return;}
   if(a==='drawer') toggleDrawer();
   else if(a==='nav'){S.view=el.dataset.v; toggleDrawer(false); render(); window.scrollTo(0,0);}
-  else if(a==='abrir'){abrirRevision(el.dataset.doc); render(); window.scrollTo(0,0);}
+  else if(a==='abrir'){S.histDocs.delete(el.dataset.doc); abrirRevision(el.dataset.doc); render(); window.scrollTo(0,0);}
   else if(a==='iest'){S.iest=el.dataset.v; render();}
   else if(a==='hdec'){S.hdec=el.dataset.v; render();}
   else if(a==='limpiarFiltros'){Object.assign(S,{iq:'',itipo:'',iest:'',asigOpen:false,hdec:'',htipo:'',hclau:'',hmios:false,hnuevos:false,hcoms:false,hequipo:false,hesc:false,iprio:'',iant:''}); render();}
-  else if(a==='abrirH'){abrirRevision(el.dataset.doc); const i=R().findIndex(r=>r.ubicacion===el.dataset.u); if(i>=0) irA(i); render(); window.scrollTo(0,0);}
+  else if(a==='abrirH'){S.histDocs.add(el.dataset.doc); abrirRevision(el.dataset.doc); const i=R().findIndex(r=>r.ubicacion===el.dataset.u); if(i>=0) irA(i); render(); window.scrollTo(0,0);}
   else if(a==='volver'){S.view='inicio'; S.sel={}; S.comment=''; render(); window.scrollTo(0,0);}
   else if(a==='criterios'){S.criteriosOpen=true; render();}
   else if(a==='cerrarCriterios'){S.criteriosOpen=false; render();}
@@ -3568,18 +3797,14 @@ document.addEventListener('click',e=>{
 });
 
 document.addEventListener('input',e=>{
+  if(S.reglaForm&&(e.target.id==='rgN'||e.target.id==='rgD')) S.reglaForm[e.target.id==='rgN'?'nombre':'descripcion']=e.target.value;
   if(S.rolForm&&(e.target.id==='rfN'||e.target.id==='rfD')) S.rolForm[e.target.id==='rfN'?'nombre':'descripcion']=e.target.value;
   if(e.target.id==='ueC') S.usrVals={...S.usrVals,c:e.target.value};
   if(e.target.id==='aN'||e.target.id==='aC') S.usrVals={...S.usrVals,[e.target.id]:e.target.value};
   if(e.target.id==='escNota') S.escVals={...S.escVals,nota:e.target.value};
   if(e.target.id==='flt'){S.q=e.target.value; render(); const f=document.getElementById('flt'); if(f){f.focus(); f.setSelectionRange(f.value.length,f.value.length);}}
   if(e.target.id==='iq'){S.iq=e.target.value; render(); const f=document.getElementById('iq'); if(f){f.focus(); f.setSelectionRange(f.value.length,f.value.length);}}
-  if(e.target.id==='edTxt'&&S.ed){                                   // editor de versión: sin redibujar (no se pierde el cursor)
-    S.ed.textos[S.ed.pag]=e.target.value;
-    const n=Object.keys(cambiosEditor().final).length, c=document.getElementById('edCnt');
-    if(c) c.textContent=`${n} ${n===1?'página cambiada':'páginas cambiadas'}`;
-    clearTimeout(_tMarcas); _tMarcas=setTimeout(pintarMarcas,120);
-  }
+  if(e.target.id==='edDoc'&&S.ed){edSync(); clearTimeout(_tMarcas); _tMarcas=setTimeout(marcarCambios,150);}   // editor de versión: sin redibujar (no se pierde el cursor)
   if(e.target.id==='edNota'&&S.ed){S.ed.nota=e.target.value;}
   if(e.target.id==='edNombre'&&S.ed){S.ed.nombre=e.target.value;}
   if(e.target.id==='claNom'){S.claveForm.nombre=e.target.value;}
@@ -3619,7 +3844,14 @@ document.addEventListener('change',e=>{
   const mf={mPeriodo:'periodo',mFamilia:'familia',mPrioridad:'prioridad',mTipo:'tipo',mClausula:'clausula'}[e.target.id];
   if(mf){S.metF[mf]=e.target.value; cargarMetricas();}
   if(e.target.id==='iest'){S.iest=e.target.value; render();}
-  if(e.target.id==='umbral'&&puede('configuracion','editar_umbral')){S.umbral=Math.min(100,Math.max(0,Number(e.target.value)||0)); render();}
+  // Ventana de regla: se guarda en S para no perderla al redibujar
+  if(S.reglaForm&&e.target.name==='rgTipo'){const t=tipoRegla(e.target.value); S.reglaForm.tipo=t.id; S.reglaForm.params=Object.fromEntries(t.params.map(([k,,ty,,,def])=>[k,(S.reglaForm.params||{})[k]??(ty==='num'?def:'')])); render();}
+  if(S.reglaForm&&e.target.dataset&&e.target.dataset.rgp){const k=e.target.dataset.rgp; S.reglaForm.params={...S.reglaForm.params,[k]:e.target.type==='number'?Number(e.target.value):e.target.value}; render();}
+  if(S.reglaForm&&e.target.id==='rgFam'){S.reglaForm.familia=e.target.value; render();}
+  if(S.reglaForm&&e.target.id==='rgAct'){S.reglaForm.activa=e.target.checked;}
+  if(e.target.dataset&&e.target.dataset.reglaact){const id=e.target.dataset.reglaact, on=e.target.checked;
+    if(!SRV){const r=S.reglas.find(x=>x.id===id); if(r) r.activa=on; guardarReglasLocal(); render(); return;}
+    api('/api/regla/editar',{id,activa:on}).then(r=>{if(r.ok) aviso(on?'Regla activada':'Regla desactivada'); sondear().then(render);});}
   // Formularios de Configuración → Usuarios y de escalamiento: se guardan en S para no perderlos al redibujar
   if(e.target.dataset&&e.target.dataset.perm&&S.rolForm){
     const [m,a]=e.target.dataset.perm.split('.'); (S.rolForm.permisos[m]=S.rolForm.permisos[m]||{})[a]=e.target.checked; render();
@@ -3652,6 +3884,7 @@ document.addEventListener('keydown',e=>{
   if(S.cmp&&e.key==='Escape'){e.preventDefault(); S.cmp=null; pintarCmp(); return;}
   if(S.comp&&e.key==='Escape'){e.preventDefault(); S.comp=null; pintarComp(); return;}
   if(S.carga&&S.carga.paso==='confirmar'&&e.key==='Escape'){e.preventDefault(); document.querySelector('[data-act="cgCancelar"]')?.click(); return;}
+  if(e.key==='Escape'&&S.reglaForm){S.reglaForm=null; render(); return;}
   if(e.key==='Escape'&&S.rolPanel){S.rolPanel=null; S.rolForm=null; render(); return;}
   if(e.key==='Escape'&&S.asigOpen){S.asigOpen=false; render(); document.querySelector('.fasig-btn')?.focus(); return;}
   if(e.key==='Escape'&&!document.getElementById('menuUsr').classList.contains('hidden')){menuUsr(false); document.querySelector('.who').focus(); return;}

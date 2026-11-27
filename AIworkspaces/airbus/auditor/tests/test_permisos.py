@@ -87,6 +87,17 @@ class TestRoles(unittest.TestCase):
         self.assertNotIn("borrar_todo", r["permisos"]["revisiones"])
         self.assertFalse(r["permisos"]["revisiones"]["aprobar"])        # solo vale True booleano
 
+    def test_umbral_antiguo_pasa_a_gestionar_reglas(self):
+        e = copy.deepcopy(ESTADO_INICIAL)
+        e["roles"] = copy.deepcopy(P.ROLES_INICIALES) + [{"id": "propio", "nombre": "Propio", "permisos": {}}]
+        for r in e["roles"]:
+            r["permisos"].setdefault("configuracion", {})["editar_umbral"] = True
+            r["permisos"]["configuracion"].pop("gestionar_reglas", None)
+        P.migrar(e)
+        g = {r["id"]: r["permisos"]["configuracion"]["gestionar_reglas"] for r in e["roles"]}
+        self.assertEqual(g, {P.ADMIN: True, "aprobador": True, "revisor": False, P.DUENO: False, "propio": True})
+        self.assertTrue(all("editar_umbral" not in r["permisos"]["configuracion"] for r in e["roles"]))
+
     def test_migracion_de_roles_antiguos(self):
         e = copy.deepcopy(ESTADO_INICIAL)
         e["equipo"] = [{"n": "A", "c": "a@x.es", "rol": "Administrador"}, {"n": "B", "c": "b@x.es", "rol": "Aprobador"},
@@ -461,6 +472,24 @@ class TestServidor(unittest.TestCase):
         for malo in ({"plazo_dias": 0}, {"plazo_dias": "x"}, {"plazo_dias": 999}, {"inicio": "2026-13-45"}):
             self.assertEqual(self.post("Sergio", "/api/config/plazo", malo)[0], 400, malo)
         self.assertEqual(servidor._estado["config"]["plazo_dias"], 30)    # lo rechazado no cambia nada
+
+    def test_reglas_de_aceptacion(self):
+        _, est = self.pedir("/api/estado", token=self.como("Nelson"), metodo="GET")
+        self.assertEqual([r["tipo"] for r in est["reglas"]], ["porcentaje_aprobados"])     # la del antiguo umbral
+        regla = {"nombre": "Sin No cumple", "tipo": "max_hallazgos_tipo", "params": {"tipo": "No cumple", "max": 0},
+                 "familia": "", "efecto": "rechazar"}
+        self.assertEqual(self.post("Nelson", "/api/regla/crear", regla)[0], 403)            # Revisor: no
+        code, j = self.post("Marina", "/api/regla/crear", regla)                             # Aprobador: sí
+        self.assertEqual(code, 200, j)
+        self.assertEqual(self.post("Marina", "/api/regla/editar", {"id": j["id"], "activa": False})[0], 200)
+        r = next(x for x in servidor._estado["reglas"] if x["id"] == j["id"])
+        self.assertEqual((r["activa"], r["params"]), (False, {"tipo": "No cumple", "max": 0}))
+        for malo in ({**regla, "tipo": "inventado"}, {**regla, "efecto": "borrar"}, {**regla, "nombre": ""},
+                     {**regla, "params": {"tipo": "No cumple", "max": -1}}, {**regla, "params": {"max": 1}}):
+            self.assertEqual(self.post("Sergio", "/api/regla/crear", malo)[0], 400, malo)
+        self.assertEqual(self.post("Nelson", "/api/regla/borrar", {"id": j["id"]})[0], 403)
+        self.assertEqual(self.post("Sergio", "/api/regla/borrar", {"id": j["id"]})[0], 200)
+        self.assertEqual(len(servidor._estado["reglas"]), 1)
 
     def test_permisos_persisten_en_disco(self):
         rid = self.post("Sergio", "/api/rol/crear", {"nombre": "Persistente", "permisos": {"historico": {"descargar_revision": True}}})[1]["id"]
