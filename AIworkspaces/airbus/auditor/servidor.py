@@ -93,6 +93,7 @@ _presencia: dict[str, dict] = {}       # usuario → {"key", "t"}
 _sesiones: dict[str, dict] = {}        # usuario → {id de sesión → {"inicio", "ua", "t"}} (en memoria; solo informativo)
 _tokens: dict[str, str] = {}           # token de sesión → usuario (en memoria: al reiniciar el servidor, hay que volver a entrar)
 _HALL: dict[str, list[str]] = {}       # documento → claves «documento|ubicación» de sus hallazgos (leído de index.html)
+_DATOS: dict = {"res": [], "docs": {}, "metricas": None}   # hallazgos y documentos completos de index.html (Métricas)
 SESION_S = 30 * 60                     # una sesión sin señales durante 30 min deja de listarse
 
 
@@ -129,6 +130,7 @@ def _cargar_documentos():
     for linea in (WEB / "index.html").read_text(encoding="utf-8").splitlines():
         if linea.startswith("const D=") and linea.endswith(";"):
             d = json.loads(linea[len("const D="):-1])
+            _DATOS.update(res=d.get("res", []), docs=d.get("docs", {}), metricas=d.get("metricas"))
             for doc in d.get("docs", {}):
                 _HALL[doc] = []
             for r in d.get("res", []):
@@ -435,6 +437,21 @@ class Manejador(SimpleHTTPRequestHandler):
             _guardar()
         return self._json({"ok": True, "id": aid, "nombre": nombre, "tipo": tipo, "tam": n})
 
+    def _metricas(self, q):
+        """Resumen, cumplimiento, equipo (de conjunto) y calidad de la IA, con los filtros de la petición."""
+        from datetime import date
+        from src import metricas as M
+        filtros = {k: (q.get(k) or [""])[0][:80] for k in ("familia", "prioridad", "tipo", "clausula", "periodo")}
+        with _lock:
+            user = _usuario_de_token(self.headers.get("X-Sesion", ""))
+            if not user:
+                return self._json({"error": "sesión no válida: vuelve a entrar"}, 401)
+            if not P.puede(_estado, user, "metricas", "consultar"):
+                return self._json({"error": "Tu rol no permite: Ver métricas."}, 403)
+            cargados = [c for c in _estado.get("cargados", {}).values() if c.get("confirmado")]
+            datos = M.calcular(_DATOS["res"], _DATOS["docs"], _estado, cargados, filtros, date.today(), _DATOS["metricas"])
+        return self._json(datos)
+
     def _recibir_documento(self):
         """«Cargar archivo» en Auditorías: guarda el original y lo prepara para abrirlo en Revisión (src/cargados.py).
         Queda pendiente de confirmar (familia y prioridad) con /api/cargado/guardar. Usuario: el del token."""
@@ -501,6 +518,8 @@ class Manejador(SimpleHTTPRequestHandler):
         u = urlparse(self.path)
         if u.path == "/api/adjunto":
             return self._adjunto(parse_qs(u.query))
+        if u.path == "/api/metricas":                 # pestaña Métricas: todas las cifras salen de src/metricas.py
+            return self._metricas(parse_qs(u.query))
         if u.path == "/api/version":                  # texto completo de una versión (la lista va en /api/estado)
             with _lock:
                 if not P.puede(_estado, _usuario_de_token(self.headers.get("X-Sesion", "")), "revisiones", "consultar"):

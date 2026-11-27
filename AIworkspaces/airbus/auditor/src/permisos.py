@@ -45,6 +45,9 @@ MODULOS = [
          "Días disponibles para responder a la auditoría y fecha de inicio; se aplica a todo el equipo"),
         ("gestionar_usuarios", "Gestionar usuarios", "Crear, editar y eliminar usuarios (no puede dar ni quitar el rol Admin)"),
     ]),
+    ("metricas", "Métricas", [
+        ("consultar", "Ver métricas", "Resumen, cumplimiento, equipo (sin nombres) y calidad de la IA, con sus filtros"),
+    ]),
     ("historico", "Descarga de histórico", [
         ("descargar_respuestas", "Descargar respuestas del auditor", "La salida oficial en CSV, Excel, JSON, Word o PDF"),
         ("descargar_revision", "Descargar revisión del equipo", "Decisiones, comentarios y ediciones del equipo"),
@@ -70,6 +73,7 @@ _REV_COMUN = ["consultar", "aprobar", "rechazar", "comentar", "editar_hallazgos"
 # Acciones añadidas después de que los equipos guardaran sus roles. En un rol guardado sin ellas, su valor inicial es
 # «este rol ya puede revisar» (aprobar o rechazar); el resto de acciones nuevas sigue empezando desactivado.
 ACCIONES_DE_REVISION = ("cargar", "compartir", "prioridad", "marcar_revisado")
+NUEVAS_PARA_QUIEN_REVISA = [("revisiones", a) for a in ACCIONES_DE_REVISION] + [("metricas", "consultar")]
 ROLES_INICIALES = [
     {"id": ADMIN, "nombre": "Admin", "sistema": True,
      "descripcion": "Administra la estructura de roles y el equipo; decide sobre los hallazgos.",
@@ -77,11 +81,11 @@ ROLES_INICIALES = [
     {"id": "aprobador", "nombre": "Aprobador", "sistema": False,
      "descripcion": "Decide y firma las decisiones de los demás.",
      "permisos": _perm(revisiones=_REV_COMUN, configuracion=["consultar", "editar_umbral", "editar_plazo"],
-                       historico=["descargar_respuestas", "descargar_revision"])},
+                       historico=["descargar_respuestas", "descargar_revision"], metricas=["consultar"])},
     {"id": "revisor", "nombre": "Revisor", "sistema": False,
      "descripcion": "Aprueba o rechaza hallazgos y comenta.",
      "permisos": _perm(revisiones=_REV_COMUN, configuracion=["consultar", "editar_umbral"],
-                       historico=["descargar_respuestas", "descargar_revision"])},
+                       historico=["descargar_respuestas", "descargar_revision"], metricas=["consultar"])},
     {"id": DUENO, "nombre": "Dueño de Proceso", "sistema": True,
      "descripcion": "Corrige los documentos que se le escalan. No decide sobre los hallazgos.",
      "permisos": _perm(revisiones=["consultar", "comentar", "editar_escalados"], configuracion=["consultar"])},
@@ -135,10 +139,14 @@ def migrar(estado: dict) -> None:
         estado["roles"] = [dict(r, permisos={m: dict(a) for m, a in r["permisos"].items()}) for r in ROLES_INICIALES]
     ids = {r["id"] for r in estado["roles"]}
     for r in estado["roles"]:                      # acciones nuevas que no existían al guardar: desactivadas
-        rev = r.get("permisos", {}).get("revisiones") if isinstance(r.get("permisos"), dict) else None
-        if isinstance(rev, dict):                  # …salvo las de ACCIONES_DE_REVISION: las tiene quien ya revisa
-            for a in ACCIONES_DE_REVISION:
-                rev.setdefault(a, rev.get("aprobar") is True or rev.get("rechazar") is True)
+        perms = r.get("permisos") if isinstance(r.get("permisos"), dict) else None
+        rev = perms.get("revisiones") if perms else None
+        if isinstance(rev, dict):                  # …salvo NUEVAS_PARA_QUIEN_REVISA: las tiene quien ya revisa
+            revisa = rev.get("aprobar") is True or rev.get("rechazar") is True
+            for m, a in NUEVAS_PARA_QUIEN_REVISA:
+                mod = perms.setdefault(m, {})
+                if isinstance(mod, dict):
+                    mod.setdefault(a, revisa)
         r["permisos"] = limpiar_permisos(r.get("permisos", {}), r["id"])
     for m in estado.get("equipo", []):
         if m.get("rol") not in ids:

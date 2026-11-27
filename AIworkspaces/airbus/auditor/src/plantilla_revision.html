@@ -392,6 +392,51 @@ button.adj-img:focus-visible{outline:2px solid var(--tint);outline-offset:2px}
 .comp-p{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:10px;cursor:pointer}
 .comp-p:hover{background:#f2f2f7}
 .dialog .comp-p input[type=checkbox]{width:18px;flex:none}   /* .dialog input{width:100%} empujaba el nombre fuera */
+/* Métricas */
+.met{transition:opacity .15s}.met.met-cargando{opacity:.55}
+.mfil{margin-bottom:14px}
+.mkpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:14px}
+.mkpi{background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.mkpi[role=button]{cursor:pointer}.mkpi[role=button]:hover{box-shadow:0 0 0 2px #c9dcef}
+.mkpi-v{font-size:28px;font-weight:600;color:#0b0b0b;margin:2px 0}
+.mkpi.hero{grid-column:span 2}.mkpi.hero .mkpi-v{font-size:52px;line-height:1.05}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:14px}
+.mcard.ancha{grid-column:1/-1}.mcard.ancha .mchart{max-height:300px}
+.mfil select{min-width:160px}
+.mcard{margin:0}.mcard h3{margin:0 0 2px;font-size:16px}
+.mcard-cab{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px}.mayuda{margin:0;max-width:62ch}
+.macc{display:flex;gap:6px}.macc .ghost{font-size:12px;padding:5px 10px}
+.mchart{width:100%;height:auto;display:block}.mchart .mtick{font-size:11px;fill:#898781;font-variant-numeric:tabular-nums}.mchart .mlab{font-size:12px;fill:#52514e}
+.mchart path[data-tv]:hover,.mchart path[data-tv]:focus{opacity:.8;outline:none}
+.mley{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:#52514e;margin-top:6px}
+.mley i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}.mley i.lin{height:2px;width:14px;border-radius:1px;vertical-align:3px}
+.mbar{display:flex;flex-direction:column;gap:2px}
+.mbar-f{all:unset;display:grid;grid-template-columns:minmax(90px,38%) 1fr;gap:10px;align-items:center;padding:5px 4px;border-radius:8px;cursor:pointer;font-size:13px}
+.mbar-f:hover,.mbar-f:focus-visible{background:#f2f6fc}.mbar-f:focus-visible{outline:2px solid var(--tint)}
+.mbar-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#0b0b0b}
+.mbar-t{display:flex;align-items:center;gap:6px;min-width:0}
+.mbar-b{height:14px;background:#2a78d6;border-radius:0 4px 4px 0;flex:none}
+.mbar-v{font-size:12px;color:#52514e;font-variant-numeric:tabular-nums}
+.mmed{display:flex;flex-direction:column;gap:2px}
+.mmed-f{display:grid;grid-template-columns:minmax(90px,38%) 1fr 46px;gap:10px;align-items:center;padding:6px 4px;border-radius:8px;font-size:13px}
+.mmed-f[role=button]{cursor:pointer}.mmed-f[role=button]:hover,.mmed-f:focus-visible{background:#f2f6fc}
+.mmed-t{height:8px;background:#cde2fb;border-radius:999px;overflow:hidden}.mmed-b{display:block;height:100%;background:#2a78d6;border-radius:999px}
+.mmed-v{text-align:right;color:#0b0b0b;font-variant-numeric:tabular-nums}
+.mseg{display:flex;gap:2px;height:28px;margin:4px 0}
+.mseg-p{display:flex;align-items:center;padding:0 8px;border-radius:4px;font-size:13px;font-weight:600;min-width:6px;cursor:default}
+.mseg-p:focus-visible{outline:2px solid #0b0b0b;outline-offset:1px}
+.mmap{overflow:auto}.mmap table{border-collapse:separate;border-spacing:2px;font-size:12px}
+.mmap th{font-weight:400;color:#52514e;text-align:left;padding:2px 8px 2px 0;white-space:nowrap}.mmap thead th{text-align:center;padding:0 2px 4px}
+.mmap-c{all:unset;display:block;min-width:58px;height:30px;line-height:30px;text-align:center;border-radius:4px;font-variant-numeric:tabular-nums;cursor:pointer}
+.mmap-c[disabled]{cursor:default}.mmap-c:not([disabled]):hover,.mmap-c:focus-visible{outline:2px solid #0b0b0b;outline-offset:-2px}
+.mescala{display:flex;align-items:center;gap:2px;margin-top:8px}.mescala i{width:22px;height:8px;border-radius:2px}.mescala .small{margin:0 6px}
+.matn{display:flex;flex-direction:column;gap:2px}
+.matn-f{all:unset;display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:8px;cursor:pointer;font-size:13px}
+.matn-f:hover,.matn-f:focus-visible{background:#f2f6fc}.matn-f:focus-visible{outline:2px solid var(--tint)}
+.mvenc{color:#d03b3b;font-weight:600}
+#metTip{position:fixed;z-index:95;display:none;background:#fff;border:1px solid rgba(11,11,11,.1);border-radius:8px;padding:7px 10px;box-shadow:0 8px 24px rgba(0,0,0,.14);font-size:12px;color:#52514e;pointer-events:none;max-width:260px}
+#metTip b{display:block;color:#0b0b0b;font-size:14px}
+@media (max-width:700px){.mkpi.hero{grid-column:auto}.mgrid{grid-template-columns:1fr}}
 /* Mi cuenta */
 .cta-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}
 .cuenta-card h3{margin:0 0 10px}
@@ -525,6 +570,7 @@ button.adj-img:focus-visible{outline:2px solid var(--tint);outline-offset:2px}
     <!-- Iconos de línea (estilo Feather): heredan el color del texto, así el activo cambia de color solo -->
     <button class="nav-item" data-act="nav" data-v="inicio"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9v11h5v-6h4v6h5V9"/></svg>Auditorías</button>
     <button class="nav-item" data-act="nav" data-v="ia"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="13" width="3.5" height="7" rx="1"/><rect x="10.25" y="8" width="3.5" height="12" rx="1"/><rect x="16.5" y="4" width="3.5" height="16" rx="1"/></svg>Panel de control IA</button>
+    <button class="nav-item" data-act="nav" data-v="metricas"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 6-6"/></svg>Métricas</button>
     <button class="nav-item" data-act="nav" data-v="historico"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>Histórico</button>
     <button class="nav-item" data-act="nav" data-v="chat"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Chat</button>
     <button class="nav-item" data-act="navCfg" aria-expanded="false" id="navCfg"><span style="display:flex;align-items:center;gap:12px"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>Configuración</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
@@ -662,6 +708,8 @@ async function sondear(){
     if(S.view==='chat'&&S.avisos.some(x=>x.key===kAbierto&&!x.leido)){
       S.avisos.forEach(x=>{if(x.key===kAbierto) x.leido=true;}); api('/api/leido',{key:kAbierto});
     }
+    if(S.view==='metricas'&&S.met&&d.seq!==S._metSeq&&!S.metCargando) cargarMetricas();   // Métricas: solo si hubo novedades
+    S._metSeq=d.seq;
     const firma=d.seq+'|'+JSON.stringify(d.presencia);
     const cambio=firma!==_firma||S.online!==true;      // solo se redibuja si hay novedades
     _firma=firma; S.online=true;
@@ -1258,6 +1306,25 @@ const EN={'Inicio':'Home','Auditorías':'Audits','Ver documentos en Auditorías'
  'Documento cargado: ya puedes abrirlo':'Document uploaded: you can open it now',
  'Un documento cargado se puede abrir, comentar, compartir y versionar enseguida. Sus hallazgos llegan al auditarlo con la solución:':'An uploaded document can be opened, commented on, shared and versioned right away. Its findings arrive when it is audited with the solution:',
  'El auditor no encontró defectos en este documento.':'The auditor found no defects in this document.',
+ 'Métricas':'Metrics','Resumen':'Summary','Cumplimiento':'Compliance','Equipo':'Team','Calidad de la IA':'AI quality','Periodo':'Period',
+ 'Desde el inicio':'Since the start','Últimos 7 días':'Last 7 days','Últimos 30 días':'Last 30 days','Últimos 90 días':'Last 90 days',
+ 'Hallazgos revisados':'Findings reviewed','Documentos por revisar':'Documents to review','Vencidos':'Overdue','han pasado el plazo':'past the deadline',
+ 'Vencen en 3 días o menos':'Due in 3 days or less','«No cumple» sin decidir':'Undecided «No cumple»','los más graves':'the most serious',
+ 'Devueltos a corregir':'Returned for correction','esperan al Dueño de Proceso':'waiting for the Process Owner','¿Llegamos al plazo?':'Will we meet the deadline?',
+ 'Pendientes':'Pending','Ritmo necesario':'Required pace','Fin del plazo':'Deadline','Hoy':'Today','¿En qué estado están los documentos?':'What state are the documents in?',
+ '¿Qué hay que mirar primero?':'What should we look at first?','Lo más urgente: prioridad Alta primero y, dentro de cada una, lo que menos plazo tiene. Pulsa para abrirlo.':'Most urgent first: High priority, then whatever has least time left. Click to open it.',
+ '¿Qué tipo de incumplimiento aparece más?':'Which type of non-compliance appears most?','¿Qué cláusulas de Part-IS se incumplen más?':'Which Part-IS clauses are breached most?',
+ '¿Dónde se concentra el riesgo?':'Where is the risk concentrated?','¿Cuánto llevamos revisado en cada familia?':'How much of each family have we reviewed?',
+ 'Prioridad Alta sin revisar':'High priority not reviewed','Ninguno: buen trabajo.':'None: well done.','Decisiones':'Decisions','Días hasta decidir':'Days to decide',
+ 'de media, desde que entra el documento':'on average, since the document arrived','Comentarios':'Comments','en los debates':'in the discussions','Devoluciones':'Returns',
+ 'Días en corregir':'Days to correct','de media, del Dueño de Proceso':'on average, by the Process Owner','Bloqueados':'Blocked',
+ 'devueltos sin corregir: no se pueden decidir':'returned and not corrected: cannot be decided','¿A qué ritmo decidimos?':'How fast are we deciding?',
+ 'Aceptadas':'Accepted','Rechazadas':'Rejected','Acuerdo con la IA':'Agreement with the AI','Rechazados por el equipo':'Rejected by the team',
+ 'falsos positivos según el revisor':'false positives according to the reviewer','Hallazgos editados':'Edited findings','F1 (puntuador oficial)':'F1 (official scorer)',
+ 'aparece al medir con el puntuador del kit':'appears when measured with the kit scorer','¿En qué acierta y en qué falla la IA?':'Where is the AI right and where is it wrong?',
+ '¿Qué fuente acierta más?':'Which source is right most often?','¿Su confianza dice la verdad?':'Does its confidence tell the truth?','Ver tabla':'Show table','Ver gráfica':'Show chart',
+ 'Cargando métricas…':'Loading metrics…','Sin datos para estos filtros.':'No data for these filters.','Nada pendiente con estos filtros.':'Nothing pending with these filters.',
+ 'Pulsa para ver los documentos':'Click to see the documents','Ver los documentos':'See the documents','Respondido':'Answered','Vence hoy':'Due today',
  'Mi cuenta':'My account','Tus datos y cómo entras.':'Your details and how you sign in.','Perfil':'Profile','Nombre visible':'Display name',
  'Usuario':'Username','Correo':'Email','Rol':'Role','Esta sesión':'This session','Prototipo · sin contraseña real':'Prototype · no real password',
  'Sin rol · no está en el equipo':'No role · not in the team','Idioma':'Language','Próximamente':'Coming soon','Esta':'This one',
@@ -1317,7 +1384,8 @@ const EN_RE=[[/^(\d+) de (\d+) revisados$/,'$1 of $2 reviewed'],[/^Página (\d+)
  [/^(\d+) de (\d+) en línea$/,'$1 of $2 online'],[/^Mensaje para (.+)$/,'Message for $1'],[/^Chat · (.+) · (.+)$/,'Chat · $1 · $2'],
  [/^(\d+) personas: (.+)$/,'$1 people: $2'],[/^Miembros de (.+)$/,'Members of $1'],[/^(\d+) integrantes · (\d+) en línea$/,'$1 members · $2 online'],
  [/^(\d+) nuevos? · (\d+) menci(?:ón|ones)$/,'$1 new · $2 mentions'],[/^(\d+) nuevos?$/,'$1 new'],[/^leídos · (\d+) menci(?:ón|ones)$/,'read · $1 mentions'],[/^Agente (\d+)$/,'Agent $1'],
- [/^Vencido hace (\d+) d$/,'Overdue by $1 d'],[/^Lleva (\d+) d · vence en (\d+) d$/,'Waiting $1 d · due in $2 d'],[/^Entró hoy · vence en (\d+) d$/,'Arrived today · due in $1 d'],
+ [/^Vencido hace (\d+) d$/,'Overdue by $1 d'],[/^de (\d+)$/,'of $1'],[/^(\d+) de (\d+)$/,'$1 of $2'],[/^Datos a (.+)$/,'Data as of $1'],[/^Confianza (.+)$/,'Confidence $1'],
+ [/^(\d+) aceptadas · (\d+) rechazadas$/,'$1 accepted · $2 rejected'],[/^(\d+) corregidas?$/,'$1 corrected'],[/^Lleva (\d+) d · vence en (\d+) d$/,'Waiting $1 d · due in $2 d'],[/^Entró hoy · vence en (\d+) d$/,'Arrived today · due in $1 d'],
  [/^Vencidos \((\d+)\)$/,'Overdue ($1)'],[/^Cargado por (.+)$/,'Uploaded by $1'],[/^Compartido por ti con (.+)$/,'Shared by you with $1'],
  [/^Te lo compartió (.+)$/,'Shared with you by $1'],[/^Trabajado con (.+)$/,'Worked on with $1'],[/^(\d+) versi(?:ón|ones)$/,'$1 versions'],
  [/^Versiones · (\d+)$/,'Versions · $1'],[/^Compartir con (\d+)$/,'Share with $1'],[/^Compartido con (.+)$/,'Shared with $1'],
@@ -1818,6 +1886,259 @@ function vCuenta(){
           <li>Roles asignados desde Entra ID.</li></ul></div>
     </div>`;
 }
+// ---------- Métricas: resumen, cumplimiento, equipo (de conjunto, sin nombres) y calidad de la IA.
+// Las cifras las calcula el servidor (src/metricas.py, GET /api/metricas): aquí solo se pintan. Cada tarjeta dice qué
+// pregunta responde y qué hacer; cada gráfica se puede ver como tabla y exportar a CSV, y sus barras llevan a
+// Auditorías con el filtro puesto. Colores: paleta validada (azul una serie; azul/naranja dos; rampa de azules en el
+// mapa de calor); el texto nunca lleva el color de la serie.
+const MCOL={s1:'#2a78d6',s2:'#eb6834',s3:'#1baf7a',gris:'#a8a7a0',grid:'#e1e0d9',eje:'#c3c2b7',
+  rampa:['#cde2fb','#9ec5f4','#6da7ec','#3987e5','#256abf','#1c5cab','#104281','#0d366b']};
+const MEST={'Completado':MCOL.s3,'Pendiente':MCOL.s1,'En revisión':MCOL.s2,'Sin hallazgos':MCOL.gris};
+Object.assign(S,{met:null,metTab:'resumen',metF:{periodo:'todo',familia:'',prioridad:'',tipo:'',clausula:''},metTabla:{},metCargando:false});
+const fmtN=(x,d=0)=>x===null||x===undefined?'—':Number(x).toLocaleString(S.lang==='en'?'en-GB':'es-ES',{maximumFractionDigits:d,minimumFractionDigits:0});
+const fmtF=iso=>{const [y,m,d]=String(iso).split('-'); return `${d}/${m}`;};
+async function cargarMetricas(){
+  if(!SRV){S.met={error:'Las métricas necesitan la revisión en equipo: python servidor.py'}; render(); return;}
+  S.metCargando=true; if(S.view==='metricas') document.querySelector('.met')?.classList.add('met-cargando');
+  const q=new URLSearchParams(Object.entries(S.metF).filter(([,v])=>v)).toString();
+  try{
+    const r=await fetch('/api/metricas'+(q?'?'+q:''),{cache:'no-store',headers:{'X-Sesion':S.token||''}});
+    const j=await r.json(); S.met=r.ok?j:{error:j.error||('Error '+r.status)};
+  }catch(e){S.met={error:'Sin conexión con el servidor'};}
+  S.metCargando=false; if(S.view==='metricas') render();
+}
+// Tooltip común: cualquier elemento con data-tv (valor) y data-tl (etiqueta). El valor manda; la etiqueta, debajo.
+function tipMet(el,x,y){
+  let t=document.getElementById('metTip');
+  if(!t){t=document.createElement('div'); t.id='metTip'; t.setAttribute('role','tooltip'); document.body.appendChild(t);}
+  if(!el){t.style.display='none'; return;}
+  t.replaceChildren(); const v=document.createElement('b'); v.textContent=el.dataset.tv||''; t.appendChild(v);
+  (el.dataset.tl||'').split('\n').filter(Boolean).forEach(l=>{const d=document.createElement('div'); d.textContent=l; t.appendChild(d);});
+  t.style.display='block';
+  const r=t.getBoundingClientRect(); t.style.left=Math.min(window.innerWidth-r.width-8,x+14)+'px'; t.style.top=Math.max(8,y-r.height-10)+'px';
+}
+document.addEventListener('pointermove',e=>{
+  if(S.view!=='metricas') return;
+  const lin=e.target.closest('.mlin-hit');
+  if(lin){lineaHover(lin,e); return;}
+  document.querySelectorAll('.mlin-x').forEach(x=>x.setAttribute('visibility','hidden'));
+  const el=e.target.closest('[data-tv]'); tipMet(el,e.clientX,e.clientY);
+});
+document.addEventListener('focusin',e=>{if(S.view!=='metricas') return; const el=e.target.closest('[data-tv]'); if(el){const r=el.getBoundingClientRect(); tipMet(el,r.right,r.top+8);}});
+document.addEventListener('focusout',()=>tipMet(null));
+// Línea con cruz: la vertical busca el día más cercano y el tooltip lista las dos series
+const _lineas={};
+function lineaHover(hit,e){
+  const L=_lineas[hit.dataset.id]; if(!L) return;
+  const b=hit.getBoundingClientRect(), fx=(e.clientX-b.left)/b.width*L.W;
+  const i=Math.max(0,Math.min(L.serie.length-1,Math.round((fx-L.x0)/L.dx)));
+  const p=L.serie[i], x=L.x0+i*L.dx, cruz=hit.parentNode.querySelector('.mlin-x');
+  cruz.setAttribute('x1',x); cruz.setAttribute('x2',x); cruz.setAttribute('visibility','visible');
+  const fake={dataset:{tv:fmtFecha(p.fecha+'T12:00:00').split(',')[0],tl:L.claves.map(k=>`${k.nombre}: ${p[k.k]===null||p[k.k]===undefined?'—':fmtN(p[k.k],1)}`).join('\n')}};
+  tipMet(fake,e.clientX,e.clientY);
+}
+function svgLinea(id,serie,claves,{hoy,fin}={}){
+  const W=960,H=260,x0=44,x1=W-150,y0=30,y1=H-30;
+  if(!serie.length) return '<p class="small">Sin datos para estos filtros.</p>';
+  const max=Math.max(1,...serie.flatMap(p=>claves.map(k=>p[k.k]||0)));
+  const paso=max<=5?1:Math.pow(10,Math.floor(Math.log10(max)))*(max/Math.pow(10,Math.floor(Math.log10(max)))>5?2:1);
+  const top=Math.ceil(max/paso)*paso, Y=v=>y1-(v/top)*(y1-y0), dx=serie.length>1?(x1-x0)/(serie.length-1):0;
+  _lineas[id]={serie,claves,W,x0,dx};
+  const ticks=[]; for(let v=0;v<=top;v+=paso) ticks.push(v);
+  const grid=ticks.map(v=>`<line x1="${x0}" x2="${x1}" y1="${Y(v)}" y2="${Y(v)}" stroke="${MCOL.grid}" stroke-width="1"/><text x="${x0-8}" y="${Y(v)+4}" text-anchor="end" class="mtick">${fmtN(v)}</text>`).join('');
+  const idx=f=>serie.findIndex(p=>p.fecha===f);
+  // «Hoy» se rotula hacia la izquierda y «Fin del plazo» hacia la derecha: si caen cerca no se pisan
+  const marca=(f,t,lado)=>{const i=idx(f); if(i<0) return ''; const x=x0+i*dx; return `<line x1="${x}" x2="${x}" y1="${y0}" y2="${y1}" stroke="${MCOL.eje}" stroke-width="1"/><text x="${lado==='izq'?x-4:x+4}" y="${y0-8}" text-anchor="${lado==='izq'?'end':'start'}" class="mtick">${t}</text>`;};
+  const lineas=claves.map(k=>{
+    const pts=serie.map((p,i)=>p[k.k]===null||p[k.k]===undefined?null:[x0+i*dx,Y(p[k.k])]).filter(Boolean);
+    if(!pts.length) return '';
+    const ult=pts[pts.length-1], v=serie[pts.length-1+serie.findIndex(p=>p[k.k]!==null&&p[k.k]!==undefined)]?.[k.k];
+    return `<polyline points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="${k.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="${ult[0]}" cy="${ult[1]}" r="4" fill="${k.color}" stroke="#fff" stroke-width="2"/>
+      <text x="${ult[0]+8}" y="${ult[1]+4}" class="mlab">${esc(k.nombre)}</text>`;
+  }).join('');
+  const ejeX=`<line x1="${x0}" x2="${x1}" y1="${y1}" y2="${y1}" stroke="${MCOL.eje}" stroke-width="1"/>
+    <text x="${x0}" y="${H-8}" class="mtick">${fmtF(serie[0].fecha)}</text><text x="${x1}" y="${H-8}" text-anchor="end" class="mtick">${fmtF(serie[serie.length-1].fecha)}</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}" class="mchart" role="img" aria-label="${esc(claves.map(k=>k.nombre).join(' y '))} por día">${grid}${ejeX}${marca(fin,'Fin del plazo','der')}${marca(hoy,'Hoy','izq')}${lineas}
+    <line class="mlin-x" x1="0" x2="0" y1="${y0}" y2="${y1}" stroke="#52514e" stroke-width="1" visibility="hidden"/>
+    <rect class="mlin-hit" data-id="${id}" x="${x0}" y="${y0}" width="${x1-x0}" height="${y1-y0}" fill="transparent"/></svg>`;
+}
+// Columnas apiladas por día (dos series): 2 px de hueco entre tramos, esquinas de 4 px arriba
+function svgColumnas(serie,claves){
+  const W=960,H=220,x0=36,x1=W-10,y0=10,y1=H-26;
+  const max=Math.max(1,...serie.map(p=>claves.reduce((a,k)=>a+(p[k.k]||0),0))), top=Math.max(1,Math.ceil(max));
+  const Y=v=>(v/top)*(y1-y0), bw=Math.min(24,Math.max(3,(x1-x0)/serie.length-2));
+  const ticks=[0,Math.ceil(top/2),top].filter((v,i,a)=>a.indexOf(v)===i);
+  let out=ticks.map(v=>`<line x1="${x0}" x2="${x1}" y1="${y1-Y(v)}" y2="${y1-Y(v)}" stroke="${MCOL.grid}"/><text x="${x0-6}" y="${y1-Y(v)+4}" text-anchor="end" class="mtick">${fmtN(v)}</text>`).join('');
+  serie.forEach((p,i)=>{
+    const cx=x0+(i+0.5)*((x1-x0)/serie.length)-bw/2; let base=y1;
+    const tot=claves.reduce((a,k)=>a+(p[k.k]||0),0);
+    claves.forEach((k,j)=>{const v=p[k.k]||0; if(!v) return; const h=Y(v); const ultimo=claves.slice(j+1).every(q=>!(p[q.k]||0));
+      out+=`<path d="${rectRed(cx,base-h,bw,h-(base<y1?2:0),ultimo?4:0)}" fill="${k.color}" tabindex="0" data-tv="${fmtN(v)} ${k.nombre.toLowerCase()}" data-tl="${fmtF(p.fecha)} · ${fmtN(tot)} en total"/>`; base-=h;});
+  });
+  out+=`<line x1="${x0}" x2="${x1}" y1="${y1}" y2="${y1}" stroke="${MCOL.eje}"/>`;
+  if(serie.length) out+=`<text x="${x0}" y="${H-8}" class="mtick">${fmtF(serie[0].fecha)}</text><text x="${x1}" y="${H-8}" text-anchor="end" class="mtick">${fmtF(serie[serie.length-1].fecha)}</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}" class="mchart" role="img" aria-label="Decisiones por día">${out}</svg>`;
+}
+function rectRed(x,y,w,h,r){r=Math.min(r,w/2,h); return `M${x},${y+h}V${y+r}Q${x},${y} ${x+r},${y}H${x+w-r}Q${x+w},${y} ${x+w},${y+r}V${y+h}Z`;}
+// Barras horizontales ordenadas, un solo tono; valor al final; pinchar lleva a Auditorías con el filtro
+function barrasH(items,{tl,act}={}){
+  if(!items.length) return '<p class="small">Sin datos para estos filtros.</p>';
+  const max=Math.max(...items.map(x=>x.n),1);
+  return `<div class="mbar">${items.map(x=>{const f=act&&act(x); return `<button class="mbar-f" ${f?`data-act="metIr" data-f="${esc(JSON.stringify(f))}"`:''} data-tv="${fmtN(x.n)}" data-tl="${esc(x.label)}${tl?'\n'+esc(tl(x)):''}${f?'\nPulsa para ver los documentos':''}">
+      <span class="mbar-n">${esc(x.label)}</span><span class="mbar-t"><span class="mbar-b" style="width:${Math.max(2,x.n/max*88)}%"></span><span class="mbar-v">${fmtN(x.n)}</span></span></button>`;}).join('')}</div>`;
+}
+// Lista de medidores: nombre, barra con pista del mismo tono y cifra
+function medidores(items){
+  if(!items.length) return '<p class="small">Sin datos para estos filtros.</p>';
+  return `<div class="mmed">${items.map(x=>`<div class="mmed-f" ${x.act?`role="button" tabindex="0" data-act="metIr" data-f="${esc(JSON.stringify(x.act))}"`:''} data-tv="${x.pct===null?'—':fmtN(x.pct,1)+' %'}" data-tl="${esc(x.label)}\n${esc(x.detalle)}">
+      <span class="mbar-n">${esc(x.label)}</span><span class="mmed-t"><span class="mmed-b" style="width:${x.pct===null?0:Math.max(1,x.pct)}%"></span></span>
+      <span class="mmed-v">${x.pct===null?'—':fmtN(x.pct,0)+' %'}</span></div>`).join('')}</div>`;
+}
+// Barra segmentada alta (una sola cosa partida en partes): cifra dentro si cabe; leyenda con los nombres
+function segmentada(partes){
+  const tot=partes.reduce((a,p)=>a+p.n,0); if(!tot) return '<p class="small">Sin datos para estos filtros.</p>';
+  return `<div class="mseg" role="img" aria-label="${esc(partes.map(p=>`${p.label}: ${p.n}`).join(', '))}">${partes.filter(p=>p.n).map(p=>{const pc=p.n/tot*100;
+      return `<span class="mseg-p" style="flex:${p.n};background:${p.color};color:${p.texto||'#fff'}" tabindex="0" data-tv="${fmtN(p.n)} (${fmtN(pc,0)} %)" data-tl="${esc(p.label)}">${pc>=9?fmtN(p.n):''}</span>`;}).join('')}</div>
+    <div class="mley">${partes.map(p=>`<span><i style="background:${p.color}"></i>${esc(p.label)}</span>`).join('')}</div>`;
+}
+// Mapa de calor familia × cláusula (rampa de azules; la cifra va escrita en cada celda)
+function mapaCalor(m){
+  if(!m.familias.length) return '<p class="small">Sin datos para estos filtros.</p>';
+  const max=Math.max(1,...m.celdas.flat());
+  const col=v=>v?MCOL.rampa[Math.min(MCOL.rampa.length-1,Math.floor(v/max*(MCOL.rampa.length-1)))]:'#f2f2f0';
+  const tinta=v=>v&&v/max>0.45?'#fff':'#0b0b0b';
+  return `<div class="mmap"><table><thead><tr><th></th>${m.clausulas.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>
+    ${m.familias.map((f,i)=>`<tr><th>${esc(f)}</th>${m.celdas[i].map((v,j)=>`<td><button class="mmap-c" style="background:${col(v)};color:${tinta(v)}" ${v?`data-act="metIr" data-f="${esc(JSON.stringify({itipo:f,hclau:m.clausulas[j]==='Sin cláusula'?'—':m.clausulas[j]}))}"`:'disabled'}
+      data-tv="${fmtN(v)} hallazgos" data-tl="${esc(f)} · ${esc(m.clausulas[j])}${v?'\nPulsa para ver los documentos':''}">${v||''}</button></td>`).join('')}</tr>`).join('')}</tbody></table></div>
+    <div class="mescala"><span class="small">0</span>${MCOL.rampa.map(c=>`<i style="background:${c}"></i>`).join('')}<span class="small">${fmtN(max)}</span></div>`;
+}
+// Tarjeta: pregunta, qué significa / qué hacer, contenido, y su gemela en tabla + CSV
+function tarjetaM(id,titulo,ayuda,cuerpo,tabla,ancha){
+  const enTabla=!!S.metTabla[id];
+  return `<section class="card mcard ${ancha?'ancha':''}" aria-labelledby="mt-${id}">
+    <div class="mcard-cab"><div style="flex:1;min-width:0"><h3 id="mt-${id}">${titulo}</h3><p class="small mayuda">${ayuda}</p></div>
+      ${tabla?`<div class="macc"><button class="ghost" data-act="metTabla" data-v="${id}" aria-pressed="${enTabla}">${enTabla?'Ver gráfica':'Ver tabla'}</button>
+        <button class="ghost" data-act="metCsv" data-v="${id}" title="Descargar estos datos en CSV">CSV</button></div>`:''}</div>
+    ${enTabla&&tabla?tablaM(tabla):cuerpo}</section>`;
+}
+const _tablasM={};
+function tablaM(t){return `<div class="cg-tabla"><table><thead><tr>${t.cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${t.filas.map(f=>`<tr>${f.map(v=>`<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;}
+function tablaReg(id,cols,filas){_tablasM[id]={cols,filas}; return _tablasM[id];}
+function kpi(label,valor,sub,{hero,act}={}){
+  return `<div class="mkpi ${hero?'hero':''}" ${act?`role="button" tabindex="0" data-act="metIr" data-f="${esc(JSON.stringify(act))}" title="Ver los documentos"`:''}><div class="small">${label}</div><div class="mkpi-v">${valor}</div>${sub?`<div class="small">${sub}</div>`:''}</div>`;
+}
+const diasTxt=d=>d.tipo==='hecho'?'Respondido':d.tipo==='na'?'—':d.n<0?`Vencido hace ${-d.n} d`:d.n===0?'Vence hoy':`${d.n} d`;
+function vMetricas(){
+  if(!S.met){if(!S.metCargando) setTimeout(cargarMetricas); return `<h2>Métricas</h2><div class="card small" aria-busy="true">Cargando métricas…</div>`;}
+  if(S.met.error) return `<h2>Métricas</h2><div class="card"><p class="sub" style="margin:0">${esc(S.met.error)}</p></div>`;
+  const m=S.met, o=m.meta.opciones, f=S.metF;
+  const sel=(id,t,ops,v)=>`<div class="fcampo"><label class="ftit" for="${id}">${t}</label><select id="${id}">${ops.map(([k,l])=>`<option value="${esc(k)}" ${k===v?'selected':''}>${esc(l)}</option>`).join('')}</select></div>`;
+  const filtros=`<div class="ffil mfil">
+      ${sel('mPeriodo','Periodo',[['todo','Desde el inicio'],['7','Últimos 7 días'],['30','Últimos 30 días'],['90','Últimos 90 días']],f.periodo)}
+      ${sel('mFamilia','Familia',[['','Todas'],...o.familias.map(x=>[x,x])],f.familia)}
+      ${sel('mPrioridad','Prioridad',[['','Todas'],['Alta','Alta'],['Media','Media'],['Baja','Baja']],f.prioridad)}
+      ${sel('mTipo','Tipo de hallazgo',[['','Todos'],...o.tipos.map(x=>[x,x])],f.tipo)}
+      ${sel('mClausula','Cláusula',[['','Todas'],...o.clausulas.map(x=>[x,x])],f.clausula)}
+      ${Object.entries(f).some(([k,v])=>v&&!(k==='periodo'&&v==='todo'))?'<button class="enlace" data-act="metLimpiar" style="align-self:end;margin-bottom:10px">Limpiar filtros</button>':''}
+    </div>`;
+  const tabs=[['resumen','Resumen'],['cumplimiento','Cumplimiento'],['equipo','Equipo'],['ia','Calidad de la IA']]
+    .map(([k,l])=>`<button role="tab" aria-selected="${S.metTab===k}" class="${S.metTab===k?'on':''}" data-act="metTab" data-v="${k}">${l}</button>`).join('');
+  let cuerpo='';
+  if(S.metTab==='resumen'){
+    const r=m.resumen, k=r.kpis;
+    cuerpo=`<div class="mkpis">
+        ${kpi('Hallazgos revisados',k.pct_decididos===null?'—':fmtN(k.pct_decididos,0)+' %',`${fmtN(k.decididos)} de ${fmtN(k.hallazgos)}`,{hero:true})}
+        ${kpi('Documentos por revisar',fmtN(k.por_revisar),`de ${fmtN(k.documentos)}`,{act:{}})}
+        ${kpi('Vencidos',fmtN(k.vencidos),'han pasado el plazo',{act:{iant:'vencidos'}})}
+        ${kpi('Vencen en 3 días o menos',fmtN(k.vencen_3),'')}
+        ${kpi('«No cumple» sin decidir',fmtN(k.no_cumple_abiertos),'los más graves',{act:{htipo:'No cumple',hdec:'pend'}})}
+        ${kpi('Devueltos a corregir',fmtN(k.devueltos),'esperan al Dueño de Proceso')}</div>
+      <div class="mgrid">
+      ${tarjetaM('avance','¿Llegamos al plazo?',`Hallazgos pendientes cada día frente al ritmo necesario para acabarlos el ${r.plazo.fin?fmtF(r.plazo.fin):'—'} (plazo de ${r.plazo.dias} días). Si la línea azul va por encima de la gris, vamos tarde: reparte trabajo o prioriza lo Alta.`,
+        svgLinea('avance',r.serie,[{k:'pendientes',nombre:'Pendientes',color:MCOL.s1},{k:'ritmo',nombre:'Ritmo necesario',color:MCOL.gris}],{hoy:m.meta.hoy,fin:r.plazo.fin})
+        +`<div class="mley"><span><i class="lin" style="background:${MCOL.s1}"></i>Pendientes</span><span><i class="lin" style="background:${MCOL.gris}"></i>Ritmo necesario</span></div>`,
+        tablaReg('avance',['Fecha','Pendientes','Ritmo necesario'],r.serie.map(p=>[p.fecha,p.pendientes===null?'':p.pendientes,p.ritmo])),true)}
+      ${tarjetaM('estados','¿En qué estado están los documentos?','Reparto de los documentos filtrados. «Sin hallazgos»: el auditor no encontró nada (o es un documento cargado que aún no se ha auditado).',
+        segmentada(r.estados.map(e=>({label:e.estado,n:e.n,color:MEST[e.estado],texto:'#fff'}))),
+        tablaReg('estados',['Estado','Documentos'],r.estados.map(e=>[e.estado,e.n])))}
+      ${tarjetaM('atencion','¿Qué hay que mirar primero?','Lo más urgente: prioridad Alta primero y, dentro de cada una, lo que menos plazo tiene. Pulsa para abrirlo.',
+        r.atencion.length?`<div class="matn">${r.atencion.map(a=>`<button class="matn-f" data-act="abrir" data-doc="${esc(a.doc)}"><b>${esc(a.doc)}</b><span class="small" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a.titulo)}</span>${pill(a.prioridad,PCOL[a.prioridad])}<span class="small ${a.dias.tipo==='dias'&&a.dias.n<0?'mvenc':''}">${esc(diasTxt(a.dias))}</span></button>`).join('')}</div>`:'<p class="small">Nada pendiente con estos filtros.</p>',
+        tablaReg('atencion',['Documento','Título','Prioridad','Estado','Días para responder'],r.atencion.map(a=>[a.doc,a.titulo,a.prioridad,a.estado,diasTxt(a.dias)])))}
+      </div>`;
+  }else if(S.metTab==='cumplimiento'){
+    const c=m.cumplimiento;
+    cuerpo=`<div class="mgrid">
+      ${tarjetaM('tipos','¿Qué tipo de incumplimiento aparece más?','Hallazgos por tipo; al pasar el ratón, cuántos siguen sin decidir. Pulsa una barra para ver sus documentos.',
+        barrasH(c.por_tipo.map(x=>({label:x.tipo,n:x.n,abiertos:x.abiertos})),{tl:x=>`${fmtN(x.abiertos)} sin decidir`,act:x=>({htipo:x.label})}),
+        tablaReg('tipos',['Tipo','Hallazgos','Sin decidir'],c.por_tipo.map(x=>[x.tipo,x.n,x.abiertos])))}
+      ${tarjetaM('clausulas','¿Qué cláusulas de Part-IS se incumplen más?','Las 10 cláusulas con más hallazgos: es donde más flojea el cumplimiento. Pulsa para ver sus documentos.',
+        barrasH(c.por_clausula.map(x=>({label:x.clausula,n:x.n})),{act:x=>({hclau:x.label==='Sin cláusula'?'—':x.label})}),
+        tablaReg('clausulas',['Cláusula','Hallazgos'],c.por_clausula.map(x=>[x.clausula,x.n])))}
+      ${tarjetaM('mapa','¿Dónde se concentra el riesgo?','Hallazgos por familia de documento y cláusula: cuanto más oscuro, más hallazgos. Pulsa una celda para ver esos documentos.',
+        mapaCalor(c.mapa),
+        tablaReg('mapa',['Familia',...c.mapa.clausulas],c.mapa.familias.map((fa,i)=>[fa,...c.mapa.celdas[i]])),true)}
+      ${tarjetaM('familias','¿Cuánto llevamos revisado en cada familia?','Hallazgos ya decididos (aceptados o rechazados) sobre el total de cada familia.',
+        medidores(c.por_familia.filter(x=>x.hallazgos).map(x=>({label:x.familia,pct:x.hallazgos?Math.round(x.decididos/x.hallazgos*1000)/10:null,detalle:`${fmtN(x.decididos)} de ${fmtN(x.hallazgos)} decididos · ${fmtN(x.aceptados)} aceptados, ${fmtN(x.rechazados)} rechazados`,act:{itipo:x.familia}}))),
+        tablaReg('familias',['Familia','Documentos','Hallazgos','Decididos','Aceptados','Rechazados'],c.por_familia.map(x=>[x.familia,x.documentos,x.hallazgos,x.decididos,x.aceptados,x.rechazados])))}
+      ${tarjetaM('alta','Prioridad Alta sin revisar',`${fmtN(c.alta_sin_revisar.length)} ${c.alta_sin_revisar.length===1?'documento de prioridad Alta necesita':'documentos de prioridad Alta necesitan'} revisión. Son los primeros a repartir.`,
+        c.alta_sin_revisar.length?`<div class="matn">${c.alta_sin_revisar.map(a=>`<button class="matn-f" data-act="abrir" data-doc="${esc(a.doc)}"><b>${esc(a.doc)}</b><span class="small" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a.titulo)}</span><span class="small">${esc(a.estado)}</span><span class="small ${a.dias.tipo==='dias'&&a.dias.n<0?'mvenc':''}">${esc(diasTxt(a.dias))}</span></button>`).join('')}</div>`:'<p class="small">Ninguno: buen trabajo.</p>',
+        tablaReg('alta',['Documento','Título','Estado','Días para responder'],c.alta_sin_revisar.map(a=>[a.doc,a.titulo,a.estado,diasTxt(a.dias)])))}
+      </div>`;
+  }else if(S.metTab==='equipo'){
+    const e=m.equipo, k=e.kpis;
+    cuerpo=`<p class="note" style="margin-top:0">Cifras del equipo en conjunto, sin nombres. ${esc(m.meta.aviso_historial)}</p>
+      <div class="mkpis">
+        ${kpi('Decisiones',fmtN(k.decisiones),`${fmtN(k.aceptadas)} aceptadas · ${fmtN(k.rechazadas)} rechazadas`)}
+        ${kpi('Días hasta decidir',k.dias_medios_decidir===null?'—':fmtN(k.dias_medios_decidir,1),'de media, desde que entra el documento')}
+        ${kpi('Comentarios',fmtN(k.comentarios),'en los debates')}
+        ${kpi('Devoluciones',fmtN(k.devoluciones),`${fmtN(k.correcciones)} ${k.correcciones===1?'corregida':'corregidas'}`)}
+        ${kpi('Días en corregir',k.dias_medios_corregir===null?'—':fmtN(k.dias_medios_corregir,1),'de media, del Dueño de Proceso')}
+        ${kpi('Bloqueados',fmtN(k.bloqueados),'devueltos sin corregir: no se pueden decidir')}</div>
+      <div class="mgrid">
+      ${tarjetaM('ritmo','¿A qué ritmo decidimos?','Decisiones por día en el periodo. Días sin barra: nadie decidió nada; si son muchos seguidos, la revisión se ha parado.',
+        svgColumnas(e.serie_decisiones,[{k:'aceptadas',nombre:'Aceptadas',color:MCOL.s1},{k:'rechazadas',nombre:'Rechazadas',color:MCOL.s2}])
+        +`<div class="mley"><span><i style="background:${MCOL.s1}"></i>Aceptadas</span><span><i style="background:${MCOL.s2}"></i>Rechazadas</span></div>`,
+        tablaReg('ritmo',['Fecha','Aceptadas','Rechazadas'],e.serie_decisiones.map(p=>[p.fecha,p.aceptadas,p.rechazadas])),true)}
+      </div>`;
+  }else{
+    const ia=m.ia, a=ia.acuerdo, solo=ia.por_origen.length===1;
+    const fila=x=>({pct:x.pct_acuerdo,detalle:`${fmtN(x.aceptados)} aceptados · ${fmtN(x.rechazados)} rechazados · ${fmtN(x.sin_decidir)} sin decidir`});
+    cuerpo=`<div class="mkpis">
+        ${kpi('Acuerdo con la IA',a.pct_acuerdo===null?'—':fmtN(a.pct_acuerdo,0)+' %',`de los hallazgos decididos, ${fmtN(a.aceptados)} aceptados`,{hero:true})}
+        ${kpi('Rechazados por el equipo',fmtN(a.rechazados),'falsos positivos según el revisor')}
+        ${kpi('Hallazgos editados',ia.editados.pct===null?'—':fmtN(ia.editados.pct,0)+' %',`${fmtN(ia.editados.n)} de ${fmtN(ia.editados.total)}: el equipo corrigió tipo, cláusula o justificación`)}
+        ${ia.metricas?kpi('F1 (puntuador oficial)',esc(ia.metricas.f1),`precisión ${esc(ia.metricas.precision)} · recall ${esc(ia.metricas.recall)}`):kpi('F1 (puntuador oficial)','—','aparece al medir con el puntuador del kit')}</div>
+      <div class="mgrid">
+      ${tarjetaM('iatipo','¿En qué acierta y en qué falla la IA?','Porcentaje de hallazgos aceptados por el equipo sobre los decididos, por tipo. Un tipo con poco acuerdo es donde ajustar reglas o prompts.',
+        medidores(ia.por_tipo.map(x=>({label:x.tipo,...fila(x),act:{htipo:x.tipo}}))),
+        tablaReg('iatipo',['Tipo','Aceptados','Rechazados','Sin decidir','% acuerdo'],ia.por_tipo.map(x=>[x.tipo,x.aceptados,x.rechazados,x.sin_decidir,x.pct_acuerdo??''])))}
+      ${tarjetaM('iaorigen','¿Qué fuente acierta más?',solo?`Hoy todos los hallazgos salen de «${esc(ia.por_origen[0]?.origen||'—')}» (sin la IA activada). Al auditar con la IA aparecerá aquí la comparación entre reglas, IA y visión.`:'Acuerdo del equipo según quién propuso el hallazgo: reglas del código, IA o visión.',
+        medidores(ia.por_origen.map(x=>({label:x.origen,...fila(x)}))),
+        tablaReg('iaorigen',['Origen','Aceptados','Rechazados','Sin decidir','% acuerdo'],ia.por_origen.map(x=>[x.origen,x.aceptados,x.rechazados,x.sin_decidir,x.pct_acuerdo??''])))}
+      ${tarjetaM('iaconf','¿Su confianza dice la verdad?','Acuerdo por tramo de confianza de la IA. Si los tramos altos no tienen más acuerdo que los bajos, la confianza no sirve para priorizar.',
+        medidores(ia.por_confianza.map(x=>({label:'Confianza '+x.tramo,...fila(x)}))),
+        tablaReg('iaconf',['Tramo de confianza','Hallazgos','Aceptados','Rechazados','% acuerdo'],ia.por_confianza.map(x=>[x.tramo,x.n,x.aceptados,x.rechazados,x.pct_acuerdo??''])))}
+      </div>`;
+  }
+  return `<div class="met ${S.metCargando?'met-cargando':''}"><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px"><h2 style="margin:0">Métricas</h2>
+      <div class="seg" role="tablist" aria-label="Vista de métricas">${tabs}</div>
+      <span class="small" style="margin-left:auto">Datos a ${fmtFecha(m.meta.hoy+'T12:00:00').split(',')[0]}${m.meta.desde?` · actividad desde ${fmtF(m.meta.desde)}`:''}</span></div>
+    ${filtros}${cuerpo}</div>`;
+}
+function metIr(f){                                    // de una métrica a Auditorías con el filtro puesto
+  Object.assign(S,{iq:'',itipo:'',iest:'',hdec:'',htipo:'',hclau:'',hmios:false,hnuevos:false,hcoms:false,hequipo:false,hesc:false,iprio:'',iant:'',orden:null},
+    S.metF.familia?{itipo:S.metF.familia}:{},S.metF.prioridad?{iprio:S.metF.prioridad}:{},S.metF.tipo?{htipo:S.metF.tipo}:{},S.metF.clausula?{hclau:S.metF.clausula}:{},f);
+  tipMet(null); S.view='inicio'; render(); window.scrollTo(0,0);
+}
+function csvMet(id){
+  const t=_tablasM[id]; if(!t) return;
+  const q=v=>{const s=String(v??''); return /[",;\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;};
+  const txt='﻿'+[t.cols,...t.filas].map(f=>f.map(q).join(';')).join('\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([txt],{type:'text/csv;charset=utf-8'}));
+  a.download=`metricas_${id}_${(S.met&&S.met.meta.hoy)||''}.csv`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+}
+
 function vPestanas(){
   return `<div class="tabs" role="tablist" aria-label="Documentos abiertos">${S.tabs.map(d=>{
     const on=d===S.doc, pend=RES.filter(r=>r.documento===d&&!decOf(r)).length;
@@ -2835,11 +3156,11 @@ function vCfg(){
   </div>${t==='roles'?vRoles():vUsuarios()}`;
 }
 
-const VIEWS={inicio:vInicio,revision:vRevision,ia:vIA,historico:vHist,chat:vChat,reglas:vCfg,usuarios:vCfg,cuenta:vCuenta};
-const TITLES={inicio:'Nimbus Audit Studio',revision:'Revisión',ia:'Panel de control IA',historico:'Histórico',chat:'Chat',reglas:'Reglas',usuarios:'Usuarios',cuenta:'Mi cuenta'};
+const VIEWS={inicio:vInicio,revision:vRevision,ia:vIA,metricas:vMetricas,historico:vHist,chat:vChat,reglas:vCfg,usuarios:vCfg,cuenta:vCuenta};
+const TITLES={inicio:'Nimbus Audit Studio',revision:'Revisión',ia:'Panel de control IA',metricas:'Métricas',historico:'Histórico',chat:'Chat',reglas:'Reglas',usuarios:'Usuarios',cuenta:'Mi cuenta'};
 
 // Cada sección pide el permiso de consultar su módulo (sin permiso, el servidor tampoco envía sus datos)
-const VISTA_PERM={inicio:['revisiones','consultar'],revision:['revisiones','consultar'],historico:['revisiones','consultar'],
+const VISTA_PERM={metricas:['metricas','consultar'],inicio:['revisiones','consultar'],revision:['revisiones','consultar'],historico:['revisiones','consultar'],
   versiones:['revisiones','consultar'],reglas:['configuracion','consultar'],usuarios:['configuracion','consultar']};
 function vista(v){
   const p=VISTA_PERM[v];
@@ -2976,6 +3297,11 @@ document.addEventListener('click',e=>{
   if(a==='cerrarComp'){S.comp=null; pintarComp(); return;}
   if(a==='enviarComp'){enviarCompartir(); return;}
   if(a==='descVer'){descargarVersion(el.dataset.doc,Number(el.dataset.n)).catch(()=>aviso('No se pudo preparar el archivo')); return;}
+  if(a==='metTab'){S.metTab=el.dataset.v; tipMet(null); render(); return;}
+  if(a==='metTabla'){S.metTabla[el.dataset.v]=!S.metTabla[el.dataset.v]; render(); return;}
+  if(a==='metCsv'){csvMet(el.dataset.v); return;}
+  if(a==='metLimpiar'){S.metF={periodo:'todo',familia:'',prioridad:'',tipo:'',clausula:''}; cargarMetricas(); return;}
+  if(a==='metIr'){try{metIr(JSON.parse(el.dataset.f||'{}'));}catch(err){} return;}
   if(a==='irPestana'){if(el.dataset.doc!==S.doc){abrirRevision(el.dataset.doc); render();} return;}
   if(a==='cerrarPestana'){cerrarPestana(el.dataset.doc); render(); window.scrollTo(0,0); return;}
   if(a==='cerrarPrev'){cerrarPrev(); return;}
@@ -3229,6 +3555,8 @@ document.addEventListener('change',e=>{
   if(['hmios','hnuevos','hcoms','hequipo','hesc'].includes(e.target.id)){S[e.target.id]=e.target.checked; render();}
   if(['iprio','iant'].includes(e.target.id)){S[e.target.id]=e.target.value; render();}
   if(e.target.id==='hdecSel'){S.hdec=e.target.value; render();}
+  const mf={mPeriodo:'periodo',mFamilia:'familia',mPrioridad:'prioridad',mTipo:'tipo',mClausula:'clausula'}[e.target.id];
+  if(mf){S.metF[mf]=e.target.value; cargarMetricas();}
   if(e.target.id==='iest'){S.iest=e.target.value; render();}
   if(e.target.id==='umbral'&&puede('configuracion','editar_umbral')){S.umbral=Math.min(100,Math.max(0,Number(e.target.value)||0)); render();}
   // Formularios de Configuración → Usuarios y de escalamiento: se guardan en S para no perderlos al redibujar
@@ -3279,6 +3607,7 @@ document.addEventListener('keydown',e=>{
     if(e.key==='Escape'){cerrarSug(); return;}
   }
   if(e.key==='Escape'&&S.asisOpen){S.asisOpen=false; render(); return;}      // cierra el Asistente IA
+  if((e.key==='Enter'||e.key===' ')&&e.target.closest('.met [role=button][data-act]')===e.target){e.preventDefault(); e.target.click(); return;}
   if(e.target.id==='ctx'&&e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault(); enviarMensaje();}
   if(e.target.id==='eMsg'&&e.key==='Enter'&&!e.shiftKey){e.preventDefault(); document.querySelector('[data-act="guardarMsg"]')?.click();}
   if(e.target.id==='eMsg'&&e.key==='Escape'){S.editMsg=null; render();}
